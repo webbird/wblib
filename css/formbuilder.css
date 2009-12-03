@@ -1,0 +1,22 @@
+table.fbtable {
+    width               : 80%;
+    margin              : 10px auto;
+    border              : 1px solid #ccc;
+}
+.fbheader {
+    border              : 1px solid #ccc;
+}
+.fbleft {
+    font-weight         : bold;
+}
+.fbrequired {
+    color               : #f00;
+}
+.fbright {
+
+}
+fieldset.fbfieldset label.fblabel {
+    width               : 200px;
+    float               : left;
+    text-align          : right;
+}
