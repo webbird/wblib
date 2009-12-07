@@ -103,6 +103,7 @@ class wbFormBuilder extends wbBase {
                                           'fb_req_class'      => 'fbrequired',
                                           'fb_fieldset_class' => 'fbfieldset',
                                           'fb_legend_class'   => 'fblegend',
+                                          'fb_button_class'   => 'fbbutton',
                                       );
 
     /**
@@ -160,7 +161,7 @@ class wbFormBuilder extends wbBase {
     private static $_form
         = array(
               'method'       => array( 'post', 'get' ),
-              'action'       => 'PCRE_URI',
+              'action'       => 'PCRE_PLAIN',
               'enctype'      => 1
           );
 
@@ -346,6 +347,40 @@ class wbFormBuilder extends wbBase {
         $this->debug( 'options:', self::$_registered_elements    );
 
     }   // end function loadFile()
+    
+    
+    /**
+     * set element to 'readonly'
+     **/
+    public function setReadonly( $name ) {
+        $this->_readonly[ $name ] = 1;
+    }   // function setReadonly()
+    
+    /**
+     * set element to 'writable'
+     **/
+    public function unsetReadonly( $name ) {
+        $this->debug( 'unset readonly flag for field ['.$name.']' );
+        unset( $this->_readonly[ $name ] );
+    }   // function setReadonly()
+
+    /**
+     * set element to 'required'
+     **/
+    public function setRequired( $name ) {
+        $this->debug( 'set required flag for field ['.$name.']' );
+        unset( $this->_optional[$name] );
+        $this->_required[ $name ] = 1;
+    }   // function setReadonly()
+
+    /**
+     * set element to 'optional'
+     **/
+    public function setOptional( $name ) {
+        $this->debug( 'set optional flag for field ['.$name.']' );
+        unset( $this->_readonly[ $name ] );
+        $this->_optional[$name] = 1;
+    }   // function setReadonly()
 
     /**
      *
@@ -436,6 +471,9 @@ class wbFormBuilder extends wbBase {
             $elem = array(
                         'name'    => $name,
                         'label'   => $label,
+                        'value'   => isset( $options['value'] )
+                                  ?  $options['value']
+                                  :  NULL,
                         'content' => $this->__createInput( $options )
                     );
         }
@@ -646,6 +684,10 @@ class wbFormBuilder extends wbBase {
             $opt['name']  = isset( $opt['name'] )
                           ? $opt['name']
                           : $opt['type'];
+
+            $opt['class'] = isset( $opt['class'] )
+                          ? $opt['class']
+                          : $this->_form_css[ 'fb_button_class' ];
 
             $this->_buttons[] = $this->__createInput( $opt );
 
@@ -995,6 +1037,7 @@ class wbFormBuilder extends wbBase {
         $this->debug( 'getForm() _required: ', $this->_required );
         $this->debug( 'getForm() _checks: '  , $this->_checks   );
         $this->debug( 'getForm() _equals: '  , $this->_equals   );
+        $this->debug( 'getForm() _readonly: ', $this->_readonly );
 
         foreach ( $this->_hidden as $elem ) {
             $hidden[] = $elem['content'];
@@ -1037,13 +1080,22 @@ class wbFormBuilder extends wbBase {
 
                 default:
                 
-                    $req = (
-                               isset( $this->_required[ $elem['name'] ] )
-                               &&
-                               ! array_key_exists( $elem['name'], $this->_readonly )
-                           )
-                         ? '*'
-                         : NULL;
+                    $req = NULL;
+                    
+                    if ( isset( $this->_required[ $elem['name'] ] ) ) {
+                        if ( ! array_key_exists( $elem['name'], $this->_readonly ) ) {
+                            $req = '*';
+                        }
+                        else {
+                            $elem['content']
+                                = '<input type="hidden" name="'
+                                . $elem['name']
+                                . '" value="'
+                                . $elem['value']
+                                . '" />'.$elem['value'];
+                        }
+                    }
+                               
 
                     $elements[] = $this->_tpl->parseString(
                           $this->_element_template,
@@ -1121,7 +1173,7 @@ class wbFormBuilder extends wbBase {
                 	  			  'content'
                                 => implode( "\n", $elements ),
                             'formattribs'
-                                => implode( " ", $this->array_collapse( $attribs ) ),
+                                => $this->__validateOptions( $attribs ),
                             'tableattrs'
                                 => $this->__validateOptions( $tableattrs ),
                             'buttons'
@@ -1132,6 +1184,8 @@ class wbFormBuilder extends wbBase {
                                 => ( isset($options['infoclass']) ? $options['infoclass'] : 'fbhide' ),
                             'required_info'
                                 => $reqinfo,
+                            'toplink'
+                                => ( isset($options['toplink']) ? $options['toplink'] : NULL ),
                 		  	)
                     )
         			  );
@@ -1452,9 +1506,7 @@ class wbFormBuilder extends wbBase {
     private function __createInput( $options ) {
 
         if ( isset( $options['readonly'] ) && $options['readonly'] ) {
-            $this->_readonly[ $options['name'] ] = 1;
-            unset( $this->_required[ $options['name'] ] );
-            return $options['value'];
+            $this->setReadonly( $options['name'] );
         }
 
         foreach ( self::$_always_add as $attr => $default ) {
@@ -1522,7 +1574,9 @@ class wbFormBuilder extends wbBase {
 
                 foreach ( $options as $key => $value ) {
 
-                    $value = htmlentities( $this->lang->translate( $value ) );
+                    $value = ( ! empty( $value ) )
+                           ? htmlentities( $this->lang->translate( $value ) )
+                           : NULL;
 
                     if ( array_key_exists( $key, self::$_knownAttrs ) ) {
 
