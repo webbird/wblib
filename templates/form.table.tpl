@@ -1,4 +1,5 @@
 <form {{ formattribs }}>
+  <a name="fbtop"></a>
   {{ hidden }}
   <table {{ tableattrs }}>
     {{ :if header }}
@@ -22,8 +23,9 @@
     {{ content }}
     <tr>
       <td colspan="3" class="{{ fb_button_class }}">
-        {{ buttons }}
+        <a name="formbuttons">{{ buttons }}</a>
       </td>
     </tr>
   </table>
+  {{ :if toplink }}<div id="fbtoplink"><a href="#fbtop">{{ toplink }}</a></div>{{ :ifend }}
 </form><!-- /form.table.tpl -->
