@@ -175,7 +175,7 @@ class wbI18n extends wbBase {
      **/
     public function translate( $msg, $attr = array() ) {
 
-        if ( empty( $msg ) ) {
+        if ( empty( $msg ) || is_bool( $msg ) ) {
             return NULL;
         }
     
