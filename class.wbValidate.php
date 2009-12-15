@@ -64,13 +64,17 @@ class wbValidate extends wbBase {
 
     private static $_tainted  = array();
     private static $_server   = array();
+    private static $_errors   = array();
+    private        $_valid    = array();
 
-    protected $_debug         = false;
+    #protected      $_debug    = true;
+    protected      $_debug    = false;
 
     /**
      * constructor
      **/
     function __construct () {
+        $this->import();
     }   // end function __construct()
 
     /**
@@ -90,7 +94,7 @@ class wbValidate extends wbBase {
                           );
         self::$_server  = $_SERVER;
 
-        if ( ! $this->uri( $_SERVER['SCRIPT_NAME'] ) ) {
+        if ( ! $this->isValidUri( $_SERVER['SCRIPT_NAME'] ) ) {
             $this->selfURL( 'http://'
                           . $_SERVER['HTTP_HOST']
                           . $_SERVER['SCRIPT_NAME']
@@ -100,8 +104,7 @@ class wbValidate extends wbBase {
             $this->selfURL( $_SERVER['SCRIPT_NAME'] );
         }
 
-        $this->debug( 'FORM DATA:' );
-        $this->debug( self::$_tainted );
+        $this->debug( 'FORM DATA:', self::$_tainted );
 
         // delete request data from global arrays
         if ( ! $weak ) {
@@ -121,33 +124,73 @@ class wbValidate extends wbBase {
      *
      *
      **/
-    public function get( $varname, $constant = NULL, $default = NULL, $stripped = false ) {
+    public function getValid ( $varname, $options = array() ) {
     
-        $this->debug( 'getting var ['.$varname.']' );
-        
-        if ( empty( $constant ) ) {
-            $constant = 'PCRE_STRING';
+        $this->debug( 'var ['.$varname.']', $options );
+    
+        // value already validated?
+        if ( isset( $this->_valid[ $varname ] ) ) {
+            $this->debug( 'returning already validated var '.$varname );
+            return $this->_valid[ $varname ];
         }
         
-        if ( count( self::$_tainted ) == 0 && count ( $_REQUEST ) > 0 ) {
-            $this->import();
+        // value available?
+        if ( ! isset( self::$_tainted[ $varname ] ) ) {
+            $this->debug( 'no data found for var '.$varname );
+            return isset( $options['default'] ) ? $options['default'] : NULL;
         }
-        
-        if (
-             isset( self::$_tainted[$varname] )
-             &&
-             self::staticValidate( $constant, self::$_tainted[$varname] )
-        ) {
-            $return = self::$_tainted[$varname];
-            if ( $stripped ) {
-                $return = $this->__strip( $return );
-            }
-            return $return;
-        }
-        
-        return $default;
+    
+        // name of accessor method available?
+        if ( isset( $options['type'] ) ) {
 
-    }   // end function get()
+            $func_name = 'isValid'.ucfirst($options['type']);
+
+            if ( method_exists( $this, $func_name ) ) {
+        
+                $this->debug( 'checking var ['.$varname. '] with method ['.$func_name.']' );
+
+                if ( $this->$func_name( self::$_tainted[ $varname ], $options ) ) {
+                
+                    $this->debug( 'found valid value for var ['.$varname.']' );
+                
+                    // found valid value
+                    $self->_valid[ $varname ] = self::$_tainted[ $varname ];
+                    unset( self::$_tainted[ $varname ] );
+                    
+                    if ( isset( $options['stripped'] ) ) {
+                        $self->_valid[ $varname ] = $this->__strip( $self->_valid[ $varname ] );
+                    }
+                    return $self->_valid[ $varname ];
+
+                }
+                else {
+                    return isset( $options['default'] ) ? $options['default'] : NULL;
+                }
+                
+            }
+
+        }   // if ( isset( $options['type'] ) )
+        
+        // constant name available?
+        $constant = 'PCRE_STRING';
+        if ( isset( $options['constant'] ) ) {
+            $constant = $options['constant'];
+        }
+        $this->debug( 'checking var '.$varname.' with constant '.$constant );
+
+        if ( self::staticValidate( $constant, self::$_tainted[$varname] ) ) {
+            $self->_valid[ $varname ] =  self::$_tainted[ $varname ];
+            unset(  self::$_tainted[ $varname ] );
+            if ( isset( $options['stripped'] ) ) {
+                $self->_valid[ $varname ] = $this->__strip( $self->_valid[ $varname ] );
+            }
+            return $self->_valid[ $varname ];
+        }
+        else {
+            return isset( $options['default'] ) ? $options['default'] : NULL;
+        }
+
+    }   // end function getValid()
     
     /**
      *
@@ -155,58 +198,240 @@ class wbValidate extends wbBase {
      *
      *
      **/
-    public function validate ( $constant, $value ) {
-        return self::staticValidate( $constant, $value );
+    public function get( $varname, $constant = NULL, $default = NULL, $stripped = false ) {
+    
+        $this->debug( 'NOTE: This function is marked as deprecated! Please use getValid() instead!' );
+        
+        return $this->getValid (
+                   $varname,
+                   array(
+                       'constant' => $constant,
+                       'default'  => $default,
+                       'stripped' => $stripped
+                   )
+               );
+
+    }   // end function get()
+    
+    /**
+     * OOP wrapper to staticValidate
+     *
+     * @param   string   $constant   - constant name
+     * @param   string   $varname    - variable to validate
+     * @param   integer  $min_length - optional, Default: 0
+     * @param   integer  $max_length - optoinal, Default: unlimited
+     *
+     **/
+    public function validate ( $constant, $varname, $options = array() ) {
+        // value already validated?
+        if ( isset( $this->_valid[ $varname ] ) ) {
+            $this->debug( 'returning already validated var ['.$varname.']' );
+            return $this->_valid[ $varname ];
+        }
+        if ( ! isset( self::$_tainted[ $varname ] ) ) {
+            $this->debug( 'no value for var ['.$varname.']' );
+            return NULL;
+        }
+        return self::staticValidate( $constant, self::$_tainted[ $varname ], $options );
     }
 
     /**
      * validate a value using a PCRE_* constant (using preg_match())
      *
-     * @param   string   $constant - constant name
-     * @param   string   $value    - value to validate
+     * @param   string   $constant   - constant name
+     * @param   string   $value      - value to validate
+     * @param   integer  $min_length - optional, Default: 0
+     * @param   integer  $max_length - optoinal, Default: unlimited
      *
      **/
-    static function staticValidate ( $constant, $value ) {
-    
-        // get the pattern
-        $pattern = constant( $constant );
-        
-        $result  = preg_match( $pattern, $value );
+    static function staticValidate ( $constant, $value, $options = array() ) {
 
-        // validate; returns 0 (false) or 1 (true)
-        return $result;
+        // check length
+        if (
+               isset( $options['min_length'] )
+               &&
+               $options['min_length'] > 0
+               &&
+               strlen( $value ) < $options['min_length']
+        ) {
+            return 0;
+        }
+        
+        if (
+               isset( $options['max_length'] )
+               &&
+               $options['max_length'] > 0
+               &&
+               strlen( $value ) > $options['max_length']
+        ) {
+            return 0;
+        }
+
+        // check pattern; returns 0 (false) or 1 (true)
+        return preg_match( constant( $constant ), $value );
 
     }   // end function staticValidate ()
     
+
 /*******************************************************************************
-    Accessor function for easier use
+    Easy date and time checking
 *******************************************************************************/
-    public function string ( $value ) {
-        return self::staticValidate( 'PCRE_STRING', $value );
+
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getValidYear( $varname = 'year', $options = array() ) {
+        $year = $this->getValid(
+                    $varname,
+                    array_merge(
+                           array(
+                               'type'       => 'integer',
+                               'min_length' => 2,
+                               'max_length' => 4,
+                               'default'    => date('Y')
+                           ),
+                           $options
+                       )
+                );
+        return strftime("%Y", strtotime("01/01/$year"));
+        
+    }   // end function getValidYear()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getValidMonth( $varname = 'month', $options = array() ) {
+        $month = $this->getValid(
+                     $varname,
+                     array_merge(
+                        array(
+                            'type'       => 'integer',
+                            'max_length' => 2,
+                        ),
+                        $options
+                     )
+                 );
+        if ( $month && $month > 0 && $month <= 12 ) {
+            return strftime("%m", strtotime("$month/01/2009"));
+        }
+        return NULL;
+    }   // end function getValidMonth()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getValidDay( $varname = 'day', $options = array() ) {
+    
+        $day = $this->getValid(
+                     $varname,
+                     array_merge(
+                        array(
+                            'type'       => 'integer',
+                            'max_length' => 2,
+                        ),
+                        $options
+                     )
+                 );
+                 
+        if ( $day && $day > 0 && $day <= 31 ) {
+            return strftime("%d", strtotime("01/$day/2009"));
+        }
+        
+        return NULL;
+    }   // end function getValidDay()
+
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getValidQuarter( $varname = 'quarter', $options = array() ) {
+
+        $quarter = $this->getValid(
+                       $varname,
+                       array_merge(
+                           array(
+                               'type'       => 'integer',
+                               'max_length' => 1,
+                           ),
+                           $options
+                       )
+                   );
+
+        if ( $quarter && $quarter > 0 && $quarter <= 4 ) {
+            return $quarter;
+        }
+
+        return NULL;
+    }   // end function getValidQuarter()
+
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getValidWeeknumber( $varname = 'week', $options = array() ) {
+
+        $week = $this->getValid(
+                       $varname,
+                       array_merge(
+                           array(
+                               'type'       => 'integer',
+                               'max_length' => 2,
+                           ),
+                           $options
+                       )
+                   );
+
+        if ( $week && $week > 0 && $week <= 53 ) {
+            return $week;
+        }
+
+        return NULL;
+        
+    }   // end function getValidWeeknumber()
+
+
+/*******************************************************************************
+    Accessor functions for easier use
+*******************************************************************************/
+    public function isValidString ( $value, $options = array() ) {
+        return self::staticValidate( 'PCRE_STRING', $value, $options );
     }
-    public function alphanum ( $value ) {
-        return self::staticValidate( 'PCRE_ALPHANUM', $value );
+    public function isValidAlphanum ( $value, $options = array() ) {
+        return self::staticValidate( 'PCRE_ALPHANUM', $value, $options );
     }
-    public function alphanum_ext ( $value ) {
-        return self::staticValidate( 'PCRE_ALPHANUM_EXT', $value );
+    public function isValidAlphanum_ext ( $value, $options = array() ) {
+        return self::staticValidate( 'PCRE_ALPHANUM_EXT', $value, $options );
     }
-    public function integer ( $value ) {
-        return self::staticValidate( 'PCRE_INT', $value );
+    public function isValidInteger ( $value, $options = array() ) {
+        return self::staticValidate( 'PCRE_INT', $value, $options );
     }
-    public function style ( $value ) {
-        return self::staticValidate( 'PCRE_STYLE', $value );
+    public function isValidStyle ( $value, $options = array() ) {
+        return self::staticValidate( 'PCRE_STYLE', $value, $options );
     }
-    public function email ( $value ) {
-        return self::staticValidate( 'PCRE_EMAIL', $value );
+    public function isValidEmail ( $value, $options = array() ) {
+        return self::staticValidate( 'PCRE_EMAIL', $value, $options );
     }
-    public function password ( $value ) {
-        return self::staticValidate( 'PCRE_PASSWORD', $value );
+    public function isValidPassword ( $value, $options = array() ) {
+        return self::staticValidate( 'PCRE_PASSWORD', $value, $options );
     }
-    public function uri ( $value ) {
-        return self::staticValidate( 'PCRE_URI', $value );
+    public function isValidUri ( $value, $options = array() ) {
+        return self::staticValidate( 'PCRE_URI', $value, $options );
     }
-    public function plain ( $value ) {
-        return self::staticValidate( 'PCRE_PLAIN', $value );
+    public function isValidPlain ( $value, $options = array() ) {
+        return self::staticValidate( 'PCRE_PLAIN', $value, $options );
     }
     
     /**
