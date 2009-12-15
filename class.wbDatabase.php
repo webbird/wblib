@@ -23,115 +23,38 @@
 
 **/
 
-// prevent this file from being accessed directly
-if(!defined('WB_PATH')) die(header('Location: index.php'));
-
-include_once WB_PATH.'/framework/class.database.php';
 
 class wbDatabase {
 
-    private   $db;
-    public    $utf8   = true;
-    private   $_error = NULL;
+    public static $instance = null;
+    public static $driver   = 'wbMySQL';
     
-    function __construct() {
-        $this->db        = new database();
-        if ( $this->utf8 ) {
-            $this->execute( 'SET NAMES utf8;' );
-        }
-    }
-
-    /***********************************************************************
-     * Throw an error and die
-     *
-     * @param  string    $msg              error message to print
-     *
-     **/
-    function FatalError ( $msg = '' ) {
-
-        global $trace;
-
-        if ( empty( $msg ) ) {
-            $msg = 'FATAL ERROR';
-        }
-
-        echo "<h1>wbDatabase Error:</h1>\n<h2>- $msg -</h2>\n";
-
-        if ( $trace ) {
-            echo "<br /><br /><strong>Debug backtrace:</strong>\n<pre>";
-            print_r( debug_backtrace() );
-            echo "</pre>\n\n";
-        }
-
-        die;
-
-    }   // end function FatalError
-
-    /**
-     * execute SQL statement
-     *
-     * @param  string  $sql  SQL statement to execute
-     * @return array
-     *
-     **/
-    function execute ( $sql ) {
-
-        $result = $this->db->query($sql);
-        $this->_error = mysql_error();
-
-        if ( $result ) {
-            if ( @$result->numRows() > 0 ) {
-                return $this->fetchAll($result);
+    // private to make sure that constructor can only be called
+    // using singleton()
+    private function __construct() {}
+    
+    public static function singleton( $options = array() ) {
+    
+        if ( ! is_object( self::$instance ) ) {
+        
+            if ( isset( $options['driver'] ) ) {
+                self::$driver = $options['driver'];
             }
-            return true;
-        }
-        else {
-            $this->FatalError(
-                "<strong>[execute] DB ERROR:</strong><br />\n"
-              . $this->db->get_error()
-            );
-        }
+        
+            $driver_file = dirname(__FILE__).'/wbDatabase/class.'.self::$driver.'.php';
+            
+            include_once $driver_file;
 
-        return true;
-
-    }   // end function execute ()
-
-    /**
-     * get last insert ID using mysql_insert_id()
-     *
-     *
-     *
-     **/
-    function lastInsertID() {
-        return mysql_insert_id();
-    }   // end function _EM_lastInsertID()
-
-    /**
-     * fetch all data from a query
-     *
-     * @param  ?      $result  mysql result
-     * @return array  $all     array of fetched rows
-     *
-     **/
-    function fetchAll($result) {
-
-        $all = array();
-
-        while ( ( $row = mysql_fetch_assoc( $result->result ) ) ) {
-            $all[] = $row;
+            self::$instance = new self::$driver($options);
+            
         }
 
-        return $all;
+        return self::$instance;
 
-    }   // end function fetchAll()
-    
-    function isError() {
-        return (!empty($this->_error)) ? true : false;
-    }
-    
-    // Return the error
-    function getError() {
-    	  return $this->_error;
-    }
-    
+    }   // end function singleton()
+
+    // no cloning!
+    private function __clone() {}
+
+
 }
