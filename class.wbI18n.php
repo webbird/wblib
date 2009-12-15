@@ -26,9 +26,9 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 
 class wbI18n extends wbBase {
 
-    protected      $_debug        = false;
-    #protected      $_debug        = true;
-    
+    // ----- Debugging -----
+    protected        $debugLevel      = KLOGGER::OFF;
+
     // default language file path; override with setPath()
     private        $_langPath     = '/languages';
     
@@ -42,6 +42,7 @@ class wbI18n extends wbBase {
      * constructor
      **/
     public function __construct( $lang ) {
+        parent::__construct();
         self::$_current_lang = $lang;
         $this->init();
     }   // end function __construct()
@@ -56,7 +57,7 @@ class wbI18n extends wbBase {
 		 **/
 		public function init( $var = NULL ) {
 		
-        $this->debug( 'init()' );
+        $this->debug->LogDebug( 'init()' );
 
         $caller = debug_backtrace();
         
@@ -73,7 +74,7 @@ class wbI18n extends wbBase {
                   'EN'                 => 'EN.php'
               );
 
-        $this->debug( 'language files to search for: ', $lang_files );
+        $this->debug->LogDebug( 'language files to search for: ', $lang_files );
 
         foreach ( $lang_files as $l => $file ) {
             if ( $this->addFile( $file, $var ) ) { break; }
@@ -106,7 +107,7 @@ class wbI18n extends wbBase {
 
         if( file_exists( $file ) ) {
 
-            $this->debug( 'found language file: ', $file );
+            $this->debug->LogDebug( 'found language file: ', $file );
 
         	  require_once( $file );
 
@@ -115,7 +116,7 @@ class wbI18n extends wbBase {
                 if ( preg_match( "/(\w+)\.php/", $file, $matches ) ) {
             	      self::$_current_lang = $matches[1];
                 }
-            	  $this->debug( 'loaded language file: ', $file );
+            	  $this->debug->LogDebug( 'loaded language file: ', $file );
                 return true;
             }
             else {
@@ -138,7 +139,7 @@ class wbI18n extends wbBase {
     
         if ( file_exists( $path ) ) {
 
-            $this->debug( 'setting language path to: ', $path );
+            $this->debug->LogDebug( 'setting language path to: ', $path );
 
             $this->_langPath = $path;
             $this->init( $var );
