@@ -26,9 +26,9 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 
 class wbTemplate extends wbBase {
 
-    protected $_debug         = false;
-    #protected $_debug         = true;
-    
+    // ----- Debugging -----
+    protected $debugLevel      = KLOGGER::OFF;
+
     // what to do if there are placeholders with no replacement
     private   $_on_unknown    = 'remove';
 
@@ -82,6 +82,8 @@ class wbTemplate extends wbBase {
      **/
     function __construct ( $options = array() ) {
     
+        parent::__construct();
+
         if ( isset ( $options['start_tag'] ) ) {
             $this->_start_tag = $options['start_tag'];
         }
@@ -244,8 +246,8 @@ class wbTemplate extends wbBase {
      **/
     public function parseString( $string = "", $aArray ) {
 
-        $this->debug( 'string to parse: ',   $string   );
-        $this->debug( 'replacement array: ', $aArray );
+        $this->debug->LogDebug( 'string to parse: ',   $string   );
+        $this->debug->LogDebug( 'replacement array: ', $aArray );
 
         if ( empty( $string ) ) {
             $this->printError( 'missing string to parse!' );
@@ -266,7 +268,7 @@ class wbTemplate extends wbBase {
         // extract {{ :if }} ... {{ :ifend }}
         $this->__handleIf( $string, $aArray );
 
-        $this->debug( 'remaining array: ', $aArray );
+        $this->debug->LogDebug( 'remaining array: ', $aArray );
 
         // other
         $string = preg_replace(
@@ -275,7 +277,7 @@ class wbTemplate extends wbBase {
                     $string
                 );
 
-        $this->debug( 'remaining string: ', $string );
+        $this->debug->LogDebug( 'remaining string: ', $string );
 
         // remove multiple blank lines ("holes")
         if ( $this->_remove_blanks ) {
@@ -410,11 +412,11 @@ class wbTemplate extends wbBase {
 
         $string = str_replace( '#####', "\n", $string );
 
-        $this->debug( '[__handleIf] current string:', $string );
+        $this->debug->LogDebug( '[__handleIf] current string:', $string );
 
         while ( preg_match( $this->_regexp[ 'if' ], $string, $matches ) ) {
 
-            $this->debug( '[__handleIf] handle match: ', $matches );
+            $this->debug->LogDebug( '[__handleIf] handle match: ', $matches );
 
             $matches[1] = trim( $matches[1] );
             $replace    = '';
@@ -436,7 +438,7 @@ class wbTemplate extends wbBase {
                                 PREG_SPLIT_DELIM_CAPTURE
                             );
 
-            $this->debug( '[__handleIf] cond_matches: ', $cond_matches );
+            $this->debug->LogDebug( '[__handleIf] cond_matches: ', $cond_matches );
 
             $item = trim( array_shift( $cond_matches ) );
             $conditions[] = "isset( \$aArray['$item'] ) && ! empty( \$aArray['$item'] )";
@@ -489,7 +491,7 @@ class wbTemplate extends wbBase {
 
         }
         
-        $this->debug( '[__handleIf] remaining string:', $string );
+        $this->debug->LogDebug( '[__handleIf] remaining string:', $string );
 
     }   // end function __handleIf()
 
@@ -519,7 +521,7 @@ class wbTemplate extends wbBase {
 
                     if ( is_array( $loop ) ) {
 
-                        $this->debug( 'current loop data: ', $loop );
+                        $this->debug->LogDebug( 'current loop data: ', $loop );
 
                         // create fakes for handleIF
                         $atext = $text;
