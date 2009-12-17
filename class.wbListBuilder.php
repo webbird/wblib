@@ -27,10 +27,11 @@ require_once dirname( __FILE__ ).'/class.wbValidate.php';
 
 class wbListBuilder extends wbBase {
 
-    protected $_debug         = false;
-    
-    private   $id             = 1;
-    private   $settings       = array(
+    // ----- Debugging -----
+    protected $debugLevel      = KLOGGER::OFF;
+
+    private   $id              = 1;
+    private   $settings        = array(
     
         'create_level_css'    => true,
     
@@ -64,7 +65,7 @@ class wbListBuilder extends wbBase {
      * constructor
      **/
     function __construct ( $options = array() ) {
-
+        parent::__construct();
     }   // end function __construct()
     
     /**
@@ -96,7 +97,7 @@ class wbListBuilder extends wbBase {
     public function buildRecursion ( $items, $min = 0 ) {
 
         if ( ! is_array( $items ) ) {
-            $this->debug( 'no items to build recursion' );
+            $this->log->LogDebug( 'no items to build recursion' );
             return;
         }
 
@@ -104,8 +105,12 @@ class wbListBuilder extends wbBase {
 
         foreach ( $items as $node ) {
 
+            $this->log->LogDebug( 'current node: ', $node );
+            
             // find parent
             if ( $node[ $this->settings['__level_key'] ] > $min ) {
+            
+                $this->log->LogDebug( 'trying to find parent...', $this->settings );
 
                 $path = $this->ArraySearchRecursive(
                             $node[ $this->settings['__parent_key'] ],
@@ -120,6 +125,7 @@ class wbListBuilder extends wbBase {
                     $ref[ $this->settings['__children_key'] ][] = $node;
                 }
                 else {
+                    $this->log->LogDebug( 'no parent found, adding node to root ' );
                     $tree[] = $node;
                 }
 
@@ -132,7 +138,7 @@ class wbListBuilder extends wbBase {
         }
 
 
-        $this->debug( 'returning tree: ', $tree );
+        $this->log->LogDebug( 'returning tree: ', $tree );
 
         return $tree;
 
@@ -146,13 +152,13 @@ class wbListBuilder extends wbBase {
      **/
     public function buildList ( $tree, $space = NULL, $as_array = NULL ) {
 
-        $this->debug(
+        $this->log->LogDebug(
             'building list from tree:',
             $tree
         );
 
         if ( ! is_array( $tree ) ) {
-            $this->debug( 'no list items to show' );
+            $this->log->LogDebug( 'no list items to show' );
             return;
         }
 
@@ -172,7 +178,7 @@ class wbListBuilder extends wbBase {
                  &&
                  $item[ $this->settings['__hidden_key'] ]
             ) {
-                $this->debug(
+                $this->log->LogDebug(
                     'skipping hidden item: '
                   . $item[ $this->settings['__title_key'] ]
                 );
