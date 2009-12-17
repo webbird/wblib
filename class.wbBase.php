@@ -22,15 +22,39 @@
 
 **/
 
+include_once dirname(__FILE__).'./debug/KLogger.php';
+
 class wbBase {
 
-    protected        $_debug          = false;
+    // ----- Debugging -----
+    protected        $debugLevel      = KLogger::OFF;
+    protected        $log             = NULL; // accessor to KLogger
+    
+    private static   $debugDir        = '/debug/log';
+
     private static   $_url            = NULL;
     
     /**
      * constructor
      **/
-    public function __construct () {}
+    public function __construct () {
+
+        // create logger instance
+        if ( property_exists( get_class($this), 'debugDir' ) ) {
+            if ( empty( $this->debugDir ) ) {
+                $this->debugDir = realpath( dirname(__FILE__) );
+            }
+        }
+        else {
+            $this->debugDir = realpath( dirname(__FILE__) ).self::$debugDir;
+        }
+
+        $this->log
+            = new KLogger(
+                  $this->debugDir.'/'.get_class($this).'.log' ,
+                  $this->debugLevel
+              );
+    }
 
     /**
   	 * Prevent cloning of the object (Singleton)
@@ -117,7 +141,7 @@ class wbBase {
 
         return false;
 
-    }   // end function _EM_ArraySearchRecursive()
+    }   // end function ArraySearchRecursive()
     
     /**
      *
@@ -165,41 +189,20 @@ class wbBase {
 
     }   // end function printError()
 
-
     /**
-     * for debugging
+     * create a random string
      *
-     * @param   string   $text    - debug message
-     * @param   mixed    $args    - additional info (string|array)
+     *
      *
      **/
-    protected function debug ( $text = '', $args = NULL ) {
-
-        if ( empty( $text ) ) {
-            return;
-        }
-
-        if ( $this->_debug ) {
-
-            echo '[debug] ',
-                 $text;
-
-            if ( $args ) {
-
-                $dump = print_r( $args, 1 );
-                $dump = preg_replace( "/\r?\n/", "\n          ", $dump );
-
-                echo "<br />\n";
-                echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
-                print_r( $dump );
-                echo "</textarea>";
-            }
-
-            echo "<br />\n";
-
-        }
-
-    }   // end function debug()
+    protected function generateRandomString( $length = 10 ) {
+        for(
+               $code_length = $length, $newcode = '';
+               strlen($newcode) < $code_length;
+               $newcode .= chr(!rand(0, 2) ? rand(48, 57) : (!rand(0, 1) ? rand(65, 90) : rand(97, 122)))
+        );
+        return $newcode;
+    }   // end function generateRandomString()
 
 }
 
