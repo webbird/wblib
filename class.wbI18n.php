@@ -27,7 +27,7 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 class wbI18n extends wbBase {
 
     // ----- Debugging -----
-    protected        $debugLevel      = KLOGGER::OFF;
+    protected      $debugLevel    = KLOGGER::OFF;
 
     // default language file path; override with setPath()
     private        $_langPath     = '/languages';
@@ -57,7 +57,7 @@ class wbI18n extends wbBase {
 		 **/
 		public function init( $var = NULL ) {
 		
-        $this->debug->LogDebug( 'init()' );
+        $this->log->LogDebug( 'init()' );
 
         $caller = debug_backtrace();
         
@@ -74,7 +74,7 @@ class wbI18n extends wbBase {
                   'EN'                 => 'EN.php'
               );
 
-        $this->debug->LogDebug( 'language files to search for: ', $lang_files );
+        $this->log->LogDebug( 'language files to search for: ', $lang_files );
 
         foreach ( $lang_files as $l => $file ) {
             if ( $this->addFile( $file, $var ) ) { break; }
@@ -107,7 +107,7 @@ class wbI18n extends wbBase {
 
         if( file_exists( $file ) ) {
 
-            $this->debug->LogDebug( 'found language file: ', $file );
+            $this->log->LogDebug( 'found language file: ', $file );
 
         	  require_once( $file );
 
@@ -116,7 +116,7 @@ class wbI18n extends wbBase {
                 if ( preg_match( "/(\w+)\.php/", $file, $matches ) ) {
             	      self::$_current_lang = $matches[1];
                 }
-            	  $this->debug->LogDebug( 'loaded language file: ', $file );
+            	  $this->log->LogDebug( 'loaded language file: ', $file );
                 return true;
             }
             else {
@@ -139,7 +139,7 @@ class wbI18n extends wbBase {
     
         if ( file_exists( $path ) ) {
 
-            $this->debug->LogDebug( 'setting language path to: ', $path );
+            $this->log->LogDebug( 'setting language path to: ', $path );
 
             $this->_langPath = $path;
             $this->init( $var );
