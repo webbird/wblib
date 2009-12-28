@@ -246,8 +246,8 @@ class wbTemplate extends wbBase {
      **/
     public function parseString( $string = "", $aArray ) {
 
-        $this->debug->LogDebug( 'string to parse: ',   $string   );
-        $this->debug->LogDebug( 'replacement array: ', $aArray );
+        $this->log->LogDebug( '[parseString] string to parse: ',   $string );
+        $this->log->LogDebug( '[parseString] replacement array: ', $aArray );
 
         if ( empty( $string ) ) {
             $this->printError( 'missing string to parse!' );
@@ -258,17 +258,24 @@ class wbTemplate extends wbBase {
 
         // handle includes
         $this->__handleIncludes( $string, $aArray );
+        
+        $this->log->LogDebug( '[parseString] string after __handleIncludes(): ',   $string   );
 
         // remove comments
         $this->__handleComments( $string );
+        
+        $this->log->LogDebug( '[parseString] string after __handleCommments(): ',   $string   );
 
         // extract {{ :loop }} ... {{ :loopend }}
         $this->__handleLoops( $string, $aArray );
+        
+        $this->log->LogDebug( '[parseString] string after __handleLoops(): ',   $string   );
 
         // extract {{ :if }} ... {{ :ifend }}
         $this->__handleIf( $string, $aArray );
-
-        $this->debug->LogDebug( 'remaining array: ', $aArray );
+        
+        $this->log->LogDebug( '[parseString] string after __handleIf(): ',   $string   );
+        $this->log->LogDebug( 'remaining array: ', $aArray );
 
         // other
         $string = preg_replace(
@@ -277,7 +284,7 @@ class wbTemplate extends wbBase {
                     $string
                 );
 
-        $this->debug->LogDebug( 'remaining string: ', $string );
+        $this->log->LogDebug( 'remaining string: ', $string );
 
         // remove multiple blank lines ("holes")
         if ( $this->_remove_blanks ) {
@@ -311,12 +318,14 @@ class wbTemplate extends wbBase {
 	  }
     
     /**
-     *
+     * handle {{ :include <File> }} directive
      *
      *
      *
      **/
     private function __handleIncludes( &$string, &$aArray ) {
+    
+        $this->log->LogDebug( '[__handleIncludes] current string:', $string );
     
         if (
             preg_match_all(
@@ -334,15 +343,24 @@ class wbTemplate extends wbBase {
 
                 if ( file_exists( $file ) ) {
                 
+                    $this->log->LogDebug( 'found file: ', $file );
+                    
                     $in      = $this->slurp( $file );
                     $replace = $this->parseString( $in, $aArray );
+                    
+                    $this->log->LogDebug( '[__handleIncludes] replacing ['.$item[0].']', array( $replace, $string ) );
+
                     $string  = str_replace(
                                    $item[0],
                                    $replace,
                                    $string
                                );
+                               
                 }
                 else {
+                
+                    $this->log->LogDebug( '[__handleIncludes] file ['.$file.'] not found, removing ['.$item[0].']' );
+                    
                     $string = str_replace(
                                   $item[0],
                                   '',
@@ -412,11 +430,11 @@ class wbTemplate extends wbBase {
 
         $string = str_replace( '#####', "\n", $string );
 
-        $this->debug->LogDebug( '[__handleIf] current string:', $string );
+        $this->log->LogDebug( 'current string:', $string );
 
         while ( preg_match( $this->_regexp[ 'if' ], $string, $matches ) ) {
 
-            $this->debug->LogDebug( '[__handleIf] handle match: ', $matches );
+            $this->log->LogDebug( 'handle match: ', $matches );
 
             $matches[1] = trim( $matches[1] );
             $replace    = '';
@@ -438,7 +456,7 @@ class wbTemplate extends wbBase {
                                 PREG_SPLIT_DELIM_CAPTURE
                             );
 
-            $this->debug->LogDebug( '[__handleIf] cond_matches: ', $cond_matches );
+            $this->log->LogDebug( 'cond_matches: ', $cond_matches );
 
             $item = trim( array_shift( $cond_matches ) );
             $conditions[] = "isset( \$aArray['$item'] ) && ! empty( \$aArray['$item'] )";
@@ -491,7 +509,7 @@ class wbTemplate extends wbBase {
 
         }
         
-        $this->debug->LogDebug( '[__handleIf] remaining string:', $string );
+        $this->log->LogDebug( '[__handleIf] remaining string:', $string );
 
     }   // end function __handleIf()
 
@@ -505,8 +523,12 @@ class wbTemplate extends wbBase {
      *
      **/
     private function __handleLoops ( &$string, &$aArray ) {
+    
+        $this->log->LogDebug( 'current string:', $string );
 
         while ( preg_match( $this->_regexp[ 'loop' ], $string, $matches ) ) {
+        
+            $this->log->LogDebug( 'handle match: ', $matches );
 
             $condname = trim( $matches[1] );
             $replace  = '';
@@ -521,13 +543,16 @@ class wbTemplate extends wbBase {
 
                     if ( is_array( $loop ) ) {
 
-                        $this->debug->LogDebug( 'current loop data: ', $loop );
+                        $this->log->LogDebug( 'current loop data: ', $loop );
 
                         // create fakes for handleIF
                         $atext = $text;
                         $aloop = $loop;
 
+                        // handle {{ :if }} inside {{ :loop }}
                         $this->__handleIf( $atext, $aloop );
+                        
+                        $this->log->LogDebug( 'replacing loop data in string:', $atext );
 
                         // replace vars in current (remaining) line
                         $out .= preg_replace(
@@ -540,8 +565,12 @@ class wbTemplate extends wbBase {
 
                 }
                 
-                // remove loop from array
-                unset( $aArray[ $condname ] );
+                // remove loop data from array to save memory; but leave a
+                // value for nested {{ :if }} (otherwise, the complete loop
+                // data may disappear!)
+                $aArray[ $condname ] = 1;
+                
+                $this->log->LogDebug( 'replacing ['.$matches[0].'] with: ', $out );
 
                 $string = str_replace(
                               $matches[0],
