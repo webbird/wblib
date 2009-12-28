@@ -52,7 +52,8 @@ class wbBase {
         $this->log
             = new KLogger(
                   $this->debugDir.'/'.get_class($this).'.log' ,
-                  $this->debugLevel
+                  $this->debugLevel,
+                  true
               );
     }
 
