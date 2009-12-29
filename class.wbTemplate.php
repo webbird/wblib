@@ -28,6 +28,9 @@ class wbTemplate extends wbBase {
 
     // ----- Debugging -----
     protected $debugLevel      = KLOGGER::OFF;
+    
+    // optional lang handler
+    private   $_lang          = NULL;
 
     // what to do if there are placeholders with no replacement
     private   $_on_unknown    = 'remove';
@@ -58,19 +61,17 @@ class wbTemplate extends wbBase {
             => "/<!--\s*?BEGIN\s*?template\s*?comment\s*?-->(.+?)<!--\s*?END\s*?template\s*?comment\s*?-->/seix",
         'simple_comment'
             => "/%%start%%\s*?:comment.*?%%end%%/seix",
-            
         'if'
             => "/%%start%% \s*? :if(?!end) \b([^%%end%%]*) \s*? %%end%% (?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% ) ( (?: [\S\s] (?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% ) ) *? ) %%start%% \s*? :ifend \s*? %%end%%/seix",
             //  {{ :if anything }}                                      ... not followed by another opening (innermost)            ... capture content                                                            {{ :ifend }} (innermost)
         'if_subpat'
             => "/%%start%% \s*? :else \s*? %%end%%/seix",
-            
         'loop'
             => "/%%start%% \s*? :loop(?!end) \b([^%%end%%]*) \s*? %%end%% (?! %%start%% \s*? :loop(?!end) \b[^%%end%%]* \s*? %%end%% ) ( (?: [\S\s] (?! %%start%% \s*? :loop(?!end) \b[^%%end%%]* \s*? %%end%% ) ) *? ) %%start%% \s*? :loopend \s*? %%end%%/seix",
-            
         'loop_subpat'
             => "/%%start%%\s*?:(?:loopend|loop)\\b\\s*(.*?)\\s*?%%end%%/",
-
+        'lang'
+            => "/%%start%%\s*?:lang\s*?(.*?)%%end%%/seix",
         'var'
             => '/%%start%%\s*?([^%%start%%].*?)%%end%%/e',
         'all'
@@ -89,6 +90,10 @@ class wbTemplate extends wbBase {
         }
         if ( isset ( $options['end_tag'] ) ) {
             $this->_end_tag = $options['end_tag'];
+        }
+        
+        if ( isset ( $options['lang'] ) && is_object($options['lang']) ) {
+            $this->_lang = $options['lang'];
         }
         
         foreach ( $this->_regexp as $key => $value ) {
@@ -246,8 +251,8 @@ class wbTemplate extends wbBase {
      **/
     public function parseString( $string = "", $aArray ) {
 
-        $this->log->LogDebug( '[parseString] string to parse: ',   $string );
-        $this->log->LogDebug( '[parseString] replacement array: ', $aArray );
+        $this->log->LogDebug( 'string to parse: ',   $string );
+        $this->log->LogDebug( 'replacement array: ', $aArray );
 
         if ( empty( $string ) ) {
             $this->printError( 'missing string to parse!' );
@@ -259,22 +264,27 @@ class wbTemplate extends wbBase {
         // handle includes
         $this->__handleIncludes( $string, $aArray );
         
-        $this->log->LogDebug( '[parseString] string after __handleIncludes(): ',   $string   );
+        $this->log->LogDebug( 'string after __handleIncludes(): ',   $string   );
 
         // remove comments
         $this->__handleComments( $string );
         
-        $this->log->LogDebug( '[parseString] string after __handleCommments(): ',   $string   );
+        $this->log->LogDebug( 'string after __handleCommments(): ',   $string   );
+
+        // handle language strings
+        $this->__handleLangStrings( $string );
+
+        $this->log->LogDebug( 'string after __handleLangStrings(): ',   $string   );
 
         // extract {{ :loop }} ... {{ :loopend }}
         $this->__handleLoops( $string, $aArray );
         
-        $this->log->LogDebug( '[parseString] string after __handleLoops(): ',   $string   );
+        $this->log->LogDebug( 'string after __handleLoops(): ',   $string   );
 
         // extract {{ :if }} ... {{ :ifend }}
         $this->__handleIf( $string, $aArray );
         
-        $this->log->LogDebug( '[parseString] string after __handleIf(): ',   $string   );
+        $this->log->LogDebug( 'string after __handleIf(): ',   $string   );
         $this->log->LogDebug( 'remaining array: ', $aArray );
 
         // other
@@ -589,6 +599,26 @@ class wbTemplate extends wbBase {
         }
 
     }   // end function __handleLoops()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    private function __handleLangStrings( &$string ) {
+    
+        $this->log->LogDebug( 'current string:', $string );
+
+        while ( preg_match( $this->_regexp[ 'lang' ], $string, $matches ) ) {
+            $text = trim( $matches[1] );
+            if ( is_object( $this->_lang ) ) {
+                $text = $this->_lang->translate( $text );
+            }
+            $string = str_replace( $matches[0], $text, $string );
+        }
+        
+    }   // end function __handleLangStrings()
     
     /**
      *
