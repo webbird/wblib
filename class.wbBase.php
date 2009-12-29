@@ -22,7 +22,7 @@
 
 **/
 
-include_once dirname(__FILE__).'./debug/KLogger.php';
+include_once dirname(__FILE__).'/./debug/KLogger.php';
 
 class wbBase {
 
