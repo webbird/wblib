@@ -68,7 +68,7 @@ class wbValidate extends wbBase {
     private        $_valid    = array();
 
     // ----- Debugging -----
-    protected        $debugLevel      = KLOGGER::OFF;
+    protected      $debugLevel      = KLOGGER::OFF;
 
     /**
      * constructor
@@ -105,7 +105,7 @@ class wbValidate extends wbBase {
             $this->selfURL( $_SERVER['SCRIPT_NAME'] );
         }
 
-        $this->debug->LogDebug( 'FORM DATA:', self::$_tainted );
+        $this->log->LogDebug( 'FORM DATA:', self::$_tainted );
 
         // delete request data from global arrays
         if ( ! $weak ) {
@@ -127,17 +127,17 @@ class wbValidate extends wbBase {
      **/
     public function getValid ( $varname, $options = array() ) {
     
-        $this->debug->LogDebug( 'var ['.$varname.']', $options );
+        $this->log->LogDebug( 'var ['.$varname.']', $options );
     
         // value already validated?
         if ( isset( $this->_valid[ $varname ] ) ) {
-            $this->debug->LogDebug( 'returning already validated var '.$varname );
+            $this->log->LogDebug( 'returning already validated var '.$varname );
             return $this->_valid[ $varname ];
         }
         
         // value available?
         if ( ! isset( self::$_tainted[ $varname ] ) ) {
-            $this->debug->LogDebug( 'no data found for var '.$varname );
+            $this->log->LogDebug( 'no data found for var '.$varname );
             return isset( $options['default'] ) ? $options['default'] : NULL;
         }
     
@@ -148,11 +148,11 @@ class wbValidate extends wbBase {
 
             if ( method_exists( $this, $func_name ) ) {
         
-                $this->debug->LogDebug( 'checking var ['.$varname. '] with method ['.$func_name.']' );
+                $this->log->LogDebug( 'checking var ['.$varname. '] with method ['.$func_name.']' );
 
                 if ( $this->$func_name( self::$_tainted[ $varname ], $options ) ) {
                 
-                    $this->debug->LogDebug( 'found valid value for var ['.$varname.']' );
+                    $this->log->LogDebug( 'found valid value for var ['.$varname.']' );
                 
                     // found valid value
                     $self->_valid[ $varname ] = self::$_tainted[ $varname ];
@@ -177,7 +177,7 @@ class wbValidate extends wbBase {
         if ( isset( $options['constant'] ) ) {
             $constant = $options['constant'];
         }
-        $this->debug->LogDebug( 'checking var '.$varname.' with constant '.$constant );
+        $this->log->LogDebug( 'checking var '.$varname.' with constant '.$constant );
 
         if ( self::staticValidate( $constant, self::$_tainted[$varname] ) ) {
             $self->_valid[ $varname ] =  self::$_tainted[ $varname ];
@@ -201,7 +201,7 @@ class wbValidate extends wbBase {
      **/
     public function get( $varname, $constant = NULL, $default = NULL, $stripped = false ) {
     
-        $this->debug->LogDebug( 'NOTE: This function is marked as deprecated! Please use getValid() instead!' );
+        $this->log->LogDebug( 'NOTE: This function is marked as deprecated! Please use getValid() instead!' );
         
         return $this->getValid (
                    $varname,
@@ -226,11 +226,11 @@ class wbValidate extends wbBase {
     public function validate ( $constant, $varname, $options = array() ) {
         // value already validated?
         if ( isset( $this->_valid[ $varname ] ) ) {
-            $this->debug->LogDebug( 'returning already validated var ['.$varname.']' );
+            $this->log->LogDebug( 'returning already validated var ['.$varname.']' );
             return $this->_valid[ $varname ];
         }
         if ( ! isset( self::$_tainted[ $varname ] ) ) {
-            $this->debug->LogDebug( 'no value for var ['.$varname.']' );
+            $this->log->LogDebug( 'no value for var ['.$varname.']' );
             return NULL;
         }
         return self::staticValidate( $constant, self::$_tainted[ $varname ], $options );
