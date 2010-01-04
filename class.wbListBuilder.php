@@ -164,6 +164,11 @@ class wbListBuilder extends wbBase {
 
         $output   = array();
         $isfirst  = 1;
+        
+        // get id of last element in the tree
+        end( $tree );
+        $last_element_id = $tree[ key( $tree ) ][ $this->settings['__id_key'] ];
+        reset( $tree );
 
         $output[] = $this->listStart($space);
 
@@ -198,6 +203,11 @@ class wbListBuilder extends wbBase {
             if ( $isfirst ) {
                 $li_css  .= ' ' . $this->settings['first_li_css'];
                 $isfirst  = 0;
+            }
+
+            // last element?
+            if ( $last_element_id === $item[ $this->settings['__id_key'] ] ) {
+                $li_css  .= ' ' . $this->settings['last_li_css'];
             }
             
             $text     = isset( $item[ $this->settings['__href_key'] ] )
