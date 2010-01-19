@@ -161,6 +161,8 @@ class wbBase {
             $carr[] = "$key=$value";
         }
 
+        /*
+
         // get server name from WB_URL
         preg_match(
             "#(http(?:s)?://([^/].*?)+)/(.*)#",
@@ -169,16 +171,19 @@ class wbBase {
         );
 
         // server name
-        $servername = isset( $matches[1] )
+       	$servername = isset( $matches[1] )
                     ? $matches[1]
                     : '';
 
+        */
+
         // remove leading /
         $path = preg_replace( "#^/+#", '', $path );
+        
+        $URI = $path . '?' . implode( '&', $carr );
+        //$URI = array( implode( '/', array( $servername, $path ) ), $URI );
 
-        $URI = implode( '/', array( $servername, $path ) ) . '?' . implode( '&', $carr );
-
-        return array( implode( '/', array( $servername, $path ) ), $URI );
+        return $URI;
 
     }   // end function getURI ()
   	
