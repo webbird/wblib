@@ -49,6 +49,7 @@ class wbListBuilder extends wbBase {
         'list_open'           => '<ul id="%%id%%" class="%%">',
         'trail_li_css'        => 'trail_item',
         'ul_css'              => 'list',
+        'space'               => '    ',
         
         '__children_key'      => 'children',
         '__current_key'       => 'current',
@@ -97,7 +98,7 @@ class wbListBuilder extends wbBase {
     public function buildRecursion ( $items, $min = 0 ) {
 
         if ( ! is_array( $items ) ) {
-            $this->log->LogDebug( 'no items to build recursion' );
+            $this->log()->LogDebug( 'no items to build recursion' );
             return;
         }
 
@@ -105,12 +106,12 @@ class wbListBuilder extends wbBase {
 
         foreach ( $items as $node ) {
 
-            $this->log->LogDebug( 'current node: ', $node );
+            $this->log()->LogDebug( 'current node: ', $node );
             
             // find parent
             if ( $node[ $this->settings['__level_key'] ] > $min ) {
             
-                $this->log->LogDebug( 'trying to find parent...', $this->settings );
+                $this->log()->LogDebug( 'trying to find parent...', $this->settings );
 
                 $path = $this->ArraySearchRecursive(
                             $node[ $this->settings['__parent_key'] ],
@@ -125,7 +126,7 @@ class wbListBuilder extends wbBase {
                     $ref[ $this->settings['__children_key'] ][] = $node;
                 }
                 else {
-                    $this->log->LogDebug( 'no parent found, adding node to root ' );
+                    $this->log()->LogDebug( 'no parent found, adding node to root ' );
                     $tree[] = $node;
                 }
 
@@ -138,7 +139,7 @@ class wbListBuilder extends wbBase {
         }
 
 
-        $this->log->LogDebug( 'returning tree: ', $tree );
+        $this->log()->LogDebug( 'returning tree: ', $tree );
 
         return $tree;
 
@@ -152,13 +153,13 @@ class wbListBuilder extends wbBase {
      **/
     public function buildList ( $tree, $space = NULL, $as_array = NULL ) {
 
-        $this->log->LogDebug(
+        $this->log()->LogDebug(
             'building list from tree:',
             $tree
         );
 
         if ( ! is_array( $tree ) ) {
-            $this->log->LogDebug( 'no list items to show' );
+            $this->log()->LogDebug( 'no list items to show' );
             return;
         }
 
@@ -183,7 +184,7 @@ class wbListBuilder extends wbBase {
                  &&
                  $item[ $this->settings['__hidden_key'] ]
             ) {
-                $this->log->LogDebug(
+                $this->log()->LogDebug(
                     'skipping hidden item: '
                   . $item[ $this->settings['__title_key'] ]
                 );
@@ -195,7 +196,7 @@ class wbListBuilder extends wbBase {
             $level  = $item[ $this->settings['__level_key'] ];
 
             // indent nicely
-            $space  = str_repeat( '    ', ($level+1) );
+            $space  = str_repeat( $this->settings['space'], ($level+1) );
 
             $li_css = $this->getListItemCSS( $item );
 
@@ -240,6 +241,82 @@ class wbListBuilder extends wbBase {
         return implode( "\n", $output );
 
     }   // end function buildList()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function buildDropDown ( $tree, $options = array() ) {
+
+        $this->log()->LogDebug(
+            'building dropdown from tree:',
+            $tree
+        );
+
+        if ( ! is_array( $tree ) ) {
+            $this->log()->LogDebug( 'no list items to show' );
+            return;
+        }
+        
+        $space = isset( $options['space'] )
+               ? $options['space']
+               : NULL;
+
+        $output   = array();
+        
+        // for each item in the tree...
+        while ( $item = array_shift( $tree ) ) {
+
+            // skip hidden
+            if (
+                 isset( $this->settings['__hidden_key'] )
+                 &&
+                 isset( $item[ $this->settings['__hidden_key'] ] )
+                 &&
+                 $item[ $this->settings['__hidden_key'] ]
+            ) {
+                $this->log()->LogDebug(
+                    'skipping hidden item: '
+                  . $item[ $this->settings['__title_key'] ]
+                );
+                continue;
+            }
+
+            // spare some typing
+            $id     = $item[ $this->settings['__id_key'] ];
+            $level  = $item[ $this->settings['__level_key'] ];
+
+            // indent nicely
+            $space  = str_repeat( $this->settings['space'], $level );
+            
+            $output[] = '<option value="'
+                      . $item[ $this->settings['__id_key'] ]
+                      . '">'
+                      . $space
+                      . ' '
+                      . $item[ $this->settings['__title_key'] ]
+                      . '</option>';
+            
+            // children to show?
+            if ( $this->hasChildren( $item ) ) {
+                // recursion
+                $output[] = $this->buildDropDown(
+                                $item[ $this->settings['__children_key'] ],
+                                array(
+                                    'space' => $space
+                                )
+                            );
+            }
+
+        }
+        
+        $select = implode( "\n", $output );
+        
+        return $select;
+        
+    }
 
     /**
      *
