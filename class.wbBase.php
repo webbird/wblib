@@ -114,6 +114,73 @@ class wbBase {
         }
         return self::$_url;
     }   // end function selfURL()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    function getURI ( $base_url = NULL, $remove_params = array(), $add_params = array() ) {
+    
+        if ( empty( $base_url ) ) {
+            $base_url = $this->selfURL();
+        }
+        
+        if ( empty( $base_url ) ) {
+            return NULL;
+        }
+
+        $paramstring = NULL;
+        $path        = $base_url;
+        $params      = array();
+
+        // get params from $base_url
+        if ( strstr( $base_url, '?' ) ) {
+            list ( $path, $paramstring ) = explode( '?', $base_url );
+        }
+
+        $aParam = preg_split( "/[;&]/", $paramstring );
+        if ( is_array( $aParam ) ) {
+
+            foreach ( $aParam as $item ) {
+                if ( strstr( $item, '=' ) ) {
+                    list ( $key, $value ) = explode( '=', $item );
+                    if ( ! in_array( $key, $remove_params ) ) {
+                        $params[$key] = $value;
+                    }
+                }
+            }
+
+        }
+
+        $params = array_merge( $params, $add_params );
+
+        $carr = array();
+        while ( list( $key, $value ) = each( $params ) ) {
+            $carr[] = "$key=$value";
+        }
+
+        // get server name from WB_URL
+        preg_match(
+            "#(http(?:s)?://([^/].*?)+)/(.*)#",
+            WB_URL,
+            $matches
+        );
+
+        // server name
+        $servername = isset( $matches[1] )
+                    ? $matches[1]
+                    : '';
+
+        // remove leading /
+        $path = preg_replace( "#^/+#", '', $path );
+
+        $URI = implode( '/', array( $servername, $path ) ) . '?' . implode( '&', $carr );
+
+        return array( implode( '/', array( $servername, $path ) ), $URI );
+
+    }   // end function getURI ()
   	
   	/**
      *
