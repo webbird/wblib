@@ -65,10 +65,11 @@ class wbValidate extends wbBase {
     private static $_tainted  = array();
     private static $_server   = array();
     private static $_errors   = array();
-    private        $_valid    = array();
+    private static $_valid    = array();
 
     // ----- Debugging -----
     protected      $debugLevel      = KLOGGER::OFF;
+    #protected      $debugLevel      = KLOGGER::DEBUG;
 
     /**
      * constructor
@@ -105,7 +106,7 @@ class wbValidate extends wbBase {
             $this->selfURL( $_SERVER['SCRIPT_NAME'] );
         }
 
-        $this->log->LogDebug( 'FORM DATA:', self::$_tainted );
+        $this->log()->LogDebug( 'FORM DATA:', self::$_tainted );
 
         // delete request data from global arrays
         if ( ! $weak ) {
@@ -127,17 +128,17 @@ class wbValidate extends wbBase {
      **/
     public function getValid ( $varname, $options = array() ) {
     
-        $this->log->LogDebug( 'var ['.$varname.']', $options );
+        $this->log()->LogDebug( 'var ['.$varname.']', $options );
     
         // value already validated?
-        if ( isset( $this->_valid[ $varname ] ) ) {
-            $this->log->LogDebug( 'returning already validated var '.$varname );
-            return $this->_valid[ $varname ];
+        if ( isset( self::$_valid[ $varname ] ) ) {
+            $this->log()->LogDebug( 'returning already validated var '.$varname );
+            return self::$_valid[ $varname ];
         }
         
         // value available?
         if ( ! isset( self::$_tainted[ $varname ] ) ) {
-            $this->log->LogDebug( 'no data found for var '.$varname );
+            $this->log()->LogDebug( 'no data found for var '.$varname );
             return isset( $options['default'] ) ? $options['default'] : NULL;
         }
     
@@ -148,20 +149,23 @@ class wbValidate extends wbBase {
 
             if ( method_exists( $this, $func_name ) ) {
         
-                $this->log->LogDebug( 'checking var ['.$varname. '] with method ['.$func_name.']' );
+                $this->log()->LogDebug( 'checking var ['.$varname. '] with method ['.$func_name.']' );
+
+$this->log()->LogDebug( 'current self::$_valid array:', self::$_valid );
 
                 if ( $this->$func_name( self::$_tainted[ $varname ], $options ) ) {
                 
-                    $this->log->LogDebug( 'found valid value for var ['.$varname.']' );
+                    $this->log()->LogDebug( 'found valid value for var ['.$varname.']', self::$_tainted[ $varname ] );
                 
                     // found valid value
-                    $self->_valid[ $varname ] = self::$_tainted[ $varname ];
+                    self::$_valid[ $varname ] = self::$_tainted[ $varname ];
+                    
                     unset( self::$_tainted[ $varname ] );
                     
                     if ( isset( $options['stripped'] ) ) {
-                        $self->_valid[ $varname ] = $this->__strip( $self->_valid[ $varname ] );
+                        self::$_valid[ $varname ] = $this->__strip( $self->_valid[ $varname ] );
                     }
-                    return $self->_valid[ $varname ];
+                    return self::$_valid[ $varname ];
 
                 }
                 else {
@@ -177,15 +181,15 @@ class wbValidate extends wbBase {
         if ( isset( $options['constant'] ) ) {
             $constant = $options['constant'];
         }
-        $this->log->LogDebug( 'checking var '.$varname.' with constant '.$constant );
+        $this->log()->LogDebug( 'checking var '.$varname.' with constant '.$constant );
 
         if ( self::staticValidate( $constant, self::$_tainted[$varname] ) ) {
-            $self->_valid[ $varname ] =  self::$_tainted[ $varname ];
+            self::$_valid[ $varname ] =  self::$_tainted[ $varname ];
             unset(  self::$_tainted[ $varname ] );
             if ( isset( $options['stripped'] ) ) {
-                $self->_valid[ $varname ] = $this->__strip( $self->_valid[ $varname ] );
+                self::$_valid[ $varname ] = $this->__strip( $self->_valid[ $varname ] );
             }
-            return $self->_valid[ $varname ];
+            return self::$_valid[ $varname ];
         }
         else {
             return isset( $options['default'] ) ? $options['default'] : NULL;
@@ -201,7 +205,7 @@ class wbValidate extends wbBase {
      **/
     public function get( $varname, $constant = NULL, $default = NULL, $stripped = false ) {
     
-        $this->log->LogDebug( 'NOTE: This function is marked as deprecated! Please use getValid() instead!' );
+        $this->log()->LogDebug( 'NOTE: This function is marked as deprecated! Please use getValid() instead!' );
         
         return $this->getValid (
                    $varname,
@@ -225,12 +229,12 @@ class wbValidate extends wbBase {
      **/
     public function validate ( $constant, $varname, $options = array() ) {
         // value already validated?
-        if ( isset( $this->_valid[ $varname ] ) ) {
-            $this->log->LogDebug( 'returning already validated var ['.$varname.']' );
-            return $this->_valid[ $varname ];
+        if ( isset( self::$_valid[ $varname ] ) ) {
+            $this->log()->LogDebug( 'returning already validated var ['.$varname.']' );
+            return self::$_valid[ $varname ];
         }
         if ( ! isset( self::$_tainted[ $varname ] ) ) {
-            $this->log->LogDebug( 'no value for var ['.$varname.']' );
+            $this->log()->LogDebug( 'no value for var ['.$varname.']' );
             return NULL;
         }
         return self::staticValidate( $constant, self::$_tainted[ $varname ], $options );
@@ -247,29 +251,44 @@ class wbValidate extends wbBase {
      **/
     static function staticValidate ( $constant, $value, $options = array() ) {
 
-        // check length
-        if (
-               isset( $options['min_length'] )
-               &&
-               $options['min_length'] > 0
-               &&
-               strlen( $value ) < $options['min_length']
-        ) {
-            return 0;
+        if ( is_string( $value ) ) {
+
+            // check length
+            if (
+                   isset( $options['min_length'] )
+                   &&
+                   $options['min_length'] > 0
+                   &&
+                   strlen( $value ) < $options['min_length']
+            ) {
+                return 0;
+            }
+
+            if (
+                   isset( $options['max_length'] )
+                   &&
+                   $options['max_length'] > 0
+                   &&
+                   strlen( $value ) > $options['max_length']
+            ) {
+                return 0;
+            }
+
+            // check pattern; returns 0 (false) or 1 (true)
+            return preg_match( constant( $constant ), $value );
+            
         }
         
-        if (
-               isset( $options['max_length'] )
-               &&
-               $options['max_length'] > 0
-               &&
-               strlen( $value ) > $options['max_length']
-        ) {
-            return 0;
+        if ( is_array( $value ) ) {
+            $valid = array();
+            foreach ( $value as $item ) {
+                $is_valid = preg_match( constant( $constant ), $item );
+                if ( $is_valid ) {
+                    $valid[] = $is_valid;
+                }
+            }
+            return $valid;
         }
-
-        // check pattern; returns 0 (false) or 1 (true)
-        return preg_match( constant( $constant ), $value );
 
     }   // end function staticValidate ()
     
@@ -302,12 +321,20 @@ class wbValidate extends wbBase {
     }   // end function getValidYear()
     
     /**
+     * validate month
      *
+     * If no valid form data is found, the current month is returned by default
      *
+     * @access public
      *
+     * @param  string  $varname - form var to validate (default: 'month')
+     * @param  array   $options
+     *
+     * @return integer $month
      *
      **/
     public function getValidMonth( $varname = 'month', $options = array() ) {
+    
         $month = $this->getValid(
                      $varname,
                      array_merge(
@@ -318,10 +345,14 @@ class wbValidate extends wbBase {
                         $options
                      )
                  );
+
         if ( $month && $month > 0 && $month <= 12 ) {
             return strftime("%m", strtotime("$month/01/2009"));
         }
+
+        //return date( "m" );
         return NULL;
+
     }   // end function getValidMonth()
     
     /**
@@ -347,7 +378,9 @@ class wbValidate extends wbBase {
             return strftime("%d", strtotime("01/$day/2009"));
         }
         
+        //return date( "d" );
         return NULL;
+        
     }   // end function getValidDay()
 
     /**
