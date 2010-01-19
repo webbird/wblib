@@ -28,10 +28,9 @@ class wbBase {
 
     // ----- Debugging -----
     protected        $debugLevel      = KLogger::OFF;
-    protected        $log             = NULL; // accessor to KLogger
-    
-    private static   $debugDir        = '/debug/log';
 
+    private static   $log             = NULL; // accessor to KLogger
+    private static   $debugDir        = '/debug/log';
     private static   $_url            = NULL;
     
     /**
@@ -61,6 +60,47 @@ class wbBase {
   	 * Prevent cloning of the object (Singleton)
   	 */
   	final private function __clone() {}
+  	
+  	/**
+  	 * Accessor to KLogger class; this makes using the class significant faster!
+  	 *
+  	 * @access public
+  	 * @return object
+  	 *
+  	 **/
+  	public function log () {
+  	
+        if ( $this->debugLevel < 6 ) {
+        
+            if ( ! is_object( self::$log ) ) {
+                
+                self::$log
+                    = new KLogger(
+                          $this->debugDir.'/'.get_class($this).'.log' ,
+                          $this->debugLevel,
+                          true
+                      );
+            }
+            
+            return self::$log;
+            
+        }
+
+        return $this;
+        
+  	}   // end function log ()
+  	
+  	/**
+  	 * Fake KLogger's LogDebug function if debug level is "off"; just does
+  	 * nothing
+  	 *
+  	 * @param ignored
+  	 *
+  	 **/
+  	public function LogDebug () {
+        return;
+    }   // end function LogDebug ()
+
   	
   	/**
   	 *
@@ -103,6 +143,36 @@ class wbBase {
     }   // end function array_collapse()
     
     /**
+     *
+     *
+     *
+     *
+     **/
+    function ArrayFindKeyRecursive ( $key, $array ) {
+
+        if ( array_key_exists( $key, $array ) ) {
+            return $array[$key];
+        }
+        
+        foreach ( $array as $k => $value ) {
+        
+            if ( is_array( $value ) ) {
+
+                // do sub-search
+                $found = $this->ArrayFindKeyRecursive( $key, $array[$k] );
+                if ( $found ) {
+                    return $found;
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
      * Recursive array search
      *
      * @param  string  $Needle     value to search for
@@ -143,6 +213,48 @@ class wbBase {
         return false;
 
     }   // end function ArraySearchRecursive()
+    
+    /**
+     * sort an array
+     *
+     *
+     *
+     **/
+    function sort2d ( $array, $index, $order='asc', $natsort=FALSE, $case_sensitive=FALSE )
+    {
+    
+        if( is_array($array) && count($array)>0 ) {
+        
+             foreach(array_keys($array) as $key)
+             {
+                 $temp[$key]=$array[$key][$index];
+             }
+
+             if(!$natsort)
+             {
+                 ($order=='asc')? asort($temp) : arsort($temp);
+             }
+             else
+             {
+                 ($case_sensitive)? natsort($temp) : natcasesort($temp);
+                 if($order!='asc')
+                 {
+                     $temp=array_reverse($temp,TRUE);
+                 }
+             }
+
+             foreach(array_keys($temp) as $key)
+             {
+                 (is_numeric($key))? $sorted[]=$array[$key] : $sorted[$key]=$array[$key];
+             }
+             return $sorted;
+
+        }
+        
+        return $array;
+
+    }   // function sort2d
+
     
     /**
      *
