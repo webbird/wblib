@@ -57,7 +57,7 @@ class wbI18n extends wbBase {
 		 **/
 		public function init( $var = NULL ) {
 		
-        $this->log->LogDebug( 'init()' );
+        $this->log()->LogDebug( 'init()' );
 
         $caller = debug_backtrace();
         
@@ -74,7 +74,7 @@ class wbI18n extends wbBase {
                   'EN'                 => 'EN.php'
               );
 
-        $this->log->LogDebug( 'language files to search for: ', $lang_files );
+        $this->log()->LogDebug( 'language files to search for: ', $lang_files );
 
         foreach ( $lang_files as $l => $file ) {
             if ( $this->addFile( $file, $var ) ) { break; }
@@ -107,7 +107,7 @@ class wbI18n extends wbBase {
 
         if( file_exists( $file ) ) {
 
-            $this->log->LogDebug( 'found language file: ', $file );
+            $this->log()->LogDebug( 'found language file: ', $file );
 
         	  require_once( $file );
 
@@ -116,7 +116,7 @@ class wbI18n extends wbBase {
                 if ( preg_match( "/(\w+)\.php/", $file, $matches ) ) {
             	      self::$_current_lang = $matches[1];
                 }
-            	  $this->log->LogDebug( 'loaded language file: ', $file );
+            	  $this->log()->LogDebug( 'loaded language file: ', $file );
                 return true;
             }
             else {
@@ -139,7 +139,7 @@ class wbI18n extends wbBase {
     
         if ( file_exists( $path ) ) {
 
-            $this->log->LogDebug( 'setting language path to: ', $path );
+            $this->log()->LogDebug( 'setting language path to: ', $path );
 
             $this->_langPath = $path;
             $this->init( $var );
