@@ -30,7 +30,7 @@ class wbListBuilder extends wbBase {
     // ----- Debugging -----
     protected $debugLevel      = KLOGGER::OFF;
 
-    private   $id              = 1;
+    private   $id              = 0;
     private   $settings        = array(
     
         'create_level_css'    => true,
@@ -39,7 +39,7 @@ class wbListBuilder extends wbBase {
         'current_href_css'    => 'current_link',
         'current_li_css'      => 'current_item',
         'first_li_css'        => 'first_item',
-        'has_child_li_css'    => '',
+        'has_child_li_css'    => 'has_child',
         'href_css'            => 'link',
         'item_close'          => '</li>',
         'item_open'           => '<li class="%%">',
@@ -50,6 +50,8 @@ class wbListBuilder extends wbBase {
         'trail_li_css'        => 'trail_item',
         'ul_css'              => 'list',
         'space'               => '    ',
+        
+        'ul_id_prefix'        => 'ul_',
         
         '__children_key'      => 'children',
         '__current_key'       => 'current',
@@ -262,7 +264,7 @@ class wbListBuilder extends wbBase {
         
         $space = isset( $options['space'] )
                ? $options['space']
-               : NULL;
+               : $this->settings['space'];
 
         $output   = array();
         
@@ -289,11 +291,24 @@ class wbListBuilder extends wbBase {
             $level  = $item[ $this->settings['__level_key'] ];
 
             // indent nicely
-            $space  = str_repeat( $this->settings['space'], $level );
+            $space  = str_repeat( $space, $level );
+            
+            // mark selected
+            $sel    = NULL;
+            if ( isset ( $options['selected'] ) ) {
+                if ( ! is_array( $options['selected'] ) ) {
+                    $options['selected'] = array( $options['selected'] );
+                }
+                foreach ( $options['selected'] as $i => $id ) {
+                    if ( $id === $item[ $this->settings['__id_key'] ] ) {
+                        $sel = ' selected="selected"';
+                    }
+                }
+            }
             
             $output[] = '<option value="'
                       . $item[ $this->settings['__id_key'] ]
-                      . '">'
+                      . '"'.$sel.'>'
                       . $space
                       . ' '
                       . $item[ $this->settings['__title_key'] ]
@@ -304,9 +319,7 @@ class wbListBuilder extends wbBase {
                 // recursion
                 $output[] = $this->buildDropDown(
                                 $item[ $this->settings['__children_key'] ],
-                                array(
-                                    'space' => $space
-                                )
+                                $options
                             );
             }
 
@@ -462,7 +475,7 @@ class wbListBuilder extends wbBase {
     private function _getID() {
     
         $this->id++;
-        return 'ul_'.$this->id;
+        return $this->settings['ul_id_prefix'].$this->id;
     
     }   // end function _getID()
     
