@@ -2,15 +2,7 @@
   <a name="fbtop"></a>
   {{ hidden }}
   <table {{ tableattrs }}>
-    {{ :if header }}
-    <thead>
-      <tr>
-        <th colspan="3" class="{{ fb_header_class }}">
-          {{ header }}
-        </th>
-      </tr>
-    </thead>
-    {{ :ifend }}
+    {{ :if header }}{{ header }}{{ :ifend }}
     {{ :if info }}
     <tr>
       <td colspan="3">
