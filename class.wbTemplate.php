@@ -28,7 +28,7 @@ class wbTemplate extends wbBase {
 
     // ----- Debugging -----
     protected $debugLevel     = KLOGGER::OFF;
-    //protected $debugLevel     = KLOGGER::DEBUG;
+    #protected $debugLevel     = KLOGGER::DEBUG;
     
     // optional lang handler
     private   $_lang          = NULL;
@@ -55,29 +55,7 @@ class wbTemplate extends wbBase {
     private   $_loaded        = array();
     
     // array to store regexp
-    private   $_regexp        = array(
-        'include'
-            => "/%%start%%\s*?:include\s*?(.*?)\s*?%%end%%/i",
-        'html_comment'
-            => "/<!--\s*?BEGIN\s*?template\s*?comment\s*?-->(.+?)<!--\s*?END\s*?template\s*?comment\s*?-->/seix",
-        'simple_comment'
-            => "/%%start%%\s*?:comment.*?%%end%%/seix",
-        'if'
-            => "/%%start%% \s*? :if(?!end) \b([^%%end%%]*) \s*? %%end%% (?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% ) ( (?: [\S\s] (?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% ) ) *? ) %%start%% \s*? :ifend \s*? %%end%%/seix",
-            //  {{ :if anything }}                                      ... not followed by another opening (innermost)            ... capture content                                                            {{ :ifend }} (innermost)
-        'if_subpat'
-            => "/%%start%% \s*? :else \s*? %%end%%/seix",
-        'loop_open'
-            => "#%%start%%\s*:loop\s*(\w+)\s*%%end%%(.*)%%start%%\s*:loopend\s*%%end%%#sim",
-        'loop_subloop'
-            => "#(.*?)(?!%%start%%\s*:loopend\s*%%end%%)(%%start%%\s*:loop\s*(\w+)\s*%%end%%.*)#sim",
-        'lang'
-            => "/%%start%%\s*?:(?:lang|translate)\s*?(.*?)%%end%%/seix",
-        'var'
-            => '/%%start%%\s*?([^%%start%%].*?)%%end%%/e',
-        'all'
-            => '/%%start%%\s*?(.*?)%%end%%/'
-    );
+    private   $_regexp        = array();
 
     /**
      * constructor
@@ -97,6 +75,8 @@ class wbTemplate extends wbBase {
             $this->_lang = $options['lang'];
         }
         
+        $this->__defineRegExp();
+        
         foreach ( $this->_regexp as $key => $value ) {
             $this->_regexp[ $key ] = str_replace(
                          array(
@@ -112,6 +92,69 @@ class wbTemplate extends wbBase {
         }
         
     }   // end function __construct()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    private function __defineRegExp () {
+    
+        $loop_open  = '%%start%%\s*:loop(?!end)\s+([^%%end%%]*?)\s*%%end%%';
+        $loop_close = '%%start%%\s*:loopend\s*%%end%%';
+    
+        $this->_regexp = array(
+        
+            // ----- {{ :include <file> }} -----
+            'include'
+                => "/%%start%%\s*?:include\s*?(.*?)\s*?%%end%%/i",
+                
+            // ----- multiline comments -----
+            'html_comment'
+                => "/<!--\s*?BEGIN\s*?template\s*?comment\s*?-->(.+?)<!--\s*?END\s*?template\s*?comment\s*?-->/seix",
+            
+            // ----- simple comments -----
+            'simple_comment'
+                => "/%%start%%\s*?:comment.*?%%end%%/seix",
+                
+            // ----- if-else -----
+            'if'
+                => "/
+# {{ :if anything }}
+%%start%% \s*? :if(?!end) \b([^%%end%%]*) \s*? %%end%%
+# not followed by another opening (innermost)
+(?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% )
+(
+  (?: [\S\s] (?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% ) )
+  *?
+)
+# {{ :ifend }} (innermost)
+%%start%% \s*? :ifend \s*? %%end%%
+/seix",
+
+            'if_subpat'
+                => "/%%start%% \s*? :else \s*? %%end%%/seix",
+                
+            // ----- {{ :lang <string> }} -----
+            'lang'
+                => "/%%start%%\s*?:(?:lang|translate)\s*?(.*?)%%end%%/seix",
+                
+            // ----- simple placeholders -----
+            'var'
+                => '/%%start%%\s*([^%%start%%].*?)\s*%%end%%/e',
+                
+            // all
+            'all'
+                => '/%%start%%\s*?(.*?)%%end%%/',
+
+            // ----- loops - this finds all "root level" loops -----
+            'loop'
+                => "/%%start%% \s*? :loop(?!end) \b([^%%end%%]*) \s*? %%end%% (?! %%start%% \s*? :loop(?!end) \b[^%%end%%]* \s*? %%end%% ) ( (?: [\S\s] (?! %%start%% \s*? :loop(?!end) \b[^%%end%%]* \s*? %%end%% ) ) *? ) %%start%% \s*? :loopend \s*? %%end%%/seix",
+
+        );
+
+    }   // end function __defineRegExp()
     
     /**
      * set behaviour for unknown params
@@ -252,38 +295,38 @@ class wbTemplate extends wbBase {
      **/
     public function parseString( $string = "", $aArray ) {
 
-        $this->log->LogDebug( 'string to parse: ',   $string );
-        $this->log->LogDebug( 'replacement array: ', $aArray );
+        $this->log()->LogDebug( 'string to parse: ',   $string );
+        $this->log()->LogDebug( 'replacement array: ', $aArray );
 
         if ( empty( $string ) ) {
             $this->printError( 'missing string to parse!' );
         }
 
-        // handle includes
+        // ----- remove comments -----
+        $string = $this->__handleComments( $string );
+
+        $this->log()->LogDebug( 'string after __handleCommments(): ',   $string   );
+
+        // ----- handle includes -----
         $string = $this->__handleIncludes( $string, $aArray );
         
-        $this->log->LogDebug( 'string after __handleIncludes(): ',   $string   );
+        $this->log()->LogDebug( 'string after __handleIncludes(): ',    $string   );
 
-        // remove comments
-        $string = $this->__handleComments( $string );
-        
-        $this->log->LogDebug( 'string after __handleCommments(): ',   $string   );
-
-        // handle language strings
+        // ----- handle language strings -----
         $string = $this->__handleLangStrings( $string );
 
-        $this->log->LogDebug( 'string after __handleLangStrings(): ',   $string   );
+        $this->log()->LogDebug( 'string after __handleLangStrings(): ', $string   );
 
-        // handle loops
+        // ----- handle loops -----
         $string = $this->__handleLoops( $string, $aArray );
         
-        $this->log->LogDebug( 'string after __handleLoops(): ',   $string   );
+        $this->log()->LogDebug( 'string after __handleLoops(): ',       $string   );
+        $this->log()->LogDebug( 'Array after __handleLoops(): ',        $aArray   );
 
         // extract {{ :if }} ... {{ :ifend }}
         $string = $this->__handleIf( $string, $aArray );
         
-        $this->log->LogDebug( 'string after __handleIf(): ',   $string   );
-        $this->log->LogDebug( 'remaining array: ', $aArray );
+        $this->log()->LogDebug( 'string after __handleIf(): ',          $string   );
 
         // other
         $string = preg_replace(
@@ -292,7 +335,7 @@ class wbTemplate extends wbBase {
                     $string
                 );
 
-        $this->log->LogDebug( 'remaining string: ', $string );
+        $this->log()->LogDebug( 'remaining string: ', $string );
 
         // remove multiple blank lines ("holes")
         if ( $this->_remove_blanks ) {
@@ -335,7 +378,7 @@ class wbTemplate extends wbBase {
      **/
     private function __handleIncludes( $string, $aArray ) {
     
-        $this->log->LogDebug( '[__handleIncludes] current string:', $string );
+        $this->log()->LogDebug( '[__handleIncludes] current string:', $string );
     
         if (
             preg_match_all(
@@ -353,12 +396,12 @@ class wbTemplate extends wbBase {
 
                 if ( file_exists( $file ) ) {
                 
-                    $this->log->LogDebug( 'found file: ', $file );
+                    $this->log()->LogDebug( 'found file: ', $file );
                     
                     $in      = $this->slurp( $file );
                     $replace = $this->parseString( $in, $aArray );
                     
-                    $this->log->LogDebug( '[__handleIncludes] replacing ['.$item[0].']', array( $replace, $string ) );
+                    $this->log()->LogDebug( '[__handleIncludes] replacing ['.$item[0].']', array( $replace, $string ) );
 
                     $string  = str_replace(
                                    $item[0],
@@ -369,7 +412,7 @@ class wbTemplate extends wbBase {
                 }
                 else {
                 
-                    $this->log->LogDebug( '[__handleIncludes] file ['.$file.'] not found, removing ['.$item[0].']' );
+                    $this->log()->LogDebug( '[__handleIncludes] file ['.$file.'] not found, removing ['.$item[0].']' );
                     
                     $string = str_replace(
                                   $item[0],
@@ -442,11 +485,11 @@ class wbTemplate extends wbBase {
      **/
     private function __handleIf ( $string, $aArray ) {
 
-        $this->log->LogDebug( 'current string:', $string );
+        # $this->log()->LogDebug( 'current string:', $string );
 
         while ( preg_match( $this->_regexp[ 'if' ], $string, $matches ) ) {
 
-            $this->log->LogDebug( 'handle match: ', $matches );
+            # $this->log()->LogDebug( 'handle match: ', $matches );
 
             $matches[1] = trim( $matches[1] );
             $replace    = '';
@@ -468,7 +511,7 @@ class wbTemplate extends wbBase {
                                 PREG_SPLIT_DELIM_CAPTURE
                             );
 
-            $this->log->LogDebug( 'cond_matches: ', $cond_matches );
+            # $this->log()->LogDebug( 'cond_matches: ', $cond_matches );
 
             $item = trim( array_shift( $cond_matches ) );
             $conditions[] = "isset( \$aArray['$item'] ) && ! empty( \$aArray['$item'] )";
@@ -515,18 +558,23 @@ class wbTemplate extends wbBase {
                 }
 
             }
+            
+            # $this->log()->LogDebug( 'replacing ... with ... in string ...', array( $matches[0], $replace, $string ) );
 
             ### remove from string
             $string = str_replace( $matches[0], $replace, $string );
+            
+            # $this->log()->LogDebug( 'remaining string:', $string );
 
         }
         
-        $this->log->LogDebug( '[__handleIf] remaining string:', $string );
+        # $this->log()->LogDebug( 'remaining string:', $string );
         
         return $string;
 
     }   // end function __handleIf()
     
+
     /**
      * handle loop statements
      *
@@ -536,72 +584,165 @@ class wbTemplate extends wbBase {
      * @return void
      *
      **/
-    private function __handleLoops ( $string, $aArray ) {
+    private function __handleLoops ( $string, &$aArray ) {
 
-        // while we have some loops...
-        while ( preg_match( $this->_regexp['loop_open'], $string, $matches ) ) {
+        # $this->log()->LogDebug( 'current string:', $string );
+        
+        $loops = array();
 
-            $loopname    = trim( $matches[1] );
-            $LOOPSTRING  = $matches[2];
+        // first, find all loops and subloops and extract them
+        while ( preg_match( $this->_regexp[ 'loop' ], $string, $matches ) ) {
 
-            // this var holds the replacement(s)
-            $replacement = NULL;
+            // this is the name of the array key
+            $condname         = trim( $matches[1] );
+            
+            // store loop contents
+            $loops[$condname] = $matches[2];
+            
+            // remove loop from string; replace with "normal" template var
+            $string = str_replace(
+                $matches[0],
+                "{{ __loop__{$condname} }}",
+                $string
+            );
 
-            // do we have some loop data?
-            if ( isset( $aArray[$loopname] ) && is_array( $aArray[$loopname] ) ) {
+        }
+        
+        # $this->log()->LogDebug( 'found loops: ', $loops );
+        # $this->log()->LogDebug( 'current string: ', $string );
 
-                // for each loop element...
-                foreach ( $aArray[$loopname] as $loop ) {
+        // now, if we have any loops...
+        if ( count( $loops ) > 0 ) {
+        
+            $code = '  ( isset( $loop[trim("$1")] ) && ! is_array( $loop[trim("$1")] ) )'
+              . '? $loop[trim("$1")] '
+              . ': ( '
+              .     '  ( strlen("$1") > 8 && ! substr_compare( "$1", "__loop__", 0, 8 ) ) '
+              .     '? $this->recurse( $loops[substr("$1",8)], $loops, $loop, false )'
+              .     ': "$0"'
+              . '  )';
 
-                    // store loop string into temp var
-                    $temp = $LOOPSTRING;
+            #$string = $this->recurse( $string, $loops, $aArray );
+            foreach ( $loops as $key => $val ) {
 
-                    // are there sub loops?
-                    if (
-                         preg_match(
-                             $this->_regexp['loop_subloop'],
-                             $temp,
-                             $submatches
-                         )
-                    ) {
+                if ( isset( $aArray[ $key ] ) && is_array( $aArray[ $key ] ) ) {
 
-                        $sub_loopname = trim( $submatches[3] );
-                        $subloop      = $this->__handleLoops( $submatches[2], $loop );
+                    $out  = '';
 
-                        // replace subloop in temp var
-                        $temp
-                            = $submatches[1]
-                            . $subloop;
+                    // parse loop
+                    foreach ( $aArray[ $key ] as $loop ) {
+
+                        if ( is_array( $loop ) ) {
+
+                            # $this->log()->LogDebug( 'current loop data: ', $loop );
+                            
+                            // handle {{ :if }} inside {{ :loop }}
+                            $val = $this->__handleIf( $loops[$key], $loop );
+
+                            // replace vars in current (remaining) line
+                            $out .= preg_replace(
+                                            $this->_regexp['var'],
+                                            $code,
+                                            $val
+                                        );
+
+                        }
 
                     }
+                    
+                    // remove array key
+                    $aArray[ $key ] = 1;
 
-                    // handle {{ :if }} inside {{ :loop }}
-                    $temp = $this->__handleIf( $temp, $loop );
+                    $string = str_replace(
+                                  "{{ __loop__{$key} }}",
+                                  $out,
+                                  $string
+                              );
 
-                    // replace "normal" placeholders and add to replacement string
-                    $temp = preg_replace(
-                                        $this->_regexp['var'],
-                                        'isset( $loop[trim("$1")] ) ? $loop[trim("$1")] : "$0"',
-                                        $temp
-                                    );
-
-                    $replacement .= $temp;
-
-                }   // foreach ( $aArray[$loopname] as $loop )
+                }
 
             }
-
-            $string = str_ireplace(
-                          $matches[0],
-                          $replacement,
-                          $string
-                      );
 
         }
 
         return $string;
         
-    }   // end function __handleLoops()
+    }   // end sub __handleLoops()
+    
+    /***
+     *
+     *
+     *
+     *
+     **/
+    function recurse ( $string, $loops, $aArray, $return_string = true ) {
+    
+        $out = NULL;
+    
+        if ( ! is_array( $loops ) ) {
+            return $string;
+        }
+
+        $code = '  isset( $loop[trim("$1")] ) '
+              . '? $loop[trim("$1")] '
+              . ': ( '
+              .     '  ( strlen("$1") > 8 && ! substr_compare( "$1", "__loop__", 0, 8 ) ) '
+              .     '? $this->recurse( $loops[substr("$1",8)], $loops, $loop, false )'
+              .     ': "$0"'
+              . '  )';
+
+        foreach ( $aArray as $key => $value ) {
+
+            if ( isset ( $loops[$key] ) ) {
+            
+                $this->log()->LogDebug( 'found loop for key '.$key );
+                $this->log()->LogDebug( 'aArray data: ', $aArray[ $key ] );
+            
+                if ( is_array( $aArray[ $key ] ) ) {
+
+                    $out  = '';
+
+                    // parse loop
+                    foreach ( $aArray[ $key ] as $loop ) {
+                    
+                        if ( is_array( $loop ) ) {
+
+                            $this->log()->LogDebug( 'current loop data: ', $loop );
+                            
+                            // handle {{ :if }} inside {{ :loop }}
+                            #$text = $this->__handleIf( $loops[$key], $loop );
+                            $text = $loops[$key];
+
+                            // replace vars in current (remaining) line
+                            $out .= preg_replace(
+                                            $this->_regexp['var'],
+                                            $code,
+                                            $text
+                                        );
+
+                        }
+
+                    }
+                    
+                    if ( $return_string ) {
+                        return str_replace(
+                            "{{ __loop__{$key} }}",
+                            $out,
+                            $string
+                        );
+                    }
+
+                }
+                
+            }
+            
+
+            
+        }
+
+        return $out;
+
+    }
     
     /**
      * handle {{ :lang <Text> }} directives
@@ -614,7 +755,7 @@ class wbTemplate extends wbBase {
      **/
     private function __handleLangStrings( $string ) {
     
-        $this->log->LogDebug( 'current string:', $string );
+        $this->log()->LogDebug( 'current string:', $string );
 
         while ( preg_match( $this->_regexp[ 'lang' ], $string, $matches ) ) {
             $text = trim( $matches[1] );

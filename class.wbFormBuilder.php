@@ -29,9 +29,9 @@ require_once dirname( __FILE__ ).'/class.wbI18n.php';
 
 class wbFormBuilder extends wbBase {
 
-    // enable/disable debug messages
-    protected      $_debug          = false;
-    #protected      $_debug          = true;
+    // ----- Debugging -----
+    protected      $debugLevel      = KLOGGER::OFF;
+    #protected      $debugLevel      = KLOGGER::DEBUG;
 
     protected      $_settings       = array();
 
@@ -111,6 +111,7 @@ class wbFormBuilder extends wbBase {
      * using setFormTemplate() and setElementTemplate()
      **/
 		private        $_form_template;
+		private        $_form_header_template;
 		private        $_form_legend_template;
     private        $_element_template;
     private        $_form_infotext_template;
@@ -223,6 +224,8 @@ class wbFormBuilder extends wbBase {
      *
      **/
     function __construct ( $options = array() ) {
+    
+        parent::__construct();
 
         self::$_input[ 'accesskey' ] = array_merge( range(0,9), range('a','z') );
         self::$_input[ 'maxlength' ] = array( range(0,999) );
@@ -235,17 +238,13 @@ class wbFormBuilder extends wbBase {
 
         $this->_settings = $options;
 
-        // create accessor to template class
-        $this->_tpl = new wbTemplate();
-        $this->_tpl->setBehaviour( 'remove' );
-        $this->_tpl->setPath( dirname(__FILE__).'/templates' );
-
         // create validator object
         $this->val  = new wbValidate();
 
         // get current working directory
         $callstack = debug_backtrace();
-        $workdir   = ( isset( $callstack[0] ) && isset( $callstack[0]['file'] ) )
+        $this->workdir
+                   = ( isset( $callstack[0] ) && isset( $callstack[0]['file'] ) )
                    ? dirname( $callstack[0]['file'] )
                    : dirname(__FILE__);
 
@@ -257,7 +256,7 @@ class wbFormBuilder extends wbBase {
         elseif ( isset( $this->_settings['uselang'] ) ) {
             $this->lang          = new wbI18n( $this->_settings['uselang'] );
             $this->_current_lang = $this->lang->getLang();
-            $this->lang->setPath( $workdir.'/languages' );
+            $this->lang->setPath( $this->workdir.'/languages' );
         }
         else {
             $this->lang          = new wbI18n('EN');
@@ -265,9 +264,19 @@ class wbFormBuilder extends wbBase {
 
         $this->lang->addFile(
             $this->_current_lang.'.php',
-            $workdir.'/languages'
+            $this->workdir.'/languages'
+        );
+        
+        // add wblib lang file
+        $this->lang->addFile(
+            $this->_current_lang.'.php',
+            dirname(__FILE__).'/languages'
         );
 
+        // create accessor to template class
+        $this->_tpl = new wbTemplate( array( 'lang' => $this->lang ) );
+        $this->_tpl->setBehaviour( 'remove' );
+        $this->_tpl->setPath( dirname(__FILE__).'/templates' );
 
         if ( isset( $this->_settings['include'] ) ) {
             $this->loadFile( $this->_settings );
@@ -294,28 +303,45 @@ class wbFormBuilder extends wbBase {
      **/
     public function loadFile( $options ) {
 
-        $this->debug( 'loadFile() called with options:', $options );
+        $this->log()->LogDebug( 'loadFile() called with options:', $options );
 
         if ( isset( $options['include'] ) ) {
+        
+            $loaded = false;
+        
+            foreach (
+                array(
+                    $options['include'],
+                    $this->workdir.'/'.$options['include']
+                ) as $file
+            ) {
 
-            if ( file_exists( $options['include'] ) ) {
+                if ( file_exists( $file ) ) {
 
-                if ( isset( self::$_is_loaded[$options['include']] ) ) {
-                    $this->debug( 'file already loaded: ', $options['include'] );
-                    return;
+                    if ( isset( self::$_is_loaded[$file] ) ) {
+                        $this->log()->LogDebug( 'file already loaded: ', $file );
+                        return;
+                    }
+
+                    $this->log()->LogDebug( 'loading config file: ', $file );
+                    include_once $file;
+                    self::$_is_loaded[ $file ] = true;
+                    $loaded                    = true;
+
+                    break;
+                    
                 }
-
-                $this->debug( 'loading config file: ', $options['include'] );
-                include_once $options['include'];
-                self::$_is_loaded[ $options['include'] ] = true;
+                
             }
-            else {
+            
+            if ( ! $loaded ) {
                 $this->printError( 'include file does not exist: '.$options['include'] );
             }
 
+
         }
         else {
-            $this->debug( 'include file not set' );
+            $this->log()->LogDebug( 'include file not set' );
             return;
         }
 
@@ -344,7 +370,7 @@ class wbFormBuilder extends wbBase {
 
         }
 
-        $this->debug( 'options:', self::$_registered_elements    );
+        $this->log()->LogDebug( 'options:', self::$_registered_elements    );
 
     }   // end function loadFile()
     
@@ -360,7 +386,7 @@ class wbFormBuilder extends wbBase {
      * set element to 'writable'
      **/
     public function unsetReadonly( $name ) {
-        $this->debug( 'unset readonly flag for field ['.$name.']' );
+        $this->log()->LogDebug( 'unset readonly flag for field ['.$name.']' );
         unset( $this->_readonly[ $name ] );
     }   // function setReadonly()
 
@@ -368,7 +394,7 @@ class wbFormBuilder extends wbBase {
      * set element to 'required'
      **/
     public function setRequired( $name ) {
-        $this->debug( 'set required flag for field ['.$name.']' );
+        $this->log()->LogDebug( 'set required flag for field ['.$name.']' );
         unset( $this->_optional[$name] );
         $this->_required[ $name ] = 1;
     }   // function setReadonly()
@@ -377,7 +403,7 @@ class wbFormBuilder extends wbBase {
      * set element to 'optional'
      **/
     public function setOptional( $name ) {
-        $this->debug( 'set optional flag for field ['.$name.']' );
+        $this->log()->LogDebug( 'set optional flag for field ['.$name.']' );
         unset( $this->_readonly[ $name ] );
         $this->_optional[$name] = 1;
     }   // function setReadonly()
@@ -434,7 +460,7 @@ class wbFormBuilder extends wbBase {
   	 **/
   	public function createElement( $options ) {
 
-        $this->debug(
+        $this->log()->LogDebug(
             'createElement() called with args:',
             $options
         );
@@ -462,7 +488,7 @@ class wbFormBuilder extends wbBase {
         // just shorter...
         $type = $options['type'];
 
-        $this->debug( 'trying to create field ['.$name.'] of type '.$type );
+        $this->log()->LogDebug( 'trying to create field ['.$name.'] of type '.$type );
 
         if ( method_exists( $this, $type ) ) {
             $elem = $this->$type( $options );
@@ -492,7 +518,7 @@ class wbFormBuilder extends wbBase {
   	 **/
   	public function addElement( $options ) {
 
-  	    $this->debug(
+  	    $this->log()->LogDebug(
             'addElement() called with args:',
             $options
         );
@@ -561,7 +587,7 @@ class wbFormBuilder extends wbBase {
   	 **/
   	public function insertElement( $position, $options ) {
 
-  	    $this->debug(
+  	    $this->log()->LogDebug(
             'insertElement() called with args:',
             array_merge(
                 $position,
@@ -616,7 +642,7 @@ class wbFormBuilder extends wbBase {
   	 **/
   	public function replaceElement( $name, $options ) {
 
-  	    $this->debug(
+  	    $this->log()->LogDebug(
             'replaceElement() called with args: name: '.$name,
             $options
         );
@@ -652,7 +678,7 @@ class wbFormBuilder extends wbBase {
   	 **/
   	public function removeElement( $name ) {
 
-  	    $this->debug(
+  	    $this->log()->LogDebug(
             'removeElement() called with args: name: '.$name,
             $options
         );
@@ -677,7 +703,7 @@ class wbFormBuilder extends wbBase {
      **/
     public function addButtons( $options = array() ) {
 
-        $this->debug( 'addButtons()', $options );
+        $this->log()->LogDebug( 'addButtons()', $options );
 
         foreach ( $options as $opt ) {
 
@@ -772,7 +798,7 @@ class wbFormBuilder extends wbBase {
         $options['type'] = 'password';
 
         $label   = isset( $options['label'] )
-                 ? '<label class="fblabel" for="'.$options['name'].'">'.$options['label'].'</label>'
+                 ? '<label class="fblabel" for="'.$options['name'].'">'.$this->lang->translate( $options['label'] ).'</label>'
                  : '';
 
         return array(
@@ -813,7 +839,7 @@ class wbFormBuilder extends wbBase {
   	 **/
     public function select( $options ) {
 
-        $this->debug( 'select()', $options );
+        $this->log()->LogDebug( 'select()', $options );
 
         $output  = NULL;
 
@@ -822,7 +848,7 @@ class wbFormBuilder extends wbBase {
                  : $this->__generateRandomName();
 
         $label   = isset( $options['label'] )
-                 ? '<label class="fblabel" for="'.$options['name'].'">'.$options['label'].'</label>'
+                 ? '<label class="fblabel" for="'.$options['name'].'">'.$this->lang->translate( $options['label'] ).'</label>'
                  : '';
 
         $opt     = ( isset( $options['options'] ) && is_array( $options['options'] ) )
@@ -839,21 +865,30 @@ class wbFormBuilder extends wbBase {
                 . $this->__validateOptions( $select )
                 . ">\n";
 
-        $isIndexed = array_values($opt) === $opt;
+        if ( is_array( $opt ) && count( $opt ) > 0 ) {
+        
+            $isIndexed = array_values($opt) === $opt;
 
-        foreach ( $opt as $key => $value ) {
+            foreach ( $opt as $key => $value ) {
 
-            if ( $isIndexed ) { $key = $value; }
+                if ( $isIndexed ) { $key = $value; }
 
-            $selected = (
-                            isset( $options['value'] )
-                            &&
-                            ! strcasecmp( $options['value'], $key )
-                        )
-                      ? 'selected="selected"'
-                      : NULL;
+                $selected = (
+                                isset( $options['value'] )
+                                &&
+                                ! strcasecmp( $options['value'], $key )
+                            )
+                          ? 'selected="selected"'
+                          : NULL;
 
-            $output .= "  <option value=\"$key\" $selected>$value</option>\n";
+                $output .= "  <option value=\"$key\" $selected>$value</option>\n";
+            }
+            
+        }
+        // options where given as preprocessed HTML;
+        // no checks are done here for this
+        elseif ( isset( $options['content'] ) ) {
+            $output .= $options['content'];
         }
 
         $output .= "</select>\n";
@@ -871,7 +906,7 @@ class wbFormBuilder extends wbBase {
     public function textarea ( $options ) {
 
         $label   = isset( $options['label'] )
-                 ? '<label class="fblabel" for="'.$options['name'].'">'.$options['label'].'</label>'
+                 ? '<label class="fblabel" for="'.$options['name'].'">'.$this->lang->translate( $options['label'] ).'</label>'
                  : '';
 
         $rows    = ( isset ( $options['rows'] ) && is_numeric( $options['rows'] ) )
@@ -968,7 +1003,7 @@ class wbFormBuilder extends wbBase {
      **/
     public function checkFormData( $options = array() ) {
 
-        $this->debug( 'checkFormData()', $options );
+        $this->log()->LogDebug( 'checkFormData()', $options );
 
         if ( isset( $options['include'] ) ) {
             $this->loadFile( $options );
@@ -987,7 +1022,7 @@ class wbFormBuilder extends wbBase {
         // validate
         foreach( array_merge( $this->_optional, $this->_required ) as $field => $i ) {
 
-            $this->debug( 'checking field '.$field );
+            $this->log()->LogDebug( 'checking field '.$field );
 
             if ( ! isset( $_POST[$field] ) ) {
                 continue;
@@ -997,7 +1032,7 @@ class wbFormBuilder extends wbBase {
 
         }
 
-    		$this->debug( 'errors: ', $this->_errors );
+    		$this->log()->LogDebug( 'errors: ', $this->_errors );
         
     		if ( count( $this->_errors ) == 0 ) {
             return true;
@@ -1033,11 +1068,11 @@ class wbFormBuilder extends wbBase {
             }
         }
 
-        $this->debug( 'getForm() _elements: ', $this->_elements );
-        $this->debug( 'getForm() _required: ', $this->_required );
-        $this->debug( 'getForm() _checks: '  , $this->_checks   );
-        $this->debug( 'getForm() _equals: '  , $this->_equals   );
-        $this->debug( 'getForm() _readonly: ', $this->_readonly );
+        $this->log()->LogDebug( 'getForm() _elements: ', $this->_elements );
+        $this->log()->LogDebug( 'getForm() _required: ', $this->_required );
+        $this->log()->LogDebug( 'getForm() _checks: '  , $this->_checks   );
+        $this->log()->LogDebug( 'getForm() _equals: '  , $this->_equals   );
+        $this->log()->LogDebug( 'getForm() _readonly: ', $this->_readonly );
 
         foreach ( $this->_hidden as $elem ) {
             $hidden[] = $elem['content'];
@@ -1255,16 +1290,18 @@ class wbFormBuilder extends wbBase {
     public function setFormType( $type ) {
 
         if ( $type == 'table' ) {
-            $this->setFormTemplate    ( 'form.table.tpl'        );
-            $this->setLegendTemplate  ( 'legend.table.tpl'      );
-            $this->setElementTemplate ( 'element.table.tpl'     );
-            $this->setInfotextTemplate( 'infotext.table.tpl'    );
+            $this->setFormTemplate    ( dirname(__FILE__).'/templates/form.table.tpl'        );
+            $this->setHeaderTemplate  ( dirname(__FILE__).'/templates/header.table.tpl'        );
+            $this->setLegendTemplate  ( dirname(__FILE__).'/templates/legend.table.tpl'      );
+            $this->setElementTemplate ( dirname(__FILE__).'/templates/element.table.tpl'     );
+            $this->setInfotextTemplate( dirname(__FILE__).'/templates/infotext.table.tpl'    );
         }
         else {
-            $this->setFormTemplate    ( 'form.fieldset.tpl '    );
-            $this->setLegendTemplate  ( 'legend.fieldset.tpl'   );
-            $this->setElementTemplate ( 'element.fieldset.tpl'  );
-            $this->setInfotextTemplate( 'infotext.fieldset.tpl' );
+            $this->setFormTemplate    ( dirname(__FILE__).'/templates/form.fieldset.tpl '    );
+            $this->setHeaderTemplate  ( dirname(__FILE__).'/templates/header.fieldset.tpl'        );
+            $this->setLegendTemplate  ( dirname(__FILE__).'/templates/legend.fieldset.tpl'   );
+            $this->setElementTemplate ( dirname(__FILE__).'/templates/element.fieldset.tpl'  );
+            $this->setInfotextTemplate( dirname(__FILE__).'/templates/infotext.fieldset.tpl' );
         }
 
     }   // end function setFormType()
@@ -1273,28 +1310,41 @@ class wbFormBuilder extends wbBase {
 		 * overload form template
 		 **/
     public function setFormTemplate( $tpl ) {
-        $this->_form_template = $this->slurp( dirname(__FILE__).'/templates/'.$tpl );
+        $text = $this->slurp( $tpl );
+        if ( $text ) {
+            $this->_form_template = $text;
+        }
     }   // end function setFormTemplate
+    
+    /**
+     * overload header template
+     **/
+    public function setHeaderTemplate( $tpl ) {
+        $text = $this->slurp( $tpl );
+        if ( $text ) {
+            $this->_form_header_template = $text;
+        }
+    }
 
     /**
 		 * overload header template
 		 **/
     public function setLegendTemplate( $tpl ) {
-        $this->_form_legend_template = $this->slurp( dirname(__FILE__).'/templates/'.$tpl );
+        $this->_form_legend_template = $this->slurp( $tpl );
     }   // end function setLegendTemplate
 
     /**
 		 * overload element template
 		 **/
     public function setElementTemplate( $tpl ) {
-        $this->_element_template = $this->slurp( dirname(__FILE__).'/templates/'.$tpl );
+        $this->_element_template = $this->slurp( $tpl );
     }   // function setElementTemplate
     
     /**
 		 * overload infotext template
 		 **/
     public function setInfotextTemplate( $tpl ) {
-        $this->_form_infotext_template = $this->slurp( dirname(__FILE__).'/templates/'.$tpl );
+        $this->_form_infotext_template = $this->slurp( $tpl );
     }   // end function setInfotextTemplate
 
     /**
@@ -1305,7 +1355,7 @@ class wbFormBuilder extends wbBase {
             $this->_error_style = $style;
         }
         else {
-            $this->debug( 'setErrorStyle(): invalid error style: ['.$style.']' );
+            $this->log()->LogDebug( 'setErrorStyle(): invalid error style: ['.$style.']' );
         }
     }   // end function setErrorStyle()
 
@@ -1340,7 +1390,7 @@ class wbFormBuilder extends wbBase {
             ? $options['value']
             : NULL;
             
-        $this->debug( 'value: '.$value );
+        $this->log()->LogDebug( 'value: '.$value );
 
         // make sure that we have an array of options
         $opt
@@ -1352,7 +1402,7 @@ class wbFormBuilder extends wbBase {
                   : array( $value )
               );
 
-        $this->debug( 'options array: ', $opt );
+        $this->log()->LogDebug( 'options array: ', $opt );
 
         // get list of checked boxes/radio buttons
         $checked
@@ -1364,7 +1414,7 @@ class wbFormBuilder extends wbBase {
                   : array()
               );
 
-        $this->debug( 'checked values: ', $checked );
+        $this->log()->LogDebug( 'checked values: ', $checked );
 
         // get list of labels
         $labels
@@ -1372,7 +1422,7 @@ class wbFormBuilder extends wbBase {
             ? $options['labels']
             : array();
 
-        $this->debug( 'labels (from labels key):', $labels );
+        $this->log()->LogDebug( 'labels (from labels key):', $labels );
 
         // let's see if we have an indexed array
         $isIndexed = array_values($opt) === $opt;
@@ -1394,7 +1444,7 @@ class wbFormBuilder extends wbBase {
                    ? $labels[ $key ]
                    : $name;
 
-            $this->debug( 'adding '.$type.' with name:', $name );
+            $this->log()->LogDebug( 'adding '.$type.' with name:', $name );
 
             $output .= $this->__createInput(
                            array(
@@ -1431,9 +1481,16 @@ class wbFormBuilder extends wbBase {
         if ( ! isset( $options['header'] ) || empty( $options['header'] ) ) {
             return NULL;
         }
-
+echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+var_export( $options['header'] );
+echo "</textarea>";
+        
         if ( ! is_array( $options['header'] ) ) {
-            return $this->lang->translate( $options['header'] );
+            return
+                $this->_tpl->parseString(
+                      $this->_form_header_template,
+                      array( 'content' => $this->lang->translate( $options['header'] ) )
+                );
         }
         else {
             return $this->lang->translate(
@@ -1565,7 +1622,7 @@ class wbFormBuilder extends wbBase {
 
             $output = array();
 
-            $this->debug(
+            $this->log()->LogDebug(
                 '__validateOptions() called with args:',
                 $options
             );
@@ -1580,7 +1637,7 @@ class wbFormBuilder extends wbBase {
 
                     if ( array_key_exists( $key, self::$_knownAttrs ) ) {
 
-                        $this->debug( 'found common attribute: '.$key );
+                        $this->log()->LogDebug( 'found common attribute: '.$key );
                         $is_valid = false;
 
                         if ( is_array( self::$_knownAttrs[ $key ] ) ) {
@@ -1594,16 +1651,16 @@ class wbFormBuilder extends wbBase {
                         }
 
                         if ( $is_valid ) {
-                            $this->debug( 'valid key '.$key );
+                            $this->log()->LogDebug( 'valid key '.$key );
                             $output[] = "$key=\"$value\"";
                         }
                         else {
-                            $this->debug( 'key '.$key.' has invalid content:', $value );
+                            $this->log()->LogDebug( 'key '.$key.' has invalid content:', $value );
                         }
 
                     }
                     else {
-                        $this->debug( 'invalid key '.$key );
+                        $this->log()->LogDebug( 'invalid key '.$key );
                     }
 
                 }
@@ -1648,10 +1705,10 @@ class wbFormBuilder extends wbBase {
 
         $is_error = NULL;
 
-        $this->debug( '__checkField(): '.$field );
+        $this->log()->LogDebug( '__checkField(): '.$field );
 
         if ( ! isset( $_POST[$field] ) || empty( $_POST[$field] ) ) {
-            $this->debug( 'no form data found' );
+            $this->log()->LogDebug( 'no form data found' );
             return;
         }
 
@@ -1659,7 +1716,7 @@ class wbFormBuilder extends wbBase {
 
             if ( is_array( $this->_checks[$field] ) ) {
 
-                $this->debug( 'array of valid values defined' );
+                $this->log()->LogDebug( 'array of valid values defined' );
 
                 if ( ! in_array( $_POST[$field], $this->_checks[$field] ) ) {
                     $is_error = isset( self::$_registered_elements[$field]['invalid'] )
@@ -1688,7 +1745,7 @@ class wbFormBuilder extends wbBase {
 
         }
         else {
-            $this->debug( '__checkField(): No checks defined for field: '.$field );
+            $this->log()->LogDebug( '__checkField(): No checks defined for field: '.$field );
         }
 
         if ( $is_error ) {
@@ -1761,14 +1818,14 @@ class wbFormBuilder extends wbBase {
         // check required
         foreach( $this->_required as $field => $i ) {
 
-            $this->debug( 'checking required field: '.$field );
+            $this->log()->LogDebug( 'checking required field: '.$field );
 
             if ( ! isset( $_POST[$field] ) || empty( $_POST[$field] ) ) {
 
-                $this->debug( 'no form data found, checking default value' );
+                $this->log()->LogDebug( 'no form data found, checking default value' );
 
                 if ( isset( self::$_registered_elements[ $field ]['default'] ) ) {
-                    $this->debug( 'setting default value: '. self::$_registered_elements[ $field ]['default'] );
+                    $this->log()->LogDebug( 'setting default value: '. self::$_registered_elements[ $field ]['default'] );
                     $_POST[$field] = self::$_registered_elements[ $field ]['default'];
                 }
                 elseif (
