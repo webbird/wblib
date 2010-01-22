@@ -28,6 +28,8 @@ class wbBase {
 
     // ----- Debugging -----
     protected        $debugLevel      = KLogger::OFF;
+    
+    protected        $workdir         = NULL;
 
     private static   $log             = NULL; // accessor to KLogger
     private static   $debugDir        = '/debug/log';
@@ -134,11 +136,14 @@ class wbBase {
         $paramstring = NULL;
         $path        = $base_url;
         $params      = array();
+        
+#echo "Base URL: -$base_url-<br />";
 
         // get params from $base_url
         if ( strstr( $base_url, '?' ) ) {
             list ( $path, $paramstring ) = explode( '?', $base_url );
         }
+#echo "PATH: -$path-<br />PARAMS: -$paramstring-<br />";
 
         $aParam = preg_split( "/[;&]/", $paramstring );
         if ( is_array( $aParam ) ) {
@@ -161,12 +166,9 @@ class wbBase {
             $carr[] = "$key=$value";
         }
 
-        /*
-
-        // get server name from WB_URL
         preg_match(
             "#(http(?:s)?://([^/].*?)+)/(.*)#",
-            WB_URL,
+            $base_url,
             $matches
         );
 
@@ -175,13 +177,15 @@ class wbBase {
                     ? $matches[1]
                     : '';
 
-        */
-
         // remove leading /
-        $path = preg_replace( "#^/+#", '', $path );
+        if ( $servername ) {
+            $path = preg_replace( "#^/+#", '', $path );
+        }
         
         $URI = $path . '?' . implode( '&', $carr );
         //$URI = array( implode( '/', array( $servername, $path ) ), $URI );
+
+#echo "URI: -$URI-<br />";
 
         return $URI;
 
@@ -194,9 +198,26 @@ class wbBase {
      *
      **/
     public function slurp ( $file ) {
+    
+        $text = NULL;
+        
+        // try to find the file
+        if ( ! file_exists( $file ) ) {
+            if ( isset( $this->workdir ) && file_exists( $this->workdir.'/'.$file ) ) {
+                $file = $this->workdir.'/'.$file;
+            }
+        }
+        
         // read the file
-        $text = implode( '', file( $file ) );
+        if ( file_exists( $file ) ) {
+            $text = implode( '', file( $file ) );
+        }
+        else {
+            $this->log()->LogDebug( "FILE $file NOT FOUND!<br />");
+        }
+        
         return $text;
+        
     }   // end function slurp()
     
 		/**
@@ -363,7 +384,7 @@ class wbBase {
              $caller[1]['line'], ' : ',
              $caller[1]['function'], "<br />\n";
 
-        if ( $this->_debug ) {
+        if ( $this->debugLevel < 6 ) {
             echo "<h2>Debug backtrace:</h2>\n",
                  "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
             print_r( debug_backtrace() );
