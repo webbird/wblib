@@ -187,7 +187,7 @@ $this->log()->LogDebug( 'current self::$_valid array:', self::$_valid );
             self::$_valid[ $varname ] =  self::$_tainted[ $varname ];
             unset(  self::$_tainted[ $varname ] );
             if ( isset( $options['stripped'] ) ) {
-                self::$_valid[ $varname ] = $this->__strip( $self->_valid[ $varname ] );
+                self::$_valid[ $varname ] = $this->__strip( self::$_valid[ $varname ] );
             }
             return self::$_valid[ $varname ];
         }
