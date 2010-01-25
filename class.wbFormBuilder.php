@@ -519,7 +519,7 @@ class wbFormBuilder extends wbBase {
   	public function addElement( $options ) {
 
   	    $this->log()->LogDebug(
-            'addElement() called with args:',
+            'called with args:',
             $options
         );
 
@@ -588,7 +588,7 @@ class wbFormBuilder extends wbBase {
   	public function insertElement( $position, $options ) {
 
   	    $this->log()->LogDebug(
-            'insertElement() called with args:',
+            'called with args:',
             array_merge(
                 $position,
                 $options
@@ -643,7 +643,7 @@ class wbFormBuilder extends wbBase {
   	public function replaceElement( $name, $options ) {
 
   	    $this->log()->LogDebug(
-            'replaceElement() called with args: name: '.$name,
+            'called with args: name: '.$name,
             $options
         );
 
@@ -679,7 +679,7 @@ class wbFormBuilder extends wbBase {
   	public function removeElement( $name ) {
 
   	    $this->log()->LogDebug(
-            'removeElement() called with args: name: '.$name,
+            'called with args: name: '.$name,
             $options
         );
 
@@ -694,6 +694,49 @@ class wbFormBuilder extends wbBase {
         return true;
 
     }   // end function removeElement()
+    
+    /**
+     * change/set element value at runtime
+     *
+     *
+     *
+     **/
+    public function setElementValue( $name, $value ) {
+    
+        $this->log()->LogDebug(
+            ' called with args: name: -'.$name.'- value: -'.$value.'-'
+        );
+        
+        if ( isset( self::$_registered_elements[ $name ] ) ) {
+            $elem    = & self::$_registered_elements[ $name ];
+            $arrName = '_elements';
+            if ( $elem['type'] == 'hidden' ) {
+                $arrName = '_hidden';
+            }
+        }
+        
+        // find given element
+        $path = $this->ArraySearchRecursive( $name, $this->{$arrName} );
+        
+        // element found
+        if ( is_array( $path ) ) {
+            // set value
+            $this->{$arrName}[ $path[0] ]['value']
+                = $value;
+            $elem['value']
+                = $value;
+            $this->{$arrName}[ $path[0] ]['content']
+                = $this->__createInput( $elem );
+                
+            $this->log()->LogDebug(
+                'setting $this->'.$arrName.'['.$path[0].'] to value '.$value
+            );
+        }
+
+        return true;
+    
+    }   // end function setElementValue()
+
 
     /**
      * add form buttons
@@ -930,7 +973,6 @@ class wbFormBuilder extends wbBase {
     }   // end function textarea()
     
     
-    
 /*******************************************************************************
 *                    FORM GENERATION/INITIALIZATION                            *
 *******************************************************************************/
@@ -1068,14 +1110,22 @@ class wbFormBuilder extends wbBase {
             }
         }
 
-        $this->log()->LogDebug( 'getForm() _elements: ', $this->_elements );
-        $this->log()->LogDebug( 'getForm() _required: ', $this->_required );
-        $this->log()->LogDebug( 'getForm() _checks: '  , $this->_checks   );
-        $this->log()->LogDebug( 'getForm() _equals: '  , $this->_equals   );
-        $this->log()->LogDebug( 'getForm() _readonly: ', $this->_readonly );
+        $this->log()->LogDebug( '_elements: ', $this->_elements );
+        $this->log()->LogDebug( '_hidden: '  , $this->_hidden   );
+        $this->log()->LogDebug( '_required: ', $this->_required );
+        $this->log()->LogDebug( '_checks: '  , $this->_checks   );
+        $this->log()->LogDebug( '_equals: '  , $this->_equals   );
+        $this->log()->LogDebug( '_readonly: ', $this->_readonly );
 
         foreach ( $this->_hidden as $elem ) {
             $hidden[] = $elem['content'];
+        }
+        
+        // there may be a key 'more_data' with some additional template data;
+        // this will only work with custom form templates!
+        $more_data = array();
+        if ( isset( $options['more_data'] ) ) {
+            $more_data = $options['more_data'];
         }
 
         // render form elements and add them to $elements array
@@ -1158,7 +1208,7 @@ class wbFormBuilder extends wbBase {
         // remove special attributes
         $options     = array_diff_key(
                            $options,
-                           array( 'table' => 1 )
+                           array( 'table' => 1, 'more_data' => 1 )
                        );
 
         // mix in form defaults to fill missing attributes
@@ -1194,12 +1244,13 @@ class wbFormBuilder extends wbBase {
                            array( 'marker' => '*' )
                        );
         }
-
+        
         // render the form
 			  $temp = $this->_tpl->parseString(
                     $this->_form_template,
                     array_merge(
                         $this->_form_css,
+                        $more_data,
                         array (
                             'header'
                                 => $this->__getFormHeader( $options ),
@@ -1355,7 +1406,7 @@ class wbFormBuilder extends wbBase {
             $this->_error_style = $style;
         }
         else {
-            $this->log()->LogDebug( 'setErrorStyle(): invalid error style: ['.$style.']' );
+            $this->log()->LogDebug( 'sinvalid error style: ['.$style.']' );
         }
     }   // end function setErrorStyle()
 
@@ -1605,6 +1656,8 @@ echo "</textarea>";
         $return  = '<input '
                  . $this->__validateOptions( $options )
                  . ' /> ';
+                 
+        $this->log()->LogDebug( 'created element:', $return );
 
         return $return;
 
@@ -1623,7 +1676,7 @@ echo "</textarea>";
             $output = array();
 
             $this->log()->LogDebug(
-                '__validateOptions() called with args:',
+                'called with args:',
                 $options
             );
 
@@ -1745,7 +1798,7 @@ echo "</textarea>";
 
         }
         else {
-            $this->log()->LogDebug( '__checkField(): No checks defined for field: '.$field );
+            $this->log()->LogDebug( 'No checks defined for field: '.$field );
         }
 
         if ( $is_error ) {
