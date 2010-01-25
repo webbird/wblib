@@ -960,7 +960,12 @@ class wbFormBuilder extends wbBase {
                  ? $options['cols']
                  : 100;
 
-        $content = "<textarea rows=\"$rows\" cols=\"$cols\" name=\"".$options['name']."\">"
+        $style   = NULL;
+        if ( isset( $this->_errors[ $options['name'] ] ) ) {
+            $style = ' style="'.$this->_error_style.'"';
+        }
+        
+        $content = "<textarea rows=\"$rows\" cols=\"$cols\" name=\"".$options['name']."\"{$style}>"
                  . $options['value']
                  . '</textarea>';
 
@@ -1532,9 +1537,6 @@ class wbFormBuilder extends wbBase {
         if ( ! isset( $options['header'] ) || empty( $options['header'] ) ) {
             return NULL;
         }
-echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
-var_export( $options['header'] );
-echo "</textarea>";
         
         if ( ! is_array( $options['header'] ) ) {
             return
