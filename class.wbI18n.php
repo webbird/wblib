@@ -28,6 +28,7 @@ class wbI18n extends wbBase {
 
     // ----- Debugging -----
     protected      $debugLevel    = KLOGGER::OFF;
+    #protected      $debugLevel    = KLOGGER::DEBUG;
 
     // default language file path; override with setPath()
     private        $_langPath     = '/languages';
@@ -41,7 +42,7 @@ class wbI18n extends wbBase {
     /**
      * constructor
      **/
-    public function __construct( $lang ) {
+    public function __construct( $lang = 'EN' ) {
         parent::__construct();
         self::$_current_lang = $lang;
         $this->init();
@@ -124,6 +125,8 @@ class wbI18n extends wbBase {
             }
 
         }
+        
+        $this->log()->LogDebug( 'language file does not exist: ', $file );
 
     }   // end function addFile ()
 		
@@ -177,9 +180,9 @@ class wbI18n extends wbBase {
     public function translate( $msg, $attr = array() ) {
 
         if ( empty( $msg ) || is_bool( $msg ) ) {
-            return NULL;
+            return $msg;
         }
-    
+
         if ( array_key_exists( $msg, self::$_lang ) ) {
             $msg = self::$_lang[$msg];
         }
