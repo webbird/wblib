@@ -303,7 +303,7 @@ class wbFormBuilder extends wbBase {
      **/
     public function loadFile( $options ) {
 
-        $this->log()->LogDebug( 'loadFile() called with options:', $options );
+        $this->log()->LogDebug( 'called with options:', $options );
 
         if ( isset( $options['include'] ) ) {
         
@@ -546,24 +546,14 @@ class wbFormBuilder extends wbBase {
   	 *
   	 **/
     public function addElements( $options, $current = array() ) {
+    
+        $this->log()->LogDebug( 'adding elements:', $options );
+    
+        foreach ( $options as $name => $item ) {
 
-        self::$_options = & $options;
-
-        foreach ( self::$_options as $name => $item ) {
-
-            $value = isset( $current[ $name ] )
-                   ? $current[ $name ]
-                   : NULL;
-
-            $item = array_merge(
-                        $item,
-                        array(
-                            'name'  => $name,
-                            'value' => $value
-                        )
-                    );
-
-            $this->__registerElement( $item );
+            $this->log()->LogDebug( 'adding element:', $item );
+            
+            $this->addElement( $item );
 
         }
 
@@ -746,7 +736,7 @@ class wbFormBuilder extends wbBase {
      **/
     public function addButtons( $options = array() ) {
 
-        $this->log()->LogDebug( 'addButtons()', $options );
+        $this->log()->LogDebug( $options );
 
         foreach ( $options as $opt ) {
 
@@ -1050,7 +1040,7 @@ class wbFormBuilder extends wbBase {
      **/
     public function checkFormData( $options = array() ) {
 
-        $this->log()->LogDebug( 'checkFormData()', $options );
+        $this->log()->LogDebug( $options );
 
         if ( isset( $options['include'] ) ) {
             $this->loadFile( $options );
@@ -1072,6 +1062,7 @@ class wbFormBuilder extends wbBase {
             $this->log()->LogDebug( 'checking field '.$field );
 
             if ( ! isset( $_POST[$field] ) ) {
+                $this->log()->LogDebug( 'no data found' );
                 continue;
             }
 
@@ -1321,6 +1312,9 @@ class wbFormBuilder extends wbBase {
      *
      **/
     public function reset() {
+    
+        $this->log()->LogDebug( 'resetting private arrays' );
+        
         $this->_elements = array();
         $this->_hidden   = array();
         $this->_buttons  = array();
@@ -1328,7 +1322,10 @@ class wbFormBuilder extends wbBase {
         $this->_optional = array();
         $this->_checks   = array();
         $this->_equal    = array();
-        $this->_valid   = array();
+        $this->_valid    = array();
+        
+        self::$_registered_elements = array();
+        self::$_options             = array();
 
     }   // end function reset()
     
@@ -1542,7 +1539,12 @@ class wbFormBuilder extends wbBase {
             return
                 $this->_tpl->parseString(
                       $this->_form_header_template,
-                      array( 'content' => $this->lang->translate( $options['header'] ) )
+                      array_merge(
+                          $this->_form_css,
+                          array(
+                              'content' => $this->lang->translate( $options['header'] ),
+                          )
+                      )
                 );
         }
         else {
@@ -1686,7 +1688,7 @@ class wbFormBuilder extends wbBase {
 
                 foreach ( $options as $key => $value ) {
 
-                    $value = ( ! empty( $value ) )
+                    $value = ( strlen( $value ) > 0 )
                            ? htmlentities( $this->lang->translate( $value ) )
                            : NULL;
 
@@ -1762,11 +1764,6 @@ class wbFormBuilder extends wbBase {
 
         $this->log()->LogDebug( '__checkField(): '.$field );
 
-        if ( ! isset( $_POST[$field] ) || empty( $_POST[$field] ) ) {
-            $this->log()->LogDebug( 'no form data found' );
-            return;
-        }
-
         if ( isset( $this->_checks[$field] ) ) {
 
             if ( is_array( $this->_checks[$field] ) ) {
@@ -1785,14 +1782,18 @@ class wbFormBuilder extends wbBase {
 
             }
             else {
+            
+                $this->log()->LogDebug( 'checking field with method '. $this->_checks[$field] );
 
                 if ( ! wbValidate::staticValidate( $this->_checks[$field], $_POST[$field] ) ) {
+                    $this->log()->LogDebug( 'invalid data for field '.$field );
                     $is_error = isset( self::$_registered_elements[$field]['invalid'] )
                               ? $this->lang->translate( self::$_registered_elements[$field]['invalid'] )
                               : $this->lang->translate( 'invalid' );
 
                 }
                 else {
+                    $this->log()->LogDebug( 'storing valid data for field '.$field, $_POST[$field] );
                     $this->_valid[$field] = $_POST[$field];
                 }
 
@@ -1875,7 +1876,7 @@ class wbFormBuilder extends wbBase {
 
             $this->log()->LogDebug( 'checking required field: '.$field );
 
-            if ( ! isset( $_POST[$field] ) || empty( $_POST[$field] ) ) {
+            if ( ! isset( $_POST[$field] ) || strlen( $_POST[$field] ) == 0 ) {
 
                 $this->log()->LogDebug( 'no form data found, checking default value' );
 
