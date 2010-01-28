@@ -32,30 +32,27 @@ class wbTemplate extends wbBase {
     
     // optional lang handler
     private   $_lang          = NULL;
-
-    // what to do if there are placeholders with no replacement
-    private   $_on_unknown    = 'remove';
-
-    // default template path; override with setPath()
-    private   $_templatePath  = '/templates';
-    
-    // template file; set with setTemplate()/setFile()
-    private   $_templateFile  = '';
-    
-    // start tag
-    private   $_start_tag     = '{{';
-    
-    // end tag
-    private   $_end_tag       = '}}';
     
     //
-    private   $_remove_blanks = true;
+    private   $_config
+        = array (
+              'unknowns'       => 'remove',
+              'path'           => '/templates',
+              'template'       => 'index.tpl',
+              'start_tag'      => '{{',
+              'end_tag'        => '}}',
+              'remove_blanks'  => true,
+          );
+
     
     // array to store already loaded templates
     private   $_loaded        = array();
     
     // array to store regexp
     private   $_regexp        = array();
+    
+    //
+    private   $_contents      = array();
 
     /**
      * constructor
@@ -63,16 +60,18 @@ class wbTemplate extends wbBase {
     function __construct ( $options = array() ) {
     
         parent::__construct();
-
-        if ( isset ( $options['start_tag'] ) ) {
-            $this->_start_tag = $options['start_tag'];
-        }
-        if ( isset ( $options['end_tag'] ) ) {
-            $this->_end_tag = $options['end_tag'];
-        }
         
+        foreach ( $this->_config as $key => $value ) {
+            if ( isset ( $options[$key] ) ) {
+                $this->_config[$key] = $options[$key];
+            }
+        }
+
         if ( isset ( $options['lang'] ) && is_object($options['lang']) ) {
             $this->_lang = $options['lang'];
+        }
+        else {
+            $this->_lang = new wbI18n();
         }
         
         $this->__defineRegExp();
@@ -84,77 +83,18 @@ class wbTemplate extends wbBase {
                              '%%end%%'
                          ),
                          array(
-                             $this->_start_tag,
-                             $this->_end_tag
+                             $this->_config['start_tag'],
+                             $this->_config['end_tag']
                          ),
                          $value
                       );
         }
         
     }   // end function __construct()
-    
-    /**
-     *
-     *
-     *
-     *
-     **/
-    private function __defineRegExp () {
-    
-        $loop_open  = '%%start%%\s*:loop(?!end)\s+([^%%end%%]*?)\s*%%end%%';
-        $loop_close = '%%start%%\s*:loopend\s*%%end%%';
-    
-        $this->_regexp = array(
-        
-            // ----- {{ :include <file> }} -----
-            'include'
-                => "/%%start%%\s*?:include\s*?(.*?)\s*?%%end%%/i",
-                
-            // ----- multiline comments -----
-            'html_comment'
-                => "/<!--\s*?BEGIN\s*?template\s*?comment\s*?-->(.+?)<!--\s*?END\s*?template\s*?comment\s*?-->/seix",
-            
-            // ----- simple comments -----
-            'simple_comment'
-                => "/%%start%%\s*?:comment.*?%%end%%/seix",
-                
-            // ----- if-else -----
-            'if'
-                => "/
-# {{ :if anything }}
-%%start%% \s*? :if(?!end) \b([^%%end%%]*) \s*? %%end%%
-# not followed by another opening (innermost)
-(?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% )
-(
-  (?: [\S\s] (?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% ) )
-  *?
-)
-# {{ :ifend }} (innermost)
-%%start%% \s*? :ifend \s*? %%end%%
-/seix",
 
-            'if_subpat'
-                => "/%%start%% \s*? :else \s*? %%end%%/seix",
-                
-            // ----- {{ :lang <string> }} -----
-            'lang'
-                => "/%%start%%\s*?:(?:lang|translate)\s*?(.*?)%%end%%/seix",
-                
-            // ----- simple placeholders -----
-            'var'
-                => '/%%start%%\s*([^%%start%%].*?)\s*%%end%%/e',
-                
-            // all
-            'all'
-                => '/%%start%%\s*?(.*?)%%end%%/',
-
-            // ----- loops - this finds all "root level" loops -----
-            'loop'
-                => "/%%start%% \s*? :loop(?!end) \b([^%%end%%]*) \s*? %%end%% (?! %%start%% \s*? :loop(?!end) \b[^%%end%%]* \s*? %%end%% ) ( (?: [\S\s] (?! %%start%% \s*? :loop(?!end) \b[^%%end%%]* \s*? %%end%% ) ) *? ) %%start%% \s*? :loopend \s*? %%end%%/seix",
-
-        );
-
-    }   // end function __defineRegExp()
+/*******************************************************************************
+ * Configuration helpers
+ ******************************************************************************/
     
     /**
      * set behaviour for unknown params
@@ -175,7 +115,7 @@ class wbTemplate extends wbBase {
             case 'fail':
             case 'remove':
             case 'comment':
-                $this->_on_unknown = $behaviour;
+                $this->_config['unknowns'] = $behaviour;
                 break;
             
             default:
@@ -195,7 +135,7 @@ class wbTemplate extends wbBase {
   	 **/
     public function setPath ( $path ) {
         if ( file_exists( $path ) ) {
-            $this->_templatePath = $path;
+            $this->_config['path'] = $path;
         }
         else {
             $this->printError( 'template path does not exist: '.$path );
@@ -211,13 +151,13 @@ class wbTemplate extends wbBase {
   	 *
   	 **/
     public function setFile ( $file ) {
-        if ( file_exists( $this->_templatePath.'/'.$file ) ) {
-            $this->_templateFile = $file;
-            $fileContents = $this->slurp( $this->_templatePath.'/'.$file );
+        if ( file_exists( $this->_config['path'].'/'.$file ) ) {
+            $this->_config['template'] = $file;
+            $fileContents = $this->slurp( $this->_config['path'].'/'.$file );
             $this->_loaded[ $file ] = $fileContents;
         }
         else {
-            $this->printError( 'template file does not exist: '.$this->_templatePath.'/'.$file );
+            $this->printError( 'template file does not exist: '.$this->_config['path'].'/'.$file );
         }
     }   // end function setFile ()
     
@@ -227,6 +167,52 @@ class wbTemplate extends wbBase {
     public function setTemplate ( $file ) {
         return $this->setFile( $file );
     }   // end function setTemplate()
+    
+    /**
+     *
+     **/
+    public function setLangHandler( $lang ) {
+        if ( is_object($lang) ) {
+            $this->_lang = $lang;
+        }
+    }   // end function setLangHandler()
+    
+
+/*******************************************************************************
+ *
+ ******************************************************************************/
+ 
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function setVal( $var, $value = NULL ) {
+        return $this->set( $var, $value );
+    }   // end function setVal()
+ 
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function set( $var, $value = NULL ) {
+    
+        if ( ! is_array( $var ) && isset( $value ) ) {
+           $this->_contents[ $var ] = $value;
+           return;
+        }
+        
+        if ( is_array( $var ) ) {
+            foreach ( $var as $k => $v ) {
+                $this->_contents[ $k ] = $v;
+            }
+        }
+    
+    }  // end function set()
+    
     
     /**
   	 * get template contents
@@ -260,13 +246,13 @@ class wbTemplate extends wbBase {
     public function parseTemplate( $contents ) {
     
         if (
-               isset( $this->_templateFile )
+               isset( $this->_config['template'] )
                &&
-               isset( $this->_loaded[ $this->_templateFile ] )
+               isset( $this->_loaded[ $this->_config['template'] ] )
         ) {
 
             $text = $this->parseString(
-                        $this->_loaded[ $this->_templateFile ],
+                        $this->_loaded[ $this->_config['template'] ],
                         $contents
                     );
             return $text;
@@ -300,6 +286,13 @@ class wbTemplate extends wbBase {
 
         if ( empty( $string ) ) {
             $this->printError( 'missing string to parse!' );
+        }
+        
+        // let's see if we have globally stored contents
+        if ( count( $this->_contents ) > 0 ) {
+            // add them to $aArray
+            $this->log()->LogDebug( 'adding pre-stored contents', $this->_contents );
+            $aArray = array_merge ( $aArray, $this->_contents );
         }
 
         // ----- remove comments -----
@@ -338,7 +331,7 @@ class wbTemplate extends wbBase {
         $this->log()->LogDebug( 'remaining string: ', $string );
 
         // remove multiple blank lines ("holes")
-        if ( $this->_remove_blanks ) {
+        if ( $this->_config['remove_blanks']=== true ) {
             $string = preg_replace( "/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]{2,}/s", '', $string );
         }
 
@@ -392,7 +385,7 @@ class wbTemplate extends wbBase {
             // for all includes...
             foreach ( $cond as $item ) {
 
-                $file = $this->_templatePath.'/'.trim( $item[1] );
+                $file = $this->_config['path'].'/'.trim( $item[1] );
 
                 if ( file_exists( $file ) ) {
                 
@@ -436,7 +429,7 @@ class wbTemplate extends wbBase {
      **/
     private function __handleUnknowns ( $aStr ) {
 
-        if ( $this->_on_unknown     == 'remove' ) {
+        if ( $this->_config['unknowns']     == 'remove' ) {
 
             // remove empty
             $aStr = preg_replace(
@@ -446,7 +439,7 @@ class wbTemplate extends wbBase {
                     );
 
         }
-        elseif ( $this->_on_unknown == 'comment' ) {
+        elseif ( $this->_config['unknowns'] == 'comment' ) {
 
             // replace empty with comment
             $aStr = preg_replace(
@@ -456,12 +449,12 @@ class wbTemplate extends wbBase {
                     );
 
         }
-        elseif ( $this->_on_unknown == 'fail' ) {
+        elseif ( $this->_config['unknowns'] == 'fail' ) {
 
             if ( preg_match( "/{{\s(.*)\s}}/", $aStr, $unknowns ) ) {
 
                 $this->printError(
-                    'Unresolved placeholders found in template '. $this->_templateFile,
+                    'Unresolved placeholders found in template '. $this->_config['template'],
                     $unknowns
                 );
 
@@ -618,11 +611,12 @@ class wbTemplate extends wbBase {
               . '? $loop[trim("$1")] '
               . ': ( '
               .     '  ( strlen("$1") > 8 && ! substr_compare( "$1", "__loop__", 0, 8 ) ) '
-              .     '? $this->recurse( $loops[substr("$1",8)], $loops, $loop, false )'
+              .     '? $this->__recurseLoop( $loops[substr("$1",8)], $loops, $loop, false )'
               .     ': "$0"'
               . '  )';
 
-            #$string = $this->recurse( $string, $loops, $aArray );
+            $loop_counter = 1;
+            
             foreach ( $loops as $key => $val ) {
 
                 if ( isset( $aArray[ $key ] ) && is_array( $aArray[ $key ] ) ) {
@@ -641,10 +635,18 @@ class wbTemplate extends wbBase {
 
                             // replace vars in current (remaining) line
                             $out .= preg_replace(
-                                            $this->_regexp['var'],
-                                            $code,
+                                            array(
+                                                $this->_regexp['var'],
+                                                $this->_regexp['loopcounter']
+                                            ),
+                                            array(
+                                                $code,
+                                                $loop_counter
+                                            ),
                                             $val
                                         );
+
+                             $loop_counter++;
 
                         }
 
@@ -668,81 +670,6 @@ class wbTemplate extends wbBase {
         return $string;
         
     }   // end sub __handleLoops()
-    
-    /***
-     *
-     *
-     *
-     *
-     **/
-    function recurse ( $string, $loops, $aArray, $return_string = true ) {
-    
-        $out = NULL;
-    
-        if ( ! is_array( $loops ) ) {
-            return $string;
-        }
-
-        $code = '  isset( $loop[trim("$1")] ) '
-              . '? $loop[trim("$1")] '
-              . ': ( '
-              .     '  ( strlen("$1") > 8 && ! substr_compare( "$1", "__loop__", 0, 8 ) ) '
-              .     '? $this->recurse( $loops[substr("$1",8)], $loops, $loop, false )'
-              .     ': "$0"'
-              . '  )';
-
-        foreach ( $aArray as $key => $value ) {
-
-            if ( isset ( $loops[$key] ) ) {
-            
-                $this->log()->LogDebug( 'found loop for key '.$key );
-                $this->log()->LogDebug( 'aArray data: ', $aArray[ $key ] );
-            
-                if ( is_array( $aArray[ $key ] ) ) {
-
-                    $out  = '';
-
-                    // parse loop
-                    foreach ( $aArray[ $key ] as $loop ) {
-                    
-                        if ( is_array( $loop ) ) {
-
-                            $this->log()->LogDebug( 'current loop data: ', $loop );
-                            
-                            // handle {{ :if }} inside {{ :loop }}
-                            #$text = $this->__handleIf( $loops[$key], $loop );
-                            $text = $loops[$key];
-
-                            // replace vars in current (remaining) line
-                            $out .= preg_replace(
-                                            $this->_regexp['var'],
-                                            $code,
-                                            $text
-                                        );
-
-                        }
-
-                    }
-                    
-                    if ( $return_string ) {
-                        return str_replace(
-                            "{{ __loop__{$key} }}",
-                            $out,
-                            $string
-                        );
-                    }
-
-                }
-                
-            }
-            
-
-            
-        }
-
-        return $out;
-
-    }
     
     /**
      * handle {{ :lang <Text> }} directives
@@ -786,5 +713,143 @@ class wbTemplate extends wbBase {
         return $string;
     
     }   // end function __handleComments()
+    
+    /***
+     *
+     *
+     *
+     *
+     **/
+    function __recurseLoop ( $string, $loops, $aArray, $return_string = true ) {
+
+        $out = NULL;
+
+        if ( ! is_array( $loops ) ) {
+            return $string;
+        }
+
+        $code = '  isset( $loop[trim("$1")] ) '
+              . '? $loop[trim("$1")] '
+              . ': ( '
+              .     '  ( strlen("$1") > 8 && ! substr_compare( "$1", "__loop__", 0, 8 ) ) '
+              .     '? $this->__recurseLoop( $loops[substr("$1",8)], $loops, $loop, false )'
+              .     ': "$0"'
+              . '  )';
+
+        foreach ( $aArray as $key => $value ) {
+
+            if ( isset ( $loops[$key] ) ) {
+
+                $this->log()->LogDebug( 'found loop for key '.$key );
+                $this->log()->LogDebug( 'aArray data: ', $aArray[ $key ] );
+
+                if ( is_array( $aArray[ $key ] ) ) {
+
+                    $out  = '';
+
+                    // parse loop
+                    foreach ( $aArray[ $key ] as $loop ) {
+
+                        if ( is_array( $loop ) ) {
+
+                            $this->log()->LogDebug( 'current loop data: ', $loop );
+
+                            // handle {{ :if }} inside {{ :loop }}
+                            #$text = $this->__handleIf( $loops[$key], $loop );
+                            $text = $loops[$key];
+
+                            // replace vars in current (remaining) line
+                            $out .= preg_replace(
+                                            $this->_regexp['var'],
+                                            $code,
+                                            $text
+                                        );
+
+                        }
+
+                    }
+
+                    if ( $return_string ) {
+                        return str_replace(
+                            "{{ __loop__{$key} }}",
+                            $out,
+                            $string
+                        );
+                    }
+
+                }
+
+            }
+
+
+
+        }
+
+        return $out;
+
+    }   // end function __recurseLoop()
+    
+    /**
+     * regular expressions for template parsing
+     *
+     * @access private
+     * @return void
+     *
+     **/
+    private function __defineRegExp () {
+
+        $loop_open  = '%%start%%\s*:loop(?!end)\s+([^%%end%%]*?)\s*%%end%%';
+        $loop_close = '%%start%%\s*:loopend\s*%%end%%';
+
+        $this->_regexp = array(
+
+            // ----- {{ :include <file> }} -----
+            'include'
+                => "/%%start%%\s*?:include\s*?(.*?)\s*?%%end%%/i",
+
+            // ----- multiline comments -----
+            'html_comment'
+                => "/<!--\s*?BEGIN\s*?template\s*?comment\s*?-->(.+?)<!--\s*?END\s*?template\s*?comment\s*?-->/seix",
+
+            // ----- simple comments -----
+            'simple_comment'
+                => "/%%start%%\s*?:comment.*?%%end%%/seix",
+
+            // ----- if-else -----
+            'if'
+                => "/%%start%% \s*? :if(?!end) \b([^%%end%%]*) \s*? %%end%%
+                    (?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% )
+                    (
+                      (?: [\S\s] (?! %%start%% \s*? :if(?!end) \b[^%%end%%]* \s*? %%end%% ) )
+                      *?
+                    )
+                    %%start%% \s*? :ifend \s*? %%end%%
+                    /seix",
+
+            'if_subpat'
+                => "/%%start%% \s*? :else \s*? %%end%%/seix",
+
+            // ----- {{ :lang <string> }} -----
+            'lang'
+                => "/%%start%%\s*?:(?:lang|translate)\s*?(.*?)%%end%%/seix",
+
+            // ----- simple placeholders -----
+            'var'
+                => '/%%start%%\s*([^%%start%%].*?)\s*%%end%%/e',
+
+            // all
+            'all'
+                => '/%%start%%\s*?(.*?)%%end%%/',
+
+            // ----- loops - this finds all "root level" loops -----
+            'loop'
+                => "/%%start%% \s*? :loop(?!end) \b([^%%end%%]*) \s*? %%end%% (?! %%start%% \s*? :loop(?!end) \b[^%%end%%]* \s*? %%end%% ) ( (?: [\S\s] (?! %%start%% \s*? :loop(?!end) \b[^%%end%%]* \s*? %%end%% ) ) *? ) %%start%% \s*? :loopend \s*? %%end%%/seix",
+
+            'loopcounter'
+                => "/%%start%% \s*? __counter__ \s*? %%end%%/six",
+
+        );
+
+    }   // end function __defineRegExp()
 
 }
