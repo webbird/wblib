@@ -29,16 +29,44 @@ class wbBase {
     // ----- Debugging -----
     protected        $debugLevel      = KLogger::OFF;
     
-    protected        $workdir         = NULL;
+    // array to store config options
+    protected        $_config         = array();
+    
+    // array to store already loaded files
+    protected        $_loaded         = array();
+    
+    // accessor to KLogger
+    protected        $logObj          = NULL;
 
-    private static   $log             = NULL; // accessor to KLogger
+
     private static   $debugDir        = '/debug/log';
     private static   $_url            = NULL;
+    
+    protected        $lang            = NULL; // accessor to wbI18n
     
     /**
      * constructor
      **/
-    public function __construct () {
+    public function __construct ( $options = array() ) {
+    
+        if ( is_array( $options ) ) {
+            $this->config( $options );
+        }
+
+        // get current working directory
+        $callstack = debug_backtrace();
+        $this->_config['workdir']
+            = ( isset( $callstack[0] ) && isset( $callstack[0]['file'] ) )
+            ? realpath( dirname( $callstack[0]['file'] ) )
+            : realpath( dirname(__FILE__) );
+            
+        if (
+             isset( $this->_config['path'] )
+             &&
+             file_exists( $this->_config['workdir'].'/'.$this->_config['path'] )
+        ) {
+            $this->setPath( $this->_config['workdir'].'/'.$this->_config['path'] );
+        }
 
         // create logger instance
         if ( property_exists( get_class($this), 'debugDir' ) ) {
@@ -50,18 +78,56 @@ class wbBase {
             $this->debugDir = realpath( dirname(__FILE__) ).self::$debugDir;
         }
 
-        $this->log
-            = new KLogger(
-                  $this->debugDir.'/'.get_class($this).'.log' ,
-                  $this->debugLevel,
-                  true
-              );
+#        $this->log
+#            = new KLogger(
+#                  $this->debugDir.'/'.get_class($this).'.log',
+#                  $this->debugLevel,
+#                  true
+#              );
+
+        // create language object
+        if ( isset ( $options['lang'] ) && is_object($options['lang']) ) {
+            $this->lang = $options['lang'];
+            $this->lang->addFile(
+                $this->lang->getLang().'.php',
+                realpath( dirname(__FILE__) ).'/'.get_class($this).'/languages'
+            );
+        }
+
     }
 
     /**
   	 * Prevent cloning of the object (Singleton)
   	 */
   	final private function __clone() {}
+  	
+  	/**
+  	 *
+  	 *
+  	 *
+  	 *
+  	 **/
+    public function translate( $msg, $attr = array() ) {
+        if ( ! is_object ( $this->lang ) ) {
+            require_once dirname( __FILE__ ).'/class.wbI18n.php';
+            $this->lang = new wbI18n();
+            $this->lang->addFile(
+                $this->lang->getLang().'.php',
+                realpath( dirname(__FILE__) ).'/'.get_class($this).'/languages'
+            );
+        }
+        return $this->lang->translate( $msg, $attr );
+    }   // end function translate()
+
+    /**
+     *
+     **/
+    public function setLangHandler( $lang ) {
+        if ( is_object($lang) ) {
+            $this->lang = $lang;
+        }
+    }   // end function setLangHandler()
+
   	
   	/**
   	 * Accessor to KLogger class; this makes using the class significant faster!
@@ -71,12 +137,12 @@ class wbBase {
   	 *
   	 **/
   	public function log () {
-  	
+
         if ( $this->debugLevel < 6 ) {
-        
-            if ( ! is_object( self::$log ) ) {
+
+            if ( ! is_object( $this->logObj ) ) {
                 
-                self::$log
+                $this->logObj
                     = new KLogger(
                           $this->debugDir.'/'.get_class($this).'.log' ,
                           $this->debugLevel,
@@ -84,7 +150,7 @@ class wbBase {
                       );
             }
             
-            return self::$log;
+            return $this->logObj;
             
         }
 
@@ -102,7 +168,147 @@ class wbBase {
   	public function LogDebug () {
         return;
     }   // end function LogDebug ()
+    
+  	/**
+  	 * set path
+  	 *
+  	 * @access public
+  	 * @param  string   $path  - new path (must exist!)
+  	 * @return void
+  	 *
+  	 **/
+    public function setPath ( $path ) {
+        if ( file_exists( $path ) ) {
+            $this->_config['path'] = $path;
+        }
+        else {
+            $this->printError( 'path does not exist: '.$path );
+        }
+    }   // end function setPath ()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getPath() {
+        return $this->_config['path'];
+    }
+    
+    /**
+     * this is an alias for setFile()
+     *
+     * @access public
+     * @param  string  $file - file to load
+     * @param  string  $path - ignored
+     * @param  string  $var  - var name (default: $FORMS)
+     *
+     **/
+    public function addFile( $file, $path = NULL, $var = NULL ) {
+        return $this->setFile( $file, $path, $var );
+    }   // end function addFile()
 
+  	/**
+  	 * set current file
+  	 *
+  	 * @access public
+  	 * @param  string   $file  - filename (must exist in current path!)
+  	 * @param  string   $path  - optional path to load from
+  	 * @param  string   $var   - var name (ignored here; overload method to use)
+  	 * @return void
+  	 *
+  	 **/
+    public function setFile ( $file, $path = NULL, $var = NULL ) {
+    
+        if ( isset( $var ) ) {
+            $set->_config['var'] = $var;
+        }
+
+        // array of locations to search for $file
+        $try = array(
+                   $file,
+                   $this->_config['path'].'/'.$file,
+                   $this->_config['workdir'].'/'.$file
+               );
+               
+        // add $path to search array if set
+        if ( isset ( $path ) && file_exists( $path ) ) {
+            array_unshift( $try, $path.'/'.$file );
+        }
+               
+        foreach ( $try as $filename ) {
+        
+            $this->log()->LogDebug(
+                'trying to find: -'.$filename.'-'
+            );
+        
+            if ( file_exists( $filename ) ) {
+            
+                $this->log()->LogDebug( 'found!' );
+            
+                // store current file name
+                $this->_config['current_filename'] = $file;
+                
+                // store current real file name (incl. path)
+                $this->_config['current_file']     = $filename;
+                
+                // load file and store contents
+                $fileContents = $this->slurp( $filename );
+                $this->_loaded[ $file ] = $fileContents;
+                #$this->log()->LogDebug( 'file contents:', $fileContents );
+                
+                break;
+                
+            }
+        }
+        
+        #if ( ! isset( $this->_loaded[ $file ] ) ) {
+        #    $this->printError( 'file not found: '.$file, $try );
+        #}
+        
+    }   // end function setFile ()
+
+    /**
+     * set config values
+     *
+     * First param $option can be an array or a string;
+     * if a string is given, $value must be set, too.
+     * Otherwise, the contents of $option array are added to internal
+     * _config array. Keys that already exist are replaced.
+     *
+     * @access public
+     * @param  string   $option
+     * @param  string   $value
+     * @return void
+     *
+     **/
+    public function set ( $option, $value = NULL ) {
+    
+        if ( is_array( $option ) ) {
+            $this->_config = array_merge(
+                                 $this->_config,
+                                 $option
+                             );
+        }
+        else {
+            $this->_config[$option] = $value;
+        }
+        
+    }   // end function set()
+    
+    /**
+     * Alias for set()
+     *
+     * @access public
+     * @param  string   $option
+     * @param  string   $value
+     * @return void
+     *
+     **/
+    public function config( $option, $value = NULL ) {
+       return $this->set( $option, $value );
+    }   // end function config()
   	
   	/**
   	 *
@@ -203,8 +409,12 @@ class wbBase {
         
         // try to find the file
         if ( ! file_exists( $file ) ) {
-            if ( isset( $this->workdir ) && file_exists( $this->workdir.'/'.$file ) ) {
-                $file = $this->workdir.'/'.$file;
+            if (
+                 isset( $this->_config['workdir'] )
+                 &&
+                 file_exists( $this->_config['workdir'].'/'.$file )
+            ) {
+                $file = $this->_config['workdir'].'/'.$file;
             }
         }
         
