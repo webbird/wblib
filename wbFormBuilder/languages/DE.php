@@ -24,9 +24,20 @@
 
 $LANG = array(
 
-// FormBuilder
     'Required items are marked with {{ marker }}'
         => 'Pflichtfelder sind mit {{ marker }} gekennzeichnet',
+        
+    '<br /><br />Forms defined:<br />{{ forms }}<br /><br />'
+        => '<br /><br />Definierte Formulare:<br />{{ forms }}<br /><br />',
+        
+    'No such form: [{{ formname }}]; did you forget to load it?'
+        => 'Formular [{{ formname }}] nicht gefunden; haben Sie vielleicht vergessen, es zu laden?',
+        
+    'Please insert a value'
+        => 'Bitte f&uuml;llen Sie das Feld aus',
+        
+    'Submit' => 'Absenden',
+    'Reset'  => 'Zur&uuml;cksetzen',
 );
 
 ?>

@@ -1,0 +1,1 @@
+    <input{{ :if attributes }} {{ attributes }}{{ :ifend }} />
