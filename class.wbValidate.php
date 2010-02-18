@@ -22,60 +22,26 @@
 
 **/
 
-// any string that doesn't have control characters (ASCII 0 - 31) - spaces allowed
-define( 'PCRE_STRING'      , '/^[^\x-\x1F]+$/' );
-
-// alphanum (letters and numbers only), no spaces allowed
-define( 'PCRE_ALPHANUM'    , '/^[A-Za-z0-9]+$/'  );
-
-// alphanum + underscore
-define( 'PCRE_ALPHANUM_EXT', '/^[a-zA-Z0-9_]+$/'  );
-
-// integer
-define( 'PCRE_INT'         , "/^[0-9]+$/"      );
-
-// CSS style definition
-define( 'PCRE_STYLE'       , "/^[a-zA-Z0-9\:\;\s\#\-]*$/" );
-
-// Email address (anchored; no consecutive dots)
-// excluding addresses with consecutive dots such as john@aol...com
-// Does not match email addresses using an IP address instead of a domain name.
-// Does not match email addresses on new-fangled top-level domains with more than 4 letters such as .museum.
-define( 'PCRE_EMAIL'       , '/^[A-Za-z0-9._%-]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,4}$/' );
-
-// Checking password complexity
-// This regular expression will tests if the input consists of 6 or more letters, digits, underscores and hyphens.
-// The input must contain at least one upper case letter, one lower case letter and one digit.
-define( 'PCRE_PASSWORD'    , "/^\A(?=[\.,;\:&\"\'\?\!\(\)a-zA-Z0-9]*?[A-Z])(?=[\.,;\:&\"\'\?\!\(\)a-zA-Z0-9]*?[a-z])(?=[\.,;\:&\"\'\?\!\(\)a-zA-Z0-9]*?[0-9])\S{6,}\z$/" );
-
-// URL
-$pattern = "#(?:http://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?)(?:/(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;:@&=])*)(?:/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;:@&=])*))*)(?:\?(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;:@&=])*))?)?)|(?:ftp://(?:(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;?&=])*)(?::(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;?&=])*))?@)?(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?))(?:/(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[?:@&=])*)(?:/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[?:@&=])*))*)(?:;type=[AIDaid])?)?)|(?:news:(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;/?:&=])+@(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3})))|(?:[a-zA-Z](?:[a-zA-Z\d]|[_.+-])*)|\*))|(?:nntp://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?)/(?:[a-zA-Z](?:[a-zA-Z\d]|[_.+-])*)(?:/(?:\d+))?)|(?:telnet://(?:(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;?&=])*)(?::(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;?&=])*))?@)?(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?))/?)|(?:gopher://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?)(?:/(?:[a-zA-Z\d$\-_.+!*'(),;/?:@&=]|(?:%[a-fA-F\d]{2}))(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),;/?:@&=]|(?:%[a-fA-F\d]{2}))*)(?:%09(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;:@&=])*)(?:%09(?:(?:[a-zA-Z\d$\-_.+!*'(),;/?:@&=]|(?:%[a-fA-F\d]{2}))*))?)?)?)?)|(?:wais://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?)/(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))*)(?:(?:/(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))*)/(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))*))|\?(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;:@&=])*))?)|(?:mailto:(?:(?:[a-zA-Z\d$\-_.+!*'(),;/?:@&=]|(?:%[a-fA-F\d]{2}))+))|(?:file://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))|localhost)?/(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[?:@&=])*)(?:/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[?:@&=])*))*))|(?:prospero://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?)/(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[?:@&=])*)(?:/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[?:@&=])*))*)(?:(?:;(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[?:@&])*)=(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[?:@&])*)))*)|(?:ldap://(?:(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?))?/(?:(?:(?:(?:(?:(?:(?:[a-zA-Z\d]|%(?:3\d|[46][a-fA-F\d]|[57][Aa\d]))|(?:%20))+|(?:OID|oid)\.(?:(?:\d+)(?:\.(?:\d+))*))(?:(?:%0[Aa])?(?:%20)*)=(?:(?:%0[Aa])?(?:%20)*))?(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))*))(?:(?:(?:%0[Aa])?(?:%20)*)\+(?:(?:%0[Aa])?(?:%20)*)(?:(?:(?:(?:(?:[a-zA-Z\d]|%(?:3\d|[46][a-fA-F\d]|[57][Aa\d]))|(?:%20))+|(?:OID|oid)\.(?:(?:\d+)(?:\.(?:\d+))*))(?:(?:%0[Aa])?(?:%20)*)=(?:(?:%0[Aa])?(?:%20)*))?(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))*)))*)(?:(?:(?:(?:%0[Aa])?(?:%20)*)(?:[;,])(?:(?:%0[Aa])?(?:%20)*))(?:(?:(?:(?:(?:(?:[a-zA-Z\d]|%(?:3\d|[46][a-fA-F\d]|[57][Aa\d]))|(?:%20))+|(?:OID|oid)\.(?:(?:\d+)(?:\.(?:\d+))*))(?:(?:%0[Aa])?(?:%20)*)=(?:(?:%0[Aa])?(?:%20)*))?(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))*))(?:(?:(?:%0[Aa])?(?:%20)*)\+(?:(?:%0[Aa])?(?:%20)*)(?:(?:(?:(?:(?:[a-zA-Z\d]|%(?:3\d|[46][a-fA-F\d]|[57][Aa\d]))|(?:%20))+|(?:OID|oid)\.(?:(?:\d+)(?:\.(?:\d+))*))(?:(?:%0[Aa])?(?:%20)*)=(?:(?:%0[Aa])?(?:%20)*))?(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))*)))*))*(?:(?:(?:%0[Aa])?(?:%20)*)(?:[;,])(?:(?:%0[Aa])?(?:%20)*))?)(?:\?(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))+)(?:,(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))+))*)?)(?:\?(?:base|one|sub)(?:\?(?:((?:[a-zA-Z\d$\-_.+!*'(),;/?:@&=]|(?:%[a-fA-F\d]{2}))+)))?)?)?)|(?:(?:z39\.50[rs])://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?)(?:/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))+)(?:\+(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))+))*(?:\?(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))+))?)?(?:;esn=(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))+))?(?:;rs=(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))+)(?:\+(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))+))*)?))|(?:cid:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;?:@&=])*))|(?:mid:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;?:@&=])*)(?:/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[;?:@&=])*))?)|(?:vemmi://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?)(?:/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[/?:@&=])*)(?:(?:;(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[/?:@&])*)=(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[/?:@&])*))*))?)|(?:imap://(?:(?:(?:(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[&=~])+)(?:(?:;[Aa][Uu][Tt][Hh]=(?:\*|(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[&=~])+))))?)|(?:(?:;[Aa][Uu][Tt][Hh]=(?:\*|(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[&=~])+)))(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[&=~])+))?))@)?(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?))/(?:(?:(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[&=~:@/])+)?;[Tt][Yy][Pp][Ee]=(?:[Ll](?:[Ii][Ss][Tt]|[Ss][Uu][Bb])))|(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[&=~:@/])+)(?:\?(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[&=~:@/])+))?(?:(?:;[Uu][Ii][Dd][Vv][Aa][Ll][Ii][Dd][Ii][Tt][Yy]=(?:[1-9]\d*)))?)|(?:(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[&=~:@/])+)(?:(?:;[Uu][Ii][Dd][Vv][Aa][Ll][Ii][Dd][Ii][Tt][Yy]=(?:[1-9]\d*)))?(?:/;[Uu][Ii][Dd]=(?:[1-9]\d*))(?:(?:/;[Ss][Ee][Cc][Tt][Ii][Oo][Nn]=(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),]|(?:%[a-fA-F\d]{2}))|[&=~:@/])+)))?)))?)|(?:nfs:(?:(?://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*(?:[a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(?:\d+))?)(?:(?:/(?:(?:(?:(?:(?:[a-zA-Z\d\$\-_.!~*'(),])|(?:%[a-fA-F\d]{2})|[:@&=+])*)(?:/(?:(?:(?:[a-zA-Z\d\$\-_.!~*'(),])|(?:%[a-fA-F\d]{2})|[:@&=+])*))*)?)))?)|(?:/(?:(?:(?:(?:(?:[a-zA-Z\d\$\-_.!~*'(),])|(?:%[a-fA-F\d]{2})|[:@&=+])*)(?:/(?:(?:(?:[a-zA-Z\d\$\-_.!~*'(),])|(?:%[a-fA-F\d]{2})|[:@&=+])*))*)?))|(?:(?:(?:(?:(?:[a-zA-Z\d\$\-_.!~*'(),])|(?:%[a-fA-F\d]{2})|[:@&=+])*)(?:/(?:(?:(?:[a-zA-Z\d\$\-_.!~*'(),])|(?:%[a-fA-F\d]{2})|[:@&=+])*))*)?)))#";
-define( 'PCRE_URI'         , $pattern );
-
-// plain text
-define( 'PCRE_PLAIN'       , '/^.*?$/esx' );
-
-#'/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i' );
-
-
 require_once dirname( __FILE__ ).'/class.wbBase.php';
 
 class wbValidate extends wbBase {
 
     private static $_tainted  = array();
     private static $_server   = array();
-    private static $_errors   = array();
     private static $_valid    = array();
+    
+    protected      $_errors   = array();
 
     // ----- Debugging -----
-    protected      $debugLevel      = KLOGGER::OFF;
-    #protected      $debugLevel      = KLOGGER::DEBUG;
+    #protected      $debugLevel      = KLOGGER::OFF;
+    protected      $debugLevel      = KLOGGER::DEBUG;
 
     /**
      * constructor
      **/
     function __construct () {
         parent::__construct();
+        $this->__init();
         $this->import();
     }   // end function __construct()
 
@@ -95,15 +61,19 @@ class wbValidate extends wbBase {
                             $_POST
                           );
         self::$_server  = $_SERVER;
+        
+        if ( is_array( $_SERVER ) ) {
 
-        if ( ! $this->isValidUri( $_SERVER['SCRIPT_NAME'] ) ) {
-            $this->selfURL( 'http://'
-                          . $_SERVER['HTTP_HOST']
-                          . $_SERVER['SCRIPT_NAME']
-                          );
-        }
-        else {
-            $this->selfURL( $_SERVER['SCRIPT_NAME'] );
+            if ( ! $this->isValidUri( $_SERVER['SCRIPT_NAME'] ) ) {
+                $this->selfURL( 'http://'
+                              . $_SERVER['HTTP_HOST']
+                              . $_SERVER['SCRIPT_NAME']
+                              );
+            }
+            else {
+                $this->selfURL( $_SERVER['SCRIPT_NAME'] );
+            }
+            
         }
 
         $this->log()->LogDebug( 'FORM DATA:', self::$_tainted );
@@ -121,137 +91,122 @@ class wbValidate extends wbBase {
     }   // end function import()
     
     /**
+     * retrieve validated form param
      *
-     *
-     *
+     * @access public
+     * @param  string   $varname  - form field to retrieve
+     * @param  string   $constant - predefined RegExp to use
+     * @param  array    $options  - more options (like default value)
      *
      **/
-    public function getValid ( $varname, $options = array() ) {
-    
+    public function param ( $varname, $constant = 'PCRE_STRING', $options = array() ) {
+
         $this->log()->LogDebug( 'var ['.$varname.']', $options );
-    
+        
+        if ( empty ( $constant ) ) {
+            $constant = 'PCRE_STRING';
+        }
+
         // value already validated?
         if ( isset( self::$_valid[ $varname ] ) ) {
             $this->log()->LogDebug( 'returning already validated var '.$varname );
             return self::$_valid[ $varname ];
         }
-        
+
         // value available?
         if ( ! isset( self::$_tainted[ $varname ] ) ) {
             $this->log()->LogDebug( 'no data found for var '.$varname );
             return isset( $options['default'] ) ? $options['default'] : NULL;
         }
-    
-        // name of accessor method available?
-        if ( isset( $options['type'] ) ) {
 
-            $func_name = 'isValid'.ucfirst($options['type']);
-
-            if ( method_exists( $this, $func_name ) ) {
-        
-                $this->log()->LogDebug( 'checking var ['.$varname. '] with method ['.$func_name.']' );
-
-$this->log()->LogDebug( 'current self::$_valid array:', self::$_valid );
-
-                if ( $this->$func_name( self::$_tainted[ $varname ], $options ) ) {
-                
-                    $this->log()->LogDebug( 'found valid value for var ['.$varname.']', self::$_tainted[ $varname ] );
-                
-                    // found valid value
-                    self::$_valid[ $varname ] = self::$_tainted[ $varname ];
-                    
-                    unset( self::$_tainted[ $varname ] );
-                    
-                    if ( isset( $options['stripped'] ) ) {
-                        self::$_valid[ $varname ] = $this->__strip( $self->_valid[ $varname ] );
-                    }
-                    return self::$_valid[ $varname ];
-
-                }
-                else {
-                    return isset( $options['default'] ) ? $options['default'] : NULL;
-                }
-                
-            }
-
-        }   // if ( isset( $options['type'] ) )
-        
-        // constant name available?
-        $constant = 'PCRE_STRING';
-        if ( isset( $options['constant'] ) ) {
-            $constant = $options['constant'];
-        }
+        // so we have a tainted value; let's check it
         $this->log()->LogDebug( 'checking var '.$varname.' with constant '.$constant );
+        
+        if ( $this->validate( $constant, self::$_tainted[ $varname ], $options ) ) {
 
-        if ( self::staticValidate( $constant, self::$_tainted[$varname] ) ) {
-            self::$_valid[ $varname ] =  self::$_tainted[ $varname ];
-            unset(  self::$_tainted[ $varname ] );
+            // cache validated value
+            self::$_valid[ $varname ] = self::$_tainted[ $varname ];
+
+            // delete tainted value
+            unset( self::$_tainted[ $varname ] );
+
+            // strip?
             if ( isset( $options['stripped'] ) ) {
                 self::$_valid[ $varname ] = $this->__strip( self::$_valid[ $varname ] );
             }
             return self::$_valid[ $varname ];
+
         }
         else {
+            $this->_errors[ $varname ] = 'invalid';
             return isset( $options['default'] ) ? $options['default'] : NULL;
         }
 
+    }   // end function param()
+    
+
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function isValid( $varname, $constant = 'PCRE_STRING', $options = array() ) {
+        // already checked and has errors
+        if ( isset( $this->_errors[ $varname ] ) ) {
+            return false;
+        }
+        // already checked and valid
+        if ( isset( self::$_valid[ $varname ] ) ) {
+            return true;
+        }
+        // not checked
+        if ( isset( self::$_tainted[ $varname ] ) ) {
+            $var = $this->param( $varname, $constant, $options );
+            if ( $var ) {
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }   // end function isValid()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getValid( $constant, $value, $options = array() ) {
+        if( $this->validate( $constant, $value, $options ) ) {
+            return $value;
+        }
+        return NULL;
     }   // end function getValid()
     
     /**
-     *
-     *
-     *
-     *
-     **/
-    public function get( $varname, $constant = NULL, $default = NULL, $stripped = false ) {
-    
-        $this->log()->LogDebug( 'NOTE: This function is marked as deprecated! Please use getValid() instead!' );
-        
-        return $this->getValid (
-                   $varname,
-                   array(
-                       'constant' => $constant,
-                       'default'  => $default,
-                       'stripped' => $stripped
-                   )
-               );
-
-    }   // end function get()
-    
-    /**
-     * OOP wrapper to staticValidate
+     * 
      *
      * @param   string   $constant   - constant name
      * @param   string   $varname    - variable to validate
-     * @param   integer  $min_length - optional, Default: 0
-     * @param   integer  $max_length - optoinal, Default: unlimited
      *
      **/
-    public function validate ( $constant, $varname, $options = array() ) {
-        // value already validated?
-        if ( isset( self::$_valid[ $varname ] ) ) {
-            $this->log()->LogDebug( 'returning already validated var ['.$varname.']' );
-            return self::$_valid[ $varname ];
-        }
-        if ( ! isset( self::$_tainted[ $varname ] ) ) {
-            $this->log()->LogDebug( 'no value for var ['.$varname.']' );
-            return NULL;
-        }
-        return self::staticValidate( $constant, self::$_tainted[ $varname ], $options );
-    }
+    public function validate( $constant, $value, $options = array() ) {
 
-    /**
-     * validate a value using a PCRE_* constant (using preg_match())
-     *
-     * @param   string   $constant   - constant name
-     * @param   string   $value      - value to validate
-     * @param   integer  $min_length - optional, Default: 0
-     * @param   integer  $max_length - optoinal, Default: unlimited
-     *
-     **/
-    static function staticValidate ( $constant, $value, $options = array() ) {
+        if ( empty( $value ) && strlen( $value ) == 0 ) {
+            $callstack = debug_backtrace();
+            $this->log()->LogDebug(
+                'no value to check, caller: ',
+                $callstack[1]
+            );
+        }
 
-        if ( is_string( $value ) ) {
+        $this->log()->LogDebug(
+            'validating value (see below) with constant ['.$constant.']:',
+            $value
+        );
+
+        if ( ! is_array( $value ) ) {
 
             // check length
             if (
@@ -261,7 +216,8 @@ $this->log()->LogDebug( 'current self::$_valid array:', self::$_valid );
                    &&
                    strlen( $value ) < $options['min_length']
             ) {
-                return 0;
+                $this->log()->LogDebug( 'invalid (too short)' );
+                return false;
             }
 
             if (
@@ -271,15 +227,29 @@ $this->log()->LogDebug( 'current self::$_valid array:', self::$_valid );
                    &&
                    strlen( $value ) > $options['max_length']
             ) {
-                return 0;
+                $this->log()->LogDebug( 'invalid (too long)' );
+                return false;
             }
 
+if ( ! is_scalar($constant) ) {
+echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+print_r( debug_backtrace() );
+echo "</textarea>";
+}
             // check pattern; returns 0 (false) or 1 (true)
-            return preg_match( constant( $constant ), $value );
-            
+            if ( preg_match( constant( $constant ), $value ) ) {
+                $this->log()->LogDebug( 'valid value:', $value );
+                return true;
+            }
+            else {
+                $this->log()->LogDebug( 'invalid (doesn\'t match regexp)' );
+                return false;
+            }
+
         }
-        
-        if ( is_array( $value ) ) {
+
+        // check array
+        else {
             $valid = array();
             foreach ( $value as $item ) {
                 $is_valid = preg_match( constant( $constant ), $item );
@@ -287,11 +257,15 @@ $this->log()->LogDebug( 'current self::$_valid array:', self::$_valid );
                     $valid[] = $is_valid;
                 }
             }
-            return $valid;
+            if ( count( $valid ) === count( $value ) ) {
+                return true;
+            }
+            else {
+                return false;
+            }
         }
 
-    }   // end function staticValidate ()
-    
+    }   // end function validate()
 
 /*******************************************************************************
     Easy date and time checking
@@ -438,35 +412,99 @@ $this->log()->LogDebug( 'current self::$_valid array:', self::$_valid );
 
 
 /*******************************************************************************
-    Accessor functions for easier use
+    Convenience methods
 *******************************************************************************/
+
+    /**
+    * check and get value; shortcut to
+    * ->param( 'var', <constant> );
+    **/
+    public function getString ( $varname, $options = array() ) {
+        return $this->param( $varname, 'PCRE_STRING', $options );
+    }
+    public function getAlphanum ( $varname, $options = array() ) {
+        return $this->param( $varname, 'PCRE_ALPHANUM', $options );
+    }
+    public function getAlphanum_ext ( $varname, $options = array() ) {
+        return $this->param( $varname, 'PCRE_ALPHANUM_EXT', $options );
+    }
+    public function getInteger ( $varname, $options = array() ) {
+        return $this->param( $varname, 'PCRE_INTEGER', $options );
+    }
+    public function getStyle ( $varname, $options = array() ) {
+        return $this->param( $varname, 'PCRE_STYLE', $options );
+    }
+    public function getEmail ( $varname, $options = array() ) {
+        return $this->param( $varname, 'PCRE_EMAIL', $options );
+    }
+    public function getPassword ( $varname, $options = array() ) {
+        return $this->param( $varname, 'PCRE_PASSWORD', $options );
+    }
+    public function getPUri ( $varname, $options = array() ) {
+        return $this->param( $varname, 'PCRE_URI', $options );
+    }
+    public function getPlain ( $varname, $options = array() ) {
+        return $this->param( $varname, 'PCRE_PLAIN', $options );
+    }
+    public function getBoolean( $varname, $options = array() ) {
+        if ( $this->param( $varname, 'PCRE_PLAIN', $options ) ) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * check a given value to be valid; returns valid value if any
+     **/
     public function isValidString ( $value, $options = array() ) {
-        return self::staticValidate( 'PCRE_STRING', $value, $options );
+        return $this->validate( 'PCRE_STRING', $value, $options );
     }
     public function isValidAlphanum ( $value, $options = array() ) {
-        return self::staticValidate( 'PCRE_ALPHANUM', $value, $options );
+        return $this->validate( 'PCRE_ALPHANUM', $value, $options );
     }
     public function isValidAlphanum_ext ( $value, $options = array() ) {
-        return self::staticValidate( 'PCRE_ALPHANUM_EXT', $value, $options );
+        return $this->validate( 'PCRE_ALPHANUM_EXT', $value, $options );
     }
     public function isValidInteger ( $value, $options = array() ) {
-        return self::staticValidate( 'PCRE_INT', $value, $options );
+        return $this->validate( 'PCRE_INT', $value, $options );
     }
     public function isValidStyle ( $value, $options = array() ) {
-        return self::staticValidate( 'PCRE_STYLE', $value, $options );
+        return $this->validate( 'PCRE_STYLE', $value, $options );
     }
     public function isValidEmail ( $value, $options = array() ) {
-        return self::staticValidate( 'PCRE_EMAIL', $value, $options );
+        return $this->validate( 'PCRE_EMAIL', $value, $options );
     }
     public function isValidPassword ( $value, $options = array() ) {
-        return self::staticValidate( 'PCRE_PASSWORD', $value, $options );
+        return $this->validate( 'PCRE_PASSWORD', $value, $options );
     }
     public function isValidUri ( $value, $options = array() ) {
-        return self::staticValidate( 'PCRE_URI', $value, $options );
+        return $this->validate( 'PCRE_URI', $value, $options );
     }
     public function isValidPlain ( $value, $options = array() ) {
-        return self::staticValidate( 'PCRE_PLAIN', $value, $options );
+        return $this->validate( 'PCRE_PLAIN', $value, $options );
     }
+    public function isValidMime( $value, $options = array() ) {
+        return $this->validate( 'PCRE_MIME', $value, $options );
+    }
+    
+    /**
+     * define regexp
+     *
+     * @access private
+     * @return void
+     *
+     **/
+    private function __init () {
+    
+        if ( defined( '__WBV_INIT__' ) ) {
+            return;
+        }
+    
+        include dirname(__FILE__).'/wbValidate/inc.regexp.php';
+
+        define( '__WBV_INIT__', true );
+
+    }   // end sub __init()
     
     /**
      * strip potentially dangerous items from a string
