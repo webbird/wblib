@@ -28,10 +28,12 @@ require_once dirname( __FILE__ ).'/class.wbValidate.php';
 class wbListBuilder extends wbBase {
 
     // ----- Debugging -----
-    protected $debugLevel      = KLOGGER::OFF;
-
-    private   $id              = 0;
-    private   $settings        = array(
+    protected      $debugLevel     = KLOGGER::OFF;
+    #protected      $debugLevel     = KLOGGER::DEBUG;
+    
+    private        $id             = 0;
+    private        $_path          = array();
+    protected      $_config        = array(
     
         'create_level_css'    => true,
     
@@ -50,6 +52,7 @@ class wbListBuilder extends wbBase {
         'trail_li_css'        => 'trail_item',
         'ul_css'              => 'list',
         'space'               => '    ',
+        'more_info'           => '<span class="more_info">%%</span>',
         
         'ul_id_prefix'        => 'ul_',
         
@@ -61,6 +64,7 @@ class wbListBuilder extends wbBase {
         '__level_key'         => 'level',
         '__parent_key'        => 'parent',
         '__title_key'         => 'title',
+        '__more_info_key'     => '',
         
     );
     
@@ -68,7 +72,7 @@ class wbListBuilder extends wbBase {
      * constructor
      **/
     function __construct ( $options = array() ) {
-        parent::__construct();
+        parent::__construct($options);
     }   // end function __construct()
     
     /**
@@ -77,74 +81,93 @@ class wbListBuilder extends wbBase {
      *
      *
      **/
-    public function set ( $settings = array() ) {
+    public function ___set ( $settings = array() ) {
 
         foreach ( $settings as $set => $value ) {
             if (
-                 isset( $this->settings[ $set ] )
+                 isset( $this->_config[ $set ] )
                  &&
                  wbValidate::staticValidate( 'PCRE_STRING', $value )
             ) {
-                $this->settings[ $set ] = $value;
+                $this->_config[ $set ] = $value;
             }
         }
 
     }   // end function set ()
     
     /**
-     *
+     * 
      *
      *
      *
      **/
     public function buildRecursion ( $items, $min = 0 ) {
-
+    
         if ( ! is_array( $items ) ) {
             $this->log()->LogDebug( 'no items to build recursion' );
             return;
         }
 
-        $tree     = array();
-
-        foreach ( $items as $node ) {
-
-            $this->log()->LogDebug( 'current node: ', $node );
-            
-            // find parent
-            if ( $node[ $this->settings['__level_key'] ] > $min ) {
-            
-                $this->log()->LogDebug( 'trying to find parent...', $this->settings );
-
-                $path = $this->ArraySearchRecursive(
-                            $node[ $this->settings['__parent_key'] ],
-                            $tree,
-                            $this->settings['__id_key']
-                        );
-
-                // add node to parent
-                if ( is_array( $path ) ) {
-                    array_pop($path);
-                    eval( '$ref =& $tree[\''.implode( '\'][\'', $path ).'\'];' );
-                    $ref[ $this->settings['__children_key'] ][] = $node;
-                }
-                else {
-                    $this->log()->LogDebug( 'no parent found, adding node to root ' );
-                    $tree[] = $node;
-                }
-
-                continue;
-
-            }
-
-            $tree[] = $node;
-
+        $tree = array();
+        
+        // spare some typing...
+        $ik      = $this->_config['__id_key'];
+        $pk      = $this->_config['__parent_key'];
+        $ck      = $this->_config['__children_key'];
+        $lk      = $this->_config['__level_key'];
+        
+        // make sure that the $items array is indexed by the __id_key
+        $arr     = array();
+        foreach ( $items as $index => $item )
+        {
+            $arr[ $item[$ik] ] = $item;
         }
+        
+        $items =& $arr;
 
+        //
+        // this creates an array of parents with their associated children
+        //
+        // -----------------------------------------------
+        // REQUIRES that the array index is the parent ID!
+        // -----------------------------------------------
+        //
+        // http://www.tommylacroix.com/2008/09/10/php-design-pattern-building-a-tree/
+        //
+        foreach ( $items as $id => &$node )
+        {
+        
+            // skip nodes with depth < min level
+            if (
+                 isset( $node[ $lk ] )
+                 &&
+                 $node[ $lk ] <= $min
+            ) {
+                continue;
+            }
+            
+            // root node
+            if ( $node[$pk] === null )
+            {
+                $tree[$id] = &$node;
+            }
+            // sub node
+            else {
+                // avoid warnings on missing children key
+                if ( ! isset( $items[$node[$pk]][$ck]) )
+                {
+                    $items[ $node[$pk] ][ $ck ] = array();
+                }
+                $items[ $node[$pk] ][ $ck ][] = &$node;
+            }
+        }
+        
+        $tree = $tree[0][$ck];
 
         $this->log()->LogDebug( 'returning tree: ', $tree );
 
         return $tree;
-
+        
     }   // end function buildRecursion ()
 
     /**
@@ -159,7 +182,7 @@ class wbListBuilder extends wbBase {
             'building list from tree:',
             $tree
         );
-
+        
         if ( ! is_array( $tree ) ) {
             $this->log()->LogDebug( 'no list items to show' );
             return;
@@ -170,62 +193,83 @@ class wbListBuilder extends wbBase {
         
         // get id of last element in the tree
         end( $tree );
-        $last_element_id = $tree[ key( $tree ) ][ $this->settings['__id_key'] ];
+        $last_element_id = $tree[ key( $tree ) ][ $this->_config['__id_key'] ];
         reset( $tree );
 
-        $output[] = $this->listStart($space);
+        $output[]  = $this->listStart($space);
+        
+        // spare some typing
+        $id_key    = $this->_config['__id_key'];
+        $level_key = $this->_config['__level_key'];
+        $href_key  = $this->_config['__href_key'];
+        $title_key = $this->_config['__title_key'];
 
         // for each item in the tree...
-        while ( $item = array_shift( $tree ) ) {
+        foreach ( $tree as $parent => $item )
+        {
 
             // skip hidden
             if (
-                 isset( $this->settings['__hidden_key'] )
+                 isset( $this->_config['__hidden_key'] )
                  &&
-                 isset( $item[ $this->settings['__hidden_key'] ] )
+                 isset( $item[ $this->_config['__hidden_key'] ] )
                  &&
-                 $item[ $this->settings['__hidden_key'] ]
+                 $item[ $this->_config['__hidden_key'] ]
             ) {
                 $this->log()->LogDebug(
                     'skipping hidden item: '
-                  . $item[ $this->settings['__title_key'] ]
+                  . $item[ $title_key ]
                 );
                 continue;
             }
 
             // spare some typing
-            $id     = $item[ $this->settings['__id_key'] ];
-            $level  = $item[ $this->settings['__level_key'] ];
+            $id     = $item[ $id_key ];
+            $level  = $item[ $level_key ];
 
             // indent nicely
-            $space  = str_repeat( $this->settings['space'], ($level+1) );
+            $space  = str_repeat( $this->_config['space'], ($level+1) );
 
             $li_css = $this->getListItemCSS( $item );
 
             // first element?
             if ( $isfirst ) {
-                $li_css  .= ' ' . $this->settings['first_li_css'];
+                $li_css  .= ' ' . $this->_config['first_li_css'];
                 $isfirst  = 0;
             }
 
             // last element?
-            if ( $last_element_id === $item[ $this->settings['__id_key'] ] ) {
-                $li_css  .= ' ' . $this->settings['last_li_css'];
+            if ( $last_element_id === $item[ $id_key ] ) {
+                $li_css  .= ' ' . $this->_config['last_li_css'];
             }
             
-            $text     = isset( $item[ $this->settings['__href_key'] ] )
-                      ? $item[ $this->settings['__href_key'] ]
-                      : $item[ $this->settings['__title_key'] ];
+            $text = NULL;
+
+            if ( isset( $item[ $href_key ] ) ) {
+                $text = $item[ $href_key ];
+            }
+            else {
+                $text = $item[ $title_key ];
+            }
+
+            if (
+                 isset( $this->_config['__more_info_key'] )
+                 &&
+                 isset( $item[ $this->_config['__more_info_key'] ] )
+            ) {
+                $text .= str_replace( '%%', $item[ $this->_config['__more_info_key'] ], $this->_config['more_info'] );
+            }
 
             // start list element
             $output[] = $this->itemStart( $li_css, $space )
+                      . $space
                       . $text;
 
             // children to show?
             if ( $this->hasChildren( $item ) ) {
                 // recursion
                 $output[] = $this->buildList(
-                                $item[ $this->settings['__children_key'] ],
+                                $item[ $this->_config['__children_key'] ],
                                 $space
                             );
             }
@@ -250,6 +294,56 @@ class wbListBuilder extends wbBase {
      *
      *
      **/
+    public function buildBreadcrumb ( $tree, $current, $as_array = NULL ) {
+
+        $this->log()->LogDebug(
+            'building breadcrumb from tree:',
+            $tree
+        );
+
+        if ( ! is_array( $tree ) ) {
+            $this->log()->LogDebug( 'no breadcrumb items to show' );
+            return;
+        }
+        
+        $trailpages = array();
+        $trail      = $this->__getTrail( $tree, $current );
+
+        foreach ( $trail as $page_id )
+        {
+        
+            $path = $this->ArraySearchRecursive(
+                        $page_id,
+                        $tree,
+                        $this->_config['__id_key']
+                    );
+
+            if ( is_array( $path ) )
+            {
+                array_pop($path);
+                eval( '$trailpages[] = $tree[\''.implode( '\'][\'', $path ).'\'];' );
+            }
+
+        }
+        
+        // push the current page to the trailpages array
+        $trailpages[] = $node;
+
+        if ( $as_array )
+        {
+            return $trailpages;
+        }
+        
+        return $this->buildList( $trailpages );
+
+    }   // end function buildBreadcrumb()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
     public function buildDropDown ( $tree, $options = array() ) {
 
         $this->log()->LogDebug(
@@ -264,7 +358,7 @@ class wbListBuilder extends wbBase {
         
         $space = isset( $options['space'] )
                ? $options['space']
-               : $this->settings['space'];
+               : $this->_config['space'];
 
         $output   = array();
         
@@ -273,22 +367,24 @@ class wbListBuilder extends wbBase {
 
             // skip hidden
             if (
-                 isset( $this->settings['__hidden_key'] )
+                 isset( $this->_config['__hidden_key'] )
                  &&
-                 isset( $item[ $this->settings['__hidden_key'] ] )
+                 isset( $item[ $this->_config['__hidden_key'] ] )
                  &&
-                 $item[ $this->settings['__hidden_key'] ]
+                 $item[ $this->_config['__hidden_key'] ]
             ) {
                 $this->log()->LogDebug(
                     'skipping hidden item: '
-                  . $item[ $this->settings['__title_key'] ]
+                  . $item[ $this->_config['__title_key'] ]
                 );
                 continue;
             }
 
             // spare some typing
-            $id     = $item[ $this->settings['__id_key'] ];
-            $level  = $item[ $this->settings['__level_key'] ];
+            $id     = $item[ $this->_config['__id_key'] ];
+            $level  = isset( $item[ $this->_config['__level_key'] ] )
+                    ? $item[ $this->_config['__level_key'] ]
+                    : 0;
 
             // indent nicely
             $space  = str_repeat( $space, $level );
@@ -300,25 +396,25 @@ class wbListBuilder extends wbBase {
                     $options['selected'] = array( $options['selected'] );
                 }
                 foreach ( $options['selected'] as $i => $id ) {
-                    if ( $id === $item[ $this->settings['__id_key'] ] ) {
+                    if ( $id === $item[ $this->_config['__id_key'] ] ) {
                         $sel = ' selected="selected"';
                     }
                 }
             }
             
             $output[] = '<option value="'
-                      . $item[ $this->settings['__id_key'] ]
+                      . $item[ $this->_config['__id_key'] ]
                       . '"'.$sel.'>'
                       . $space
                       . ' '
-                      . $item[ $this->settings['__title_key'] ]
+                      . $item[ $this->_config['__title_key'] ]
                       . '</option>';
             
             // children to show?
             if ( $this->hasChildren( $item ) ) {
                 // recursion
                 $output[] = $this->buildDropDown(
-                                $item[ $this->settings['__children_key'] ],
+                                $item[ $this->_config['__children_key'] ],
                                 $options
                             );
             }
@@ -339,24 +435,24 @@ class wbListBuilder extends wbBase {
      **/
     function listStart( $space = NULL ) {
     
-        $class = $this->settings['ul_css'];
+        $class = $this->_config['ul_css'];
         
         // special CSS class for each level?
         if (
                (
-                   isset( $this->settings['create_level_css'] )
+                   isset( $this->_config['create_level_css'] )
                    &&
-                   $this->settings['create_level_css'] == 1
+                   $this->_config['create_level_css'] == 1
                )
                &&
                (
-                      isset( $this->settings['ul_css'] )
+                      isset( $this->_config['ul_css'] )
                    &&
-                   ! empty ( $this->settings['ul_css'] )
+                   ! empty ( $this->_config['ul_css'] )
                )
         ) {
             $class  .= ' '
-                    .  $this->settings['ul_css']
+                    .  $this->_config['ul_css']
                     .  '_'
                     .  intval( ( strlen($space) / 4 ) );
         }
@@ -371,7 +467,7 @@ class wbListBuilder extends wbBase {
                            $this->_getID(),
                            $class
                        ),
-                       $this->settings['list_open']
+                       $this->_config['list_open']
                    );
 
         return $output;
@@ -385,7 +481,7 @@ class wbListBuilder extends wbBase {
      *
      **/
     function listEnd( $space = NULL ) {
-        return $space . $this->settings['list_close'];
+        return $space . $this->_config['list_close'];
     }   // end function listEnd()
 
     /**
@@ -395,7 +491,7 @@ class wbListBuilder extends wbBase {
      *
      **/
     function itemStart( $css, $space = NULL ) {
-        $start = str_replace( '%%', $css, $this->settings['item_open'] );
+        $start = str_replace( '%%', $css, $this->_config['item_open'] );
         return $space
              . $start
              . "\n";
@@ -408,7 +504,7 @@ class wbListBuilder extends wbBase {
      *
      **/
     function itemEnd( $space = NULL ) {
-        return $space . $this->settings['item_close'];
+        return $space . $this->_config['item_close'];
     }   // end function _EM_itemEnd()
 
     /**
@@ -419,47 +515,47 @@ class wbListBuilder extends wbBase {
      **/
     function getListItemCSS ( $item ) {
 
-        $li_css = $this->settings['li_css'];
+        $li_css = $this->_config['li_css'];
 
         // special CSS class for each level?
         if (
                (
-                   isset( $this->settings['create_level_css'] )
+                   isset( $this->_config['create_level_css'] )
                    &&
-                   $this->settings['create_level_css'] == 1
+                   $this->_config['create_level_css'] == 1
                )
                &&
                (
-                      isset( $this->settings['li_css'] )
+                      isset( $this->_config['li_css'] )
                    &&
-                   ! empty ( $this->settings['li_css'] )
+                   ! empty ( $this->_config['li_css'] )
                )
         ) {
             $li_css .= ' '
-                    .  $this->settings['li_css']
+                    .  $this->_config['li_css']
                     .  '_'
-                    .  $item[ $this->settings['__level_key'] ];
+                    .  $item[ $this->_config['__level_key'] ];
         }
 
         // markup for current page
-        if ( isset( $item[ $this->settings['__current_key'] ] ) ) {
-            $li_css .= ' ' . $this->settings['current_li_css'];
+        if ( isset( $item[ $this->_config['__current_key'] ] ) ) {
+            $li_css .= ' ' . $this->_config['current_li_css'];
         }
 
         // markup for pages on current trail
         if ( isset( $item['em_on_current_trail'] ) ) {
-            $li_css .= ' ' . $this->settings['trail_li_css'];
+            $li_css .= ' ' . $this->_config['trail_li_css'];
         }
 
         // markup for pages that have children
         if (
-               isset( $item[ $this->settings['__children_key'] ] )
+               isset( $item[ $this->_config['__children_key'] ] )
                &&
-               count( $item[ $this->settings['__children_key'] ] ) > 0
+               count( $item[ $this->_config['__children_key'] ] ) > 0
                &&
-               isset( $this->settings['has_child_li_css'] )
+               isset( $this->_config['has_child_li_css'] )
         ) {
-            $li_css .= ' ' . $this->settings['has_child_li_css'];
+            $li_css .= ' ' . $this->_config['has_child_li_css'];
         }
 
         return $li_css;
@@ -475,9 +571,54 @@ class wbListBuilder extends wbBase {
     private function _getID() {
     
         $this->id++;
-        return $this->settings['ul_id_prefix'].$this->id;
+        return $this->_config['ul_id_prefix'].$this->id;
     
     }   // end function _getID()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    private function __getTrail( $tree, $current )
+    {
+    
+        // get the current node
+        $path = $this->ArraySearchRecursive(
+                    $current,
+                    $tree,
+                    $this->_config['__id_key']
+                );
+
+        array_pop($path);
+        eval( '$node = $tree[\''.implode( '\'][\'', $path ).'\'];' );
+
+        // get the trail
+        $cnt   = count( $path );
+        $i     = 0;
+        $trail = array();
+        $node  = & $tree;
+
+        while ( $i < $cnt )
+        {
+            $index = $path[$i++];
+            $child = $path[$i++];
+
+            $node  = &$node[$index];
+
+            array_push( $trail, $node[ 'pageID' ] );
+
+            if ( isset( $child ) && isset( $node[$child] ) )
+            {
+                $node = & $node[$child];
+            }
+
+        }
+        
+        return $trail;
+        
+    }   // end function __getTrail()
     
     /**
      * Check if an item has children
@@ -488,9 +629,9 @@ class wbListBuilder extends wbBase {
      **/
     function hasChildren($item) {
         if (
-             isset( $item[ $this->settings['__children_key'] ] )
+             isset( $item[ $this->_config['__children_key'] ] )
              &&
-             count( $item[ $this->settings['__children_key'] ] ) > 0
+             count( $item[ $this->_config['__children_key'] ] ) > 0
         ) {
             return true;
         }
