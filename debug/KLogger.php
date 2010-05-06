@@ -94,8 +94,8 @@
    call stack on debug level
 */
         $bt = debug_backtrace();
-        $class     = $bt[1]['class'];
-        $function  = $bt[1]['function'];
+        $class     = isset( $bt[1]['class'] )    ? $bt[1]['class'] : NULL;
+        $function  = isset( $bt[1]['function'] ) ? $bt[1]['function'] : NULL;
         $file      = basename($bt[1]['file']);
         $code_line = $bt[1]['line'];
         $line      = "[$function()] $line [ $file:$code_line ]";
