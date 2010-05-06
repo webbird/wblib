@@ -1,9 +1,9 @@
     <select {{ attributes }}>
     {{ :if options }}
     {{ :loop options }}
-      <option {{ attributes}}>{{ value }}</option>
+      <option value="{{ key }}" {{ selected }}>{{ value }}</option>
     {{ :loopend }}
-    {{ :else }}
-    {{ value }}
+    {{ :else }}{{ :comment The content can be given pre-rendered, using wbListBuilder, for example }}
+    {{ content }}
     {{ :ifend }}
     </select>

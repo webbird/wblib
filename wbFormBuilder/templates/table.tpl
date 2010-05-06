@@ -1,39 +1,57 @@
     <table class="{{ fb_table_class }}">
     {{ :if header }}
     <tr>
-      <th colspan="3" class="{{ fb_header_class }}">
+      <th colspan="3"{{ :if fb_header_class }} class="{{ fb_header_class }}"{{ :ifend }}>
         {{ header }}
       </th>
     </tr>{{ :ifend }}
     {{ :if req_info }}
     <tr>
-      <td colspan="3" class="{{ fb_req_class }}">
+      <td colspan="3"{{ :if fb_req_class }} class="{{ fb_req_class }}"{{ :ifend }}>
         {{ req_info }}
       </td>
     </tr>{{ :ifend }}
     {{ :if info }}
     <tr>
-      <td colspan="3" class="{{ fb_info_class }}">
+      <td colspan="3"{{ :if fb_info_class }} class="{{ fb_info_class }}"{{ :ifend }}>
         {{ info }}
       </td>
     </tr>{{ :ifend }}
-    {{ :loop elements }}
+{{ :loop elements }}
     {{ :if error }}
     <tr>
-      <td colspan="3" class="{{ fb_error_class }}">
+      <td colspan="3"{{ :if fb_error_class }} class="{{ fb_error_class }}"{{ :ifend }}>
         {{ error }}
       </td>
     </tr>{{ :ifend }}
+<!-- BEGIN template comment -->
+    {{ :if header }}
     <tr>
-      <td class="{{ fb_left_class }}">
-        {{ label }}
+      <th colspan="3"{{ :if fb_header_class }} class="{{ fb_header_class }}"{{ :ifend }}>
+        {{ header }}
+      </th>
+    </tr>
+    {{ :else }}
+<!-- END template comment -->
+    <tr>
+      <td{{ :if fb_left_class }} class="{{ fb_left_class }}"{{ :ifend }}>
+        {{ label }}:
+        {{ :if info }}<br /><span class="fbsmall">{{ info }}</span>{{ :ifend }}
       </td>
-      <td class="{{ fb_req_class }}">
-        {{ req }}
+      <td{{ :if fb_req_class }} class="{{ fb_req_class }}"{{ :ifend }}>
+        {{ :if req }}{{ req }}{{ :ifend }}
       </td>
-      <td class="{{ fb_right_class }}">
+      <td{{ :if fb_right_class }} class="{{ fb_right_class }}"{{ :ifend }}>
         {{ field }}
       </td>
     </tr>
-    {{ :loopend }}
+<!-- BEGIN template comment -->
+    {{ :ifend }}
+<!-- END template comment -->
+{{ :loopend }}
+    <tr>
+      <td colspan="3"{{ :if fb_button_class }} class="{{ fb_button_class }}"{{ :ifend }}>
+      {{ :loop buttons }}{{ :if field }}{{ field }}{{ :ifend }}{{ :loopend }}
+      </td>
+    </tr>
     </table>
