@@ -37,13 +37,21 @@ class wbI18n extends wbBase {
     private static $_lang         = array();
     
     // default language
-    private static $_current_lang = 'EN';
+    private static $_current_lang = NULL;
 
     /**
      * constructor
      **/
-    public function __construct( $lang = 'EN' ) {
+    public function __construct( $lang = NULL ) {
         parent::__construct();
+        if ( ! isset( $lang ) ) {
+            if ( defined( 'LANGUAGE' ) ) {
+                $lang = LANGUAGE;
+            }
+            else {
+                $lang = 'EN';
+            }
+        }
         self::$_current_lang = $lang;
         $this->init();
     }   // end function __construct()
