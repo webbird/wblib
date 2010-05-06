@@ -28,6 +28,7 @@ class wbBase {
 
     // ----- Debugging -----
     protected        $debugLevel      = KLogger::OFF;
+    #protected        $debugLevel      = KLogger::DEBUG;
     
     // array to store config options
     protected        $_config         = array();
@@ -38,10 +39,10 @@ class wbBase {
     // accessor to KLogger
     protected        $logObj          = NULL;
 
+    protected        $_url            = NULL;
 
-    private static   $debugDir        = '/debug/log';
-    private static   $_url            = NULL;
-    
+    private static   $defaultDebugDir = '/debug/log';
+
     protected        $lang            = NULL; // accessor to wbI18n
     
     /**
@@ -75,15 +76,8 @@ class wbBase {
             }
         }
         else {
-            $this->debugDir = realpath( dirname(__FILE__) ).self::$debugDir;
+            $this->debugDir = realpath( dirname(__FILE__) ).self::$defaultDebugDir;
         }
-
-#        $this->log
-#            = new KLogger(
-#                  $this->debugDir.'/'.get_class($this).'.log',
-#                  $this->debugLevel,
-#                  true
-#              );
 
         // create language object
         if ( isset ( $options['lang'] ) && is_object($options['lang']) ) {
@@ -101,20 +95,30 @@ class wbBase {
   	 */
   	final private function __clone() {}
   	
-  	/**
+    /**
+     * wrapper to wbI18n::translate; used to uncouple the template parser
+     * from the wbI18n class (auto translation will not work then!)
   	 *
+  	 * @access public
+  	 * @param  string  $msg  - message to "translate"
+  	 * @param  array   $attr - additional attributes
   	 *
-  	 *
-  	 *
+  	 * @return string
   	 **/
     public function translate( $msg, $attr = array() ) {
         if ( ! is_object ( $this->lang ) ) {
-            require_once dirname( __FILE__ ).'/class.wbI18n.php';
-            $this->lang = new wbI18n();
-            $this->lang->addFile(
-                $this->lang->getLang().'.php',
-                realpath( dirname(__FILE__) ).'/'.get_class($this).'/languages'
-            );
+            if ( file_exists( dirname( __FILE__ ).'/class.wbI18n.php' ) ) {
+                require_once dirname( __FILE__ ).'/class.wbI18n.php';
+                $this->lang = new wbI18n();
+                $this->lang->addFile(
+                    $this->lang->getLang().'.php',
+                    realpath( dirname(__FILE__) ).'/'.get_class($this).'/languages'
+                );
+            }
+        }
+        // still no object?
+        if ( ! is_object ( $this->lang ) ) {
+            return $msg;
         }
         return $this->lang->translate( $msg, $attr );
     }   // end function translate()
@@ -272,20 +276,15 @@ class wbBase {
     /**
      * set config values
      *
-     * First param $option can be an array or a string;
-     * if a string is given, $value must be set, too.
-     * Otherwise, the contents of $option array are added to internal
-     * _config array. Keys that already exist are replaced.
-     *
      * @access public
      * @param  string   $option
      * @param  string   $value
      * @return void
      *
      **/
-    public function set ( $option, $value = NULL ) {
+    public function config( $option, $value = NULL ) {
     
-        if ( is_array( $option ) ) {
+       if ( is_array( $option ) ) {
             $this->_config = array_merge(
                                  $this->_config,
                                  $option
@@ -295,19 +294,6 @@ class wbBase {
             $this->_config[$option] = $value;
         }
         
-    }   // end function set()
-    
-    /**
-     * Alias for set()
-     *
-     * @access public
-     * @param  string   $option
-     * @param  string   $value
-     * @return void
-     *
-     **/
-    public function config( $option, $value = NULL ) {
-       return $this->set( $option, $value );
     }   // end function config()
   	
   	/**
@@ -318,9 +304,12 @@ class wbBase {
   	 **/
     public function selfURL( $url = NULL ) {
         if ( $url ) {
-            self::$_url = $url;
+            $this->_url = $url;
         }
-        return self::$_url;
+        if ( empty( self::$_url ) ) {
+            $this->_url = $_SERVER['REQUEST_URI'];
+        }
+        return $this->_url;
     }   // end function selfURL()
     
     /**
@@ -330,7 +319,7 @@ class wbBase {
      *
      **/
     function getURI ( $base_url = NULL, $remove_params = array(), $add_params = array() ) {
-    
+
         if ( empty( $base_url ) ) {
             $base_url = $this->selfURL();
         }
@@ -343,21 +332,35 @@ class wbBase {
         $path        = $base_url;
         $params      = array();
         
-#echo "Base URL: -$base_url-<br />";
-
+        // to prevent datatype errors
+        if ( ! is_array( $remove_params ) ) {
+            $remove_params = array();
+        }
+        if ( ! is_array( $add_params ) ) {
+            $add_params = array();
+        }
+        
+        //
+        $remove_all = ( isset( $remove_params[0] ) && $remove_params[0] == '*' )
+                    ? true
+                    : false;
+        
         // get params from $base_url
         if ( strstr( $base_url, '?' ) ) {
             list ( $path, $paramstring ) = explode( '?', $base_url );
         }
-#echo "PATH: -$path-<br />PARAMS: -$paramstring-<br />";
 
+#echo "BASE URL: $base_url<br />\n",
+#     "PATH:     $path<br />\n",
+#     "PARAMS:   $paramstring<br />\n";
+     
         $aParam = preg_split( "/[;&]/", $paramstring );
         if ( is_array( $aParam ) ) {
 
             foreach ( $aParam as $item ) {
                 if ( strstr( $item, '=' ) ) {
                     list ( $key, $value ) = explode( '=', $item );
-                    if ( ! in_array( $key, $remove_params ) ) {
+                    if ( ! $remove_all && ! in_array( $key, $remove_params ) ) {
                         $params[$key] = $value;
                     }
                 }
@@ -381,7 +384,7 @@ class wbBase {
         // server name
        	$servername = isset( $matches[1] )
                     ? $matches[1]
-                    : '';
+                    : $_SERVER['SERVER_NAME'];
 
         // remove leading /
         if ( $servername ) {
@@ -389,9 +392,14 @@ class wbBase {
         }
         
         $URI = $path . '?' . implode( '&', $carr );
-        //$URI = array( implode( '/', array( $servername, $path ) ), $URI );
+#echo "getURI() URI before match servername: -$URI-<br />";
+        
+        // make sure that we have a server name
+        if ( ! preg_match( "#^http(?:s)?://#", $URI ) ) {
+            $URI = 'http://'.$servername.'/'.$URI;
+        }
 
-#echo "URI: -$URI-<br />";
+#echo "getURI() URI: -$URI-<br />";
 
         return $URI;
 
@@ -488,30 +496,41 @@ class wbBase {
      *                 false       if $Needle is not found
      **/
     function ArraySearchRecursive( $Needle, $Haystack, $NeedleKey="", $Strict=false, $Path=array() ) {
-
-        if( ! is_array($Haystack) ) {
+    
+        if( ! is_array( $Haystack ) ) {
+            $this->log()->LogDebug( 'Haystack is not an array', $Haystack );
             return false;
         }
+        
+        $this->log()->LogDebug( 'searching for ['.$Needle.'] in stack: ', $Haystack );
 
-        foreach($Haystack as $Key => $Val) {
+        reset($Haystack);
 
-            if( is_array($Val)
+        foreach ( $Haystack as $Key => $Val ) {
+        
+            $this->log()->LogDebug( 'current key: '.$Key, $Val );
+
+            if (
+                is_array( $Val )
                 &&
                 $SubPath = $this->ArraySearchRecursive($Needle,$Val,$NeedleKey,$Strict,$Path)
             ) {
                 $Path=array_merge($Path,Array($Key),$SubPath);
                 return $Path;
             }
-            elseif(
+            elseif (
                 ( ! $Strict && $Val  == $Needle && $Key == ( strlen($NeedleKey) > 0 ? $NeedleKey : $Key ) )
                 ||
                 (   $Strict && $Val === $Needle && $Key == ( strlen($NeedleKey) > 0 ? $NeedleKey : $Key ) )
             ) {
+                $this->log()->LogDebug( "found needle [$Needle], key [$NeedleKey], value [$Val]" );
                 $Path[]=$Key;
                 return $Path;
             }
 
         }
+        
+        $this->log()->LogDebug( "needle [$Needle] not found" );
 
         return false;
 
@@ -523,7 +542,7 @@ class wbBase {
      *
      *
      **/
-    function sort2d ( $array, $index, $order='asc', $natsort=FALSE, $case_sensitive=FALSE )
+    function ArraySort ( $array, $index, $order='asc', $natsort=FALSE, $case_sensitive=FALSE )
     {
     
         if( is_array($array) && count($array)>0 ) {
@@ -556,7 +575,7 @@ class wbBase {
         
         return $array;
 
-    }   // function sort2d
+    }   // function ArraySort
 
     
     /**
@@ -567,7 +586,7 @@ class wbBase {
      **/
     public function printError( $msg = NULL, $args = NULL ) {
     
-        $caller = debug_backtrace();
+        $caller       = debug_backtrace();
 
         $caller_class = isset( $caller[1]['class'] )
                       ? $caller[1]['class']
@@ -589,11 +608,16 @@ class wbBase {
             echo "</pre>\n";
         }
         
-        echo "<br />",
-             $caller[1]['file'], ' : ',
+        // remove path info from file
+        $file = basename( $caller[1]['file'] );
+        
+        echo "<br /><br /><span style=\"font-size: smaller;\">[ ",
+             $file, ' : ',
              $caller[1]['line'], ' : ',
-             $caller[1]['function'], "<br />\n";
+             $caller[1]['function'],
+             " ]</span><br />\n";
 
+$this->debugLevel = 1;
         if ( $this->debugLevel < 6 ) {
             echo "<h2>Debug backtrace:</h2>\n",
                  "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
