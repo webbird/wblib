@@ -29,6 +29,7 @@ class wbValidate extends wbBase {
     private static $_tainted  = array();
     private static $_server   = array();
     private static $_valid    = array();
+    private static $_initialized = false;
     
     protected      $_errors   = array();
 
@@ -53,6 +54,11 @@ class wbValidate extends wbBase {
      *
      **/
     public function import( $weak = true ) {
+    
+        // initialize only once (singleton)
+        if ( self::$_initialized ) {
+            return;
+        }
 
         // read request data into $tainted array
         self::$_tainted = array_merge(
@@ -88,7 +94,31 @@ class wbValidate extends wbBase {
             // be accessed using this class!
         }
         
+        self::$_initialized = true;
+        
     }   // end function import()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function delete( $varname ) {
+    
+        $this->log()->LogDebug( 'deleting var ['.$varname.']' );
+
+        // value already validated?
+        if ( isset( self::$_valid[ $varname ] ) ) {
+            unset( self::$_valid[ $varname ] );
+        }
+        
+        // value available?
+        if ( isset( self::$_tainted[ $varname ] ) ) {
+            unset( self::$_tainted[ $varname ] );
+        }
+    
+    }   // end function delete()
     
     /**
      * retrieve validated form param
