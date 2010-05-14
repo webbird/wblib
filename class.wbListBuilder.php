@@ -101,7 +101,7 @@ class wbListBuilder extends wbBase {
      *
      *
      **/
-    public function buildRecursion ( $items, $min = -1 ) {
+    public function buildRecursion ( &$items, $min = -1 ) {
     
         if ( ! is_array( $items ) ) {
             $this->log()->LogDebug( 'no items to build recursion' );
@@ -125,7 +125,7 @@ class wbListBuilder extends wbBase {
         }
 
         $items = $arr;
-        
+
         //
         // this creates an array of parents with their associated children
         //
@@ -137,7 +137,7 @@ class wbListBuilder extends wbBase {
         //
         foreach ( $items as $id => &$node )
         {
-        
+
             // skip nodes with depth < min level
             if (
                  isset( $node[ $lk ] )
@@ -160,7 +160,6 @@ class wbListBuilder extends wbBase {
             }
             // sub node
             else {
-                if ( count( $tree ) == 0 )
                 // avoid warnings on missing children key
                 if ( ! isset( $items[$node[$pk]][$ck]) )
                 {
@@ -168,6 +167,7 @@ class wbListBuilder extends wbBase {
                 }
                 $items[ $node[$pk] ][ $ck ][] = &$node;
             }
+            
         }
 
         $tree = $tree[0][$ck];
