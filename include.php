@@ -27,5 +27,6 @@ include_once dirname( __FILE__ ).'/class.wbFormBuilder.php';
 require_once dirname( __FILE__ ).'/class.wbTemplate.php';
 require_once dirname( __FILE__ ).'/class.wbI18n.php';
 require_once dirname( __FILE__ ).'/class.wbListBuilder.php';
+require_once dirname( __FILE__ ).'/class.wbHolidays.php';
 
 ?>
