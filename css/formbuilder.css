@@ -1,22 +1,91 @@
-table.fbtable {
-    width               : 80%;
-    margin              : 10px auto;
-    border              : 1px solid #ccc;
+form.fbform
+{
+    font-family          : Verdana, Helvetica, Arial, sans-serif;
 }
-.fbheader {
-    border              : 1px solid #ccc;
-}
-.fbleft {
-    font-weight         : bold;
-}
-.fbrequired {
-    color               : #f00;
-}
-.fbright {
 
+form.fbform table.fbtable
+{
+    width                : 80%;
+    margin               : 10px auto;
+    border               : 1px solid #ccc;
+    border-collapse      : collapse;
+    background-color     : #ffffff;
+    /* Mozilla */
+    -moz-border-radius   : 10px;
+    /* Safari / Chrome */
+    -webkit-border-radius: 10px;
+    /* Konquerer */
+    -khtml-border-radius : 10px;
+    /* CSS3 */
+    border-radius        : 10px;
 }
-fieldset.fbfieldset label.fblabel {
-    width               : 200px;
-    float               : left;
-    text-align          : right;
+
+form.fbform table.fbtable th,
+form.fbform table.fbtable td
+{
+    vertical-align       : top;
+}
+
+form.fbform label.fblabel,
+form.fbform table.fbtable td.fbleft,
+form.fbform input.fbsubmit,
+form.fbform .fbheader
+{
+    font-weight          : bold;
+    color                : #000;
+}
+
+form.fbform table.fbtable td.fbleft
+{
+    text-align           : right;
+}
+
+form.fbform .fbheader
+{
+    border-bottom        : 1px dotted #000;
+}
+
+form.fbform .fbsmall
+{
+    font-size       : x-small;
+    font-weight     : normal;
+}
+
+form.fbform input.fbtext,
+form.fbform input.fbsubmit,
+form.fbform select.fbselect,
+form.fbform textarea.fbtextarea
+{
+    width                : 400px;
+    border               : 1px solid #ccc;
+    /* Mozilla */
+    -moz-border-radius   : 10px;
+    /* Safari / Chrome */
+    -webkit-border-radius: 10px;
+    /* Konquerer */
+    -khtml-border-radius : 10px;
+    /* CSS3 */
+    border-radius        : 10px;
+    padding              : 3px;
+}
+
+form.fbform input.fbsubmit
+{
+    text-align           : center;
+    background-color     : #dfdec4 !important;
+}
+
+form.fbform table.fbtable td.fbbutton
+{
+    text-align           : right;
+    background-color     : #ececd8;
+    padding              : 5px;
+}
+
+form.fbform .fbinfo
+{
+    padding              : 5px;
+    border               : 2px #dfdec4 solid !important;
+    text-align           : center;
+    font-weight          : bold;
 }
