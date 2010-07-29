@@ -50,7 +50,7 @@
 <!-- END template comment -->
 {{ :loopend }}
     <tr>
-      <td colspan="3"{{ :if fb_button_class }} class="{{ fb_button_class }}"{{ :ifend }}>
+      <td colspan="3"{{ :if fb_buttonpane_class }} class="{{ fb_buttonpane_class }}"{{ :ifend }}>
       {{ :loop buttons }}{{ :if field }}{{ field }}{{ :ifend }}{{ :loopend }}
       </td>
     </tr>
