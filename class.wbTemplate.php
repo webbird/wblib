@@ -28,8 +28,8 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 class wbTemplate extends wbBase {
 
     // ----- Debugging -----
-    #protected $debugLevel     = KLOGGER::OFF;
-    protected $debugLevel     = KLOGGER::DEBUG;
+    protected $debugLevel     = KLOGGER::OFF;
+    #protected $debugLevel     = KLOGGER::DEBUG;
 
     //
     protected $_config
@@ -325,7 +325,7 @@ class wbTemplate extends wbBase {
             $this->log()->LogDebug( 'adding fillings to pre-stored contents' );
             $fillings = array_merge ( $fillings, $this->_fillings );
         }
-        
+
         $this->log()->LogDebug( 'string:', $string );
         $this->log()->LogDebug( 'fillings:', $fillings );
 
