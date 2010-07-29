@@ -108,7 +108,8 @@ class wbListBuilder extends wbBase {
             return;
         }
 
-        $tree = array();
+        $tree    = array();
+        $root_id = 0;
         
         // spare some typing...
         $ik      = $this->_config['__id_key'];
@@ -125,7 +126,7 @@ class wbListBuilder extends wbBase {
         }
 
         $items = $arr;
-
+        
         //
         // this creates an array of parents with their associated children
         //
@@ -157,6 +158,7 @@ class wbListBuilder extends wbBase {
             if ( $node[$pk] === null )
             {
                 $tree[$id] = &$node;
+                $root_id   = $id;
             }
             // sub node
             else {
@@ -169,8 +171,9 @@ class wbListBuilder extends wbBase {
             }
             
         }
-
-        $tree = $tree[0][$ck];
+        
+// ---- ????? -----
+        $tree = $tree[$root_id][$ck];
 
         $this->log()->LogDebug( 'returning tree: ', $tree );
 
@@ -353,7 +356,7 @@ class wbListBuilder extends wbBase {
      *
      **/
     public function buildDropDown ( $tree, $options = array() ) {
-
+    
         $this->log()->LogDebug(
             'building dropdown from tree:',
             $tree
