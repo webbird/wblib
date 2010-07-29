@@ -59,9 +59,12 @@ class wbFormBuilder extends wbBase {
               # form defaults (<form> tag)
               'method'          => 'post',
               'action'          => '',
+              'enctype'         => '',
               'save_key'        => 'save',
+              # use CSS file
+              'fb_css_file'     => '',
               # CSS classes
-              'label_css'       => 'fblabel',
+              'fb_label_css'    => 'fblabel',
               'fb_form_class'   => 'fbform',
               'fb_left_class'   => 'fbleft',
               'fb_header_class' => 'fbheader',
@@ -70,6 +73,7 @@ class wbFormBuilder extends wbBase {
               'fb_table_class'  => 'fbtable',
               'fb_error_class'  => 'fberror',
               'fb_info_class'   => 'fbinfo',
+              'fb_buttonpane_class' => 'fbbuttonpane',
               'fb_button_class' => 'fbbutton',
 
               # output as table or fieldset
@@ -456,6 +460,10 @@ class wbFormBuilder extends wbBase {
     
         $formname = $this->__validateFormName( $formname );
         
+        $this->log()->LogDebug(
+            'Searching for form element ['.$name.'] in form ['.$formname.']'
+        );
+        
         // find given element
         $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
 
@@ -472,6 +480,9 @@ class wbFormBuilder extends wbBase {
                 return false;
             }
             self::$_forms[ $formname ]['elements'][ $path[0] ]['value'] = $value;
+echo "$name<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+print_r( self::$_forms[ $formname ]['elements'][ $path[0] ] );
+echo "</textarea>";
         }
         else {
             $this->log()->LogDebug(
@@ -554,6 +565,7 @@ class wbFormBuilder extends wbBase {
                                    'type'  => 'submit',
                                    'value' => $this->translate( 'Submit' ),
                                    'name'  => $this->_config['save_key'],
+                                   'class' => $this->_config['fb_button_class']
                                )
                            )
             );
@@ -587,12 +599,13 @@ class wbFormBuilder extends wbBase {
                    $this->_config,
                    array(
                        // FormBuilder CSS
-                       'cssfile'    => 'http://localhost/_projects/wb28/modules/wblib/css/formbuilder.css',
+                       'cssfile'    => $this->_config['fb_css_file'],
                        // form attributes
                        'attributes' => $this->__validateAttributes(
                                            array(
                                                'type'     => 'form',
                                                'class'    => $this->_config['fb_form_class'],
+                                               'enctype'  => $this->_config['enctype'],
                                                'method'   => $this->_config['method'],
                                                'name'     => $formname,
                                                'action'   => $this->_config['action'],
@@ -696,7 +709,10 @@ class wbFormBuilder extends wbBase {
 
             // check required fields
             if (
-                 isset( $element['required'] )
+                 ( isset( $element['required'] )
+                   &&
+                   $element['required'] === true
+                 )
                  &&
                  ( ! isset( $value ) || strlen( $value ) == 0 )
             ) {
@@ -916,7 +932,7 @@ class wbFormBuilder extends wbBase {
                 if ( $isIndexed ) { $key = $value; }
                 
                 $selected = NULL;
-                
+
                 if ( isset( $element['value'] ) ) {
                     if ( ! is_array( $element['value'] ) ) {
                         $element['value'] = array( $element['value'] );
@@ -931,13 +947,15 @@ class wbFormBuilder extends wbBase {
                     }
                 }
 
-                $opt[$key] = array(
+                $opt[] = array(
                                  'key'      => $key,
                                  'value'    => $this->lang->translate( $value ),
                                  'selected' => $selected
                              );
 
             }
+            
+            $this->log()->LogDebug( 'options:', $opt );
             
             // select default value?
             if ( ! $found_val && isset( $element['default'] ) ) {
@@ -946,7 +964,7 @@ class wbFormBuilder extends wbBase {
 
         }
 
-        return $this->tpl->getTemplate(
+        $output = $this->tpl->getTemplate(
                    'select.tpl',
                    array(
                        'attributes' => $this->__validateAttributes( $element ),
@@ -954,6 +972,10 @@ class wbFormBuilder extends wbBase {
                        'content'    => ( isset ( $element['content'] ) ? $element['content'] : '' ),
                    )
                );
+
+        $this->log()->LogDebug( 'returning rendered select field:', $output );
+
+        return $output;
 
     }   // end function select()
     
@@ -1097,6 +1119,7 @@ class wbFormBuilder extends wbBase {
             = array(
                   'method' => array( 'get', 'post' ),
                   'action' => 'PCRE_URI',
+                  'enctype' => array( 'multipart/form-data', 'text/plain', 'application/x-www-form-urlencoded' ),
               );
 
         // attributes allowed in nearly all input fields
@@ -1441,7 +1464,7 @@ exit;
 
             if ( isset ( $element['label'] ) ) {
                 $label = '<label for="'.$element['name'].'" '
-                       . 'class="'.$this->_config['label_css'].'">'
+                       . 'class="'.$this->_config['fb_label_css'].'">'
                        . $this->translate( $element['label'] )
                        . '</label>';
             }
@@ -1453,7 +1476,7 @@ exit;
                          ?  $this->lang->translate( $element['info'] )
                          :  NULL,
                 'field'  => $field,
-                'req'    => ( ( isset( $element['required'] ) && $element['required'] ) ? '*' : NULL ),
+                'req'    => ( ( ( isset( $element['required'] ) && $element['required'] === true ) && $element['required'] ) ? '*' : NULL ),
                 'header' => ( $element['type'] == 'legend' ) ? $field : NULL,
                 'error'  => (
                                 isset( $this->_errors[ $this->_current_form ][ $element['name'] ] )
