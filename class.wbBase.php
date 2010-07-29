@@ -231,9 +231,9 @@ class wbBase {
 
         // array of locations to search for $file
         $try = array(
-                   $file,
                    $this->_config['path'].'/'.$file,
-                   $this->_config['workdir'].'/'.$file
+                   $this->_config['workdir'].'/'.$file,
+                   $file,
                );
                
         // add $path to search array if set
@@ -247,7 +247,7 @@ class wbBase {
                 'trying to find: -'.$filename.'-'
             );
         
-            if ( file_exists( $filename ) ) {
+            if ( @file_exists( $filename ) ) {
             
                 $this->log()->LogDebug( 'found!' );
             
@@ -306,7 +306,7 @@ class wbBase {
         if ( $url ) {
             $this->_url = $url;
         }
-        if ( empty( self::$_url ) ) {
+        if ( empty( self::$_url ) && isset($_SERVER['REQUEST_URI']) ) {
             $this->_url = $_SERVER['REQUEST_URI'];
         }
         return $this->_url;
@@ -356,7 +356,6 @@ class wbBase {
      
         $aParam = preg_split( "/[;&]/", $paramstring );
         if ( is_array( $aParam ) ) {
-
             foreach ( $aParam as $item ) {
                 if ( strstr( $item, '=' ) ) {
                     list ( $key, $value ) = explode( '=', $item );
@@ -365,7 +364,6 @@ class wbBase {
                     }
                 }
             }
-
         }
 
         $params = array_merge( $params, $add_params );
