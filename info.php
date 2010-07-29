@@ -28,7 +28,7 @@
 $module_directory 	= 'wblib';
 $module_name 				= 'WebBirds Base Libraries';
 $module_function 		= 'snippet';
-$module_version 		= '0.13';
+$module_version 		= '0.35';
 $module_platform 		= '2.8';
 
 $module_author 			= 'Bianka Martinovic (http://www.webbird.de/)';
