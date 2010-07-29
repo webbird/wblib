@@ -72,8 +72,8 @@ class wbValidate extends wbBase {
 
             if ( ! $this->isValidUri( $_SERVER['SCRIPT_NAME'] ) ) {
                 $this->selfURL( 'http://'
-                              . $_SERVER['HTTP_HOST']
-                              . $_SERVER['SCRIPT_NAME']
+                              . ( isset( $_SERVER['HTTP_HOST'] )   ? $_SERVER['HTTP_HOST']   : 'localhost' )
+                              . ( isset( $_SERVER['SCRIPT_NAME'] ) ? $_SERVER['SCRIPT_NAME'] : ''          )
                               );
             }
             else {
@@ -139,7 +139,7 @@ class wbValidate extends wbBase {
 
         // value already validated?
         if ( isset( self::$_valid[ $varname ] ) ) {
-            $this->log()->LogDebug( 'returning already validated var '.$varname );
+            $this->log()->LogDebug( 'returning already validated var '.$varname, self::$_valid[ $varname ] );
             return self::$_valid[ $varname ];
         }
 
@@ -263,6 +263,7 @@ class wbValidate extends wbBase {
 
 if ( ! is_scalar($constant) ) {
 echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+print_r( $constant );
 print_r( debug_backtrace() );
 echo "</textarea>";
 }
