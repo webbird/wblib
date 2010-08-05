@@ -33,6 +33,7 @@ class wbMySQL extends wbDBBase implements wbDBDriver {
 
     // ----- Debugging -----
     protected        $debugLevel      = KLogger::DEBUG;
+    #protected        $debugLevel      = KLogger::OFF;
 
     /**
      * set some defaults specific to this driver class
@@ -42,7 +43,8 @@ class wbMySQL extends wbDBBase implements wbDBDriver {
         $this->port       = 3306;
         $this->pdo_driver = 'mysql';
     }   // end function defaults ()
-
+    
 }
+
 
 ?>
