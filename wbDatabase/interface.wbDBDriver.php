@@ -28,7 +28,10 @@ interface wbDBDriver {
     function getDSN   ();
     
     function search ();
-    
+    function insert ( $options );
+    function update ( $options );
+    function delete ( $options );
+
 }
 
 ?>
