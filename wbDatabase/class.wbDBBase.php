@@ -28,7 +28,7 @@ include_once dirname(__FILE__).'/../debug/KLogger.php';
 class wbDBBase extends PDO {
 
     // ----- Debugging -----
-    protected    $debugLevel = KLogger::DEBUG;
+    protected    $debugLevel = KLogger::OFF;
     private static $debugDir = '/../debug/log';
 
     protected $dsn        = NULL;
@@ -40,6 +40,9 @@ class wbDBBase extends PDO {
     protected $pdo_driver = 'mysql';
     protected $prefix     = NULL;
     protected $timeout    = 5;
+    protected $errors     = array();
+    protected $lasterror  = NULL;
+    protected $lastInsertID = NULL;
 
 // ----- Operators used in WHERE-clauses -----
     protected $operators  = array(
@@ -50,6 +53,7 @@ class wbDBBase extends PDO {
         '!=' => '<>',
         '=~' => 'REGEXP',
         '!~' => 'NOT REGEXP',
+        '~~' => 'LIKE'
     );
 
 // ----- Conjunctions used in WHERE-clauses -----
@@ -67,9 +71,12 @@ class wbDBBase extends PDO {
      **/
     public static function exception_handler( $exception ) {
         // Output the exception details
-        $this->log->LogError(
-            'Uncaught exception: '. $exception->getMessage()
-        );
+        if ( is_object( $this ) && is_object($this->log) )
+        {
+            $this->log->LogError(
+                'Uncaught exception: '. $exception->getMessage()
+            );
+        }
         die( 'Uncaught exception: '. $exception->getMessage() );
     }
 
@@ -117,7 +124,8 @@ class wbDBBase extends PDO {
         $this->log
             = new KLogger(
                   $this->debugDir.'/'.get_class($this).'.log' ,
-                  $this->debugLevel
+                  $this->debugLevel,
+                  true
               );
 
     }   // end function __construct()
@@ -137,6 +145,36 @@ class wbDBBase extends PDO {
             }
         }
     }   // end function getDSN()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getError() {
+        return $this->lasterror;
+    }   // end function getError()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getLastInsertID() {
+        return $this->lastInsertID;
+    }   // end function getLastInsertID()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function isError() {
+        return isset( $this->lasterror ) ? true : false;
+    }   // end function isError()
 
     /**
      * Search the DB
@@ -160,6 +198,8 @@ class wbDBBase extends PDO {
         if ( ! isset( $options['tables'] ) ) {
             return NULL;
         }
+        
+        $this->lasterror = NULL;
 
         $tables = $this->__map_tables( $options['tables'], $options );
 
@@ -182,6 +222,10 @@ class wbDBBase extends PDO {
         $params = isset( $options['params'] ) && is_array( $options['params'] )
                 ? array_values( $options['params'] )
                 : NULL;
+                
+        $group  = isset( $options['group_by'] )
+                ? 'GROUP BY '.$options['group_by']
+                : NULL;
 
         // create the statement
         $statement = "SELECT "
@@ -190,8 +234,8 @@ class wbDBBase extends PDO {
                        ? implode( ', ', $fields )
                        : $fields
                      )
-                   . " FROM $tables $where $order $limit";
-        
+                   . " FROM $tables $where $order $group $limit";
+
         $this->log->LogDebug( 'executing statement: '.$statement, $params );
 
         $stmt      = $this->prepare( $statement );
@@ -203,7 +247,7 @@ class wbDBBase extends PDO {
 
         if ( $stmt->execute( $params ) ) {
             $this->log->LogDebug( 'returning ['.$stmt->rowCount().'] results' );
-            return $stmt->fetchAll();
+            return $stmt->fetchAll( PDO::FETCH_ASSOC );
         }
         else {
             if ( $stmt->errorInfo() ) {
@@ -212,9 +256,208 @@ class wbDBBase extends PDO {
             $this->log->LogFatal(
                 $error
             );
+            $this->lasterror = $error;
         }
 
     }   // end function search ()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function insert( $options ) {
+    
+        if ( ! isset( $options['tables'] ) || ! isset( $options['values'] ) ) {
+            return NULL;
+        }
+        
+        $this->lasterror = NULL;
+        
+        $do     = isset( $options['do'] )
+                ? $options['do']
+                : 'INSERT';
+                
+        $options['__is_insert'] = true;
+
+        $tables = $this->__map_tables( $options['tables'], $options );
+        $values = array();
+        $fields = NULL;
+
+        foreach ( $options['values'] as $v ) {
+            $values[] = '?';
+        }
+
+        if ( isset( $options['fields'] ) && is_array( $options['fields'] ) ) {
+            $fields = '( `'
+                    . implode( '`, `', $options['fields'] )
+                    . '` )';
+        }
+
+        // create the statement
+        $statement = "$do INTO $tables $fields"
+                   . " VALUES ( "
+                   . implode( ', ', $values )
+                   . " )";
+                       
+        $this->log->LogDebug( 'executing statement: '.$statement, $options['values'] );
+
+        $stmt      = $this->prepare( $statement );
+
+        if ( ! is_object( $stmt ) ) {
+            $error_info = '['.implode( "] [", $this->errorInfo() ).']';
+            $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
+        }
+
+        if ( $stmt->execute( $options['values'] ) ) {
+            $this->log->LogDebug( 'statement successful:', $statement );
+            // if it's an insert, save the id
+            if ( $do == 'INSERT' ) {
+                $this->lastInsertID = $this->lastInsertId();
+            }
+            return true;
+        }
+        else {
+            if ( $stmt->errorInfo() ) {
+                $error = '['.implode( "] [", $stmt->errorInfo() ).']';
+                $this->errors[] = $error;
+                $this->lasterror = $error;
+                $this->log->LogFatal(
+                    $error
+                );
+            }
+        }
+
+    }   // end function insert()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function replace( $options ) {
+        $this->log->LogDebug( '', $options );
+        $options['do'] = 'REPLACE';
+        return $this->insert( $options );
+    }   // end function replace()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function update( $options ) {
+    
+        if ( ! isset( $options['tables'] ) || ! isset( $options['values'] ) ) {
+            return NULL;
+        }
+
+        $this->lasterror = NULL;
+        
+        $tables = $this->__map_tables( $options['tables'], $options, true );
+        $where  = isset( $options['where'] )
+                ? $this->__parse_where( $options['where'] )
+                : NULL;
+        
+        $carr = array();
+        foreach ( $options['fields'] as $key ) {
+            $carr[] = "$key = ?";
+        }
+        
+        // create the statement
+        $statement = "UPDATE $tables SET "
+                   . implode( ', ', $carr )
+                   . " $where";
+
+        $this->log->LogDebug( 'executing statement: '.$statement, $options['values'] );
+
+        $stmt      = $this->prepare( $statement );
+        
+        if ( ! is_object( $stmt ) ) {
+            $error_info = '['.implode( "] [", $this->errorInfo() ).']';
+            $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
+        }
+        
+        $params = array();
+        if ( isset ( $options['params'] ) ) {
+            $params = $options['params'];
+        }
+
+        if ( $stmt->execute( array_merge( $options['values'], $params ) ) ) {
+            $this->log->LogDebug( 'statement successful:', $statement );
+            return true;
+        }
+        else {
+            if ( $stmt->errorInfo() ) {
+                $error = '['.implode( "] [", $stmt->errorInfo() ).']';
+                $this->errors[] = $error;
+                $this->lasterror = $error;
+                $this->log->LogFatal(
+                    $error
+                );
+            }
+        }
+    
+    }   // end function update()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function delete( $options )
+    {
+    
+        if ( ! isset( $options['tables'] ) ) {
+            return NULL;
+        }
+        
+        $this->lasterror = NULL;
+        $options['__is_delete'] = true;
+
+        $tables = $this->__map_tables( $options['tables'], $options, true );
+        $where  = isset( $options['where'] )
+                ? $this->__parse_where( $options['where'] )
+                : NULL;
+    
+        // create the statement
+        $statement = "DELETE FROM $tables "
+                   . " $where";
+                   
+        $stmt      = $this->prepare( $statement );
+
+        if ( ! is_object( $stmt ) ) {
+            $error_info = '['.implode( "] [", $this->errorInfo() ).']';
+            $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
+        }
+
+        $params = array();
+        if ( isset ( $options['params'] ) ) {
+            $params = $options['params'];
+        }
+
+        $this->log->LogDebug( 'executing statement: '.$statement, $options['params'] );
+
+        if ( $stmt->execute( $params ) ) {
+            $this->log->LogDebug( 'statement successful:', $statement );
+            return true;
+        }
+        else {
+            if ( $stmt->errorInfo() ) {
+                $error = '['.implode( "] [", $stmt->errorInfo() ).']';
+                $this->errors[] = $error;
+                $this->lasterror = $error;
+                $this->log->LogFatal(
+                    $error
+                );
+            }
+        }
+                   
+    }
     
     
     /**
@@ -223,7 +466,7 @@ class wbDBBase extends PDO {
      *
      *
      **/
-    protected function __map_tables( $tables, $options = array() ) {
+    protected function __map_tables( $tables, $options = array(), $is_insert = false ) {
     
         if ( is_array( $tables ) ) {
         
@@ -232,9 +475,7 @@ class wbDBBase extends PDO {
                 return $this->__parse_join( $tables, $options );
             }
             else {
-            
                 foreach ( $tables as $i => $t_name ) {
-
                     if (
                          ! empty( $this->prefix )
                          &&
@@ -242,7 +483,7 @@ class wbDBBase extends PDO {
                     ) {
                         $t_name = $this->prefix . $t_name;
                     }
-                    $tables[$i] = $t_name . ' as t' . ($i+1);
+                    $tables[$i] = $t_name . ( isset( $options['__is_delete'] ) ? '' : ' as t' . ($i+1) );
                 }
                 return implode( ', ', $tables );
 
@@ -250,7 +491,7 @@ class wbDBBase extends PDO {
 
         }
         else {
-            return $this->prefix . $tables;
+            return $this->prefix . $tables . ( ( isset( $options['__is_insert'] ) || isset( $options['__is_delete'] ) ) ? NULL : ' as t1' );
         }
         
         
@@ -290,10 +531,7 @@ class wbDBBase extends PDO {
         $this->log->LogDebug( 'options: ', $options );
     
         if ( ! is_array( $tables ) ) {
-            $this->log->LogError(
-                '$tables must be an array to use JOIN'
-            );
-            return NULL;
+            $tables = array( $tables );
         }
 
         if ( count( $tables ) > 2 && ! is_array( $join ) ) {
@@ -380,7 +618,8 @@ class wbDBBase extends PDO {
         $this->log
             = new KLogger(
                   $this->debugDir.'/wbDB_'.$this->pdo_driver.'.log' ,
-                  $this->debugLevel
+                  $this->debugLevel,
+                  true
               );
 
         // load defaults
