@@ -23,7 +23,6 @@
 **/
 
 require_once dirname( __FILE__ ).'/class.wbBase.php';
-require_once dirname( __FILE__ ).'/class.wbValidate.php';
 
 class wbListBuilder extends wbBase {
 
@@ -74,26 +73,6 @@ class wbListBuilder extends wbBase {
     function __construct ( $options = array() ) {
         parent::__construct($options);
     }   // end function __construct()
-    
-    /**
-     *
-     *
-     *
-     *
-     **/
-    public function ___set ( $settings = array() ) {
-
-        foreach ( $settings as $set => $value ) {
-            if (
-                 isset( $this->_config[ $set ] )
-                 &&
-                 wbValidate::staticValidate( 'PCRE_STRING', $value )
-            ) {
-                $this->_config[ $set ] = $value;
-            }
-        }
-
-    }   // end function set ()
     
     /**
      * 
@@ -173,7 +152,13 @@ class wbListBuilder extends wbBase {
         }
         
 // ---- ????? -----
-        $tree = $tree[$root_id][$ck];
+        if ( is_array($tree) && count( $tree ) > 0 )
+        {
+            $tree = $tree[$root_id][$ck];
+        }
+        else {
+            $this->log()->LogDebug( '---ERROR!--- $tree is empty!' );
+        }
 
         $this->log()->LogDebug( 'returning tree: ', $tree );
 
