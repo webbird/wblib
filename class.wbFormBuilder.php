@@ -29,8 +29,8 @@ require_once dirname( __FILE__ ).'/class.wbTemplate.php';
 class wbFormBuilder extends wbBase {
 
     // ----- Debugging -----
-    protected      $debugLevel      = KLOGGER::OFF;
-    #protected      $debugLevel      = KLOGGER::DEBUG;
+    #protected      $debugLevel      = KLOGGER::OFF;
+    protected      $debugLevel      = KLOGGER::DEBUG;
     
     // name of the current form
     private        $_current_form   = NULL;
@@ -60,6 +60,7 @@ class wbFormBuilder extends wbBase {
               'method'          => 'post',
               'action'          => '',
               'enctype'         => '',
+              'id'              => '',
               'save_key'        => 'save',
               # use CSS file
               'fb_css_file'     => '',
@@ -480,10 +481,11 @@ class wbFormBuilder extends wbBase {
                 return false;
             }
             self::$_forms[ $formname ]['elements'][ $path[0] ]['value'] = $value;
-echo "$name<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+/*
+	echo "$name<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
 print_r( self::$_forms[ $formname ]['elements'][ $path[0] ] );
 echo "</textarea>";
-        }
+*/        }
         else {
             $this->log()->LogDebug(
                 'element not found!',
@@ -608,6 +610,7 @@ echo "</textarea>";
                                                'enctype'  => $this->_config['enctype'],
                                                'method'   => $this->_config['method'],
                                                'name'     => $formname,
+                                               'id'       => $this->_config['id'],
                                                'action'   => $this->_config['action'],
                                            )
                                        ),
@@ -704,7 +707,11 @@ echo "</textarea>";
 
             $this->log()->LogDebug(
                 'got value: '
-              . ( ( isset( $value ) && strlen( $value ) > 0 ) ? '['.$value.']' : '---none---' )
+              . (
+                    ( isset( $value ) )
+                  ? ( is_array( $value ) ? print_r( $value, 1 ) : '['.$value.']' )
+                  : '---none---'
+                )
             );
 
             // check required fields
@@ -1117,8 +1124,9 @@ echo "</textarea>";
         // <form>
         $this->_config['_form_attrs']
             = array(
-                  'method' => array( 'get', 'post' ),
-                  'action' => 'PCRE_URI',
+                  'method'  => array( 'get', 'post' ),
+                  'action'  => 'PCRE_URI',
+                  'id'      => 'PCRE_STRING',
                   'enctype' => array( 'multipart/form-data', 'text/plain', 'application/x-www-form-urlencoded' ),
               );
 
@@ -1295,6 +1303,10 @@ echo "</textarea>";
 
                 // validate attribute
                 if ( is_array( $known_attributes[$attr] ) ) {
+                    $this->log()->LogDebug(
+                        'validating attr ['.$attr.'] value ['.$value.'] against $known_attributes[$attr]',
+                        $known_attributes[$attr]
+                    );
                     $valid = in_array( $value, $known_attributes[$attr] )
                            ? $value
                            : NULL;
