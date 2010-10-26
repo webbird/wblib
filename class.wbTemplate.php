@@ -140,6 +140,15 @@ class wbTemplate extends wbBase {
 
     }  // end function setVal()
 
+    /**
+     * this is an alias for parseTemplate()
+     *
+     *
+     *
+     **/
+    public function render( $contents, $cache = false ) {
+        return $this->parseTemplate( $contents, $cache );
+    }   // end function render
 
     /**
   	 * get template contents
@@ -147,7 +156,7 @@ class wbTemplate extends wbBase {
   	 * This is a shortcut function for
   	 *
   	 *     $tpl->setTemplate( $file );
-  	 *     $tpl->renderTemplate( $array );
+  	 *     $tpl->parseTemplate( $array );
   	 *
   	 * @access public
   	 * @param  string   $file  - file to parse
@@ -173,7 +182,7 @@ class wbTemplate extends wbBase {
      *
      **/
     public function parseTemplate( $contents, $cache = false ) {
-
+    
         if (
                isset( $this->_config['current_filename'] )
                &&
@@ -275,7 +284,7 @@ class wbTemplate extends wbBase {
         else { # fail
             $this->printError(
                 'Unresolved placeholder found in template '
-              . $this->_config['file']
+              . $this->_config['current_filename']
               . '<br />'
               . $text
             );
@@ -300,6 +309,15 @@ class wbTemplate extends wbBase {
         $checksum   = md5_file( $this->_config['current_file'] );
         $cache_file = $this->_config['current_filename'].'_'.$checksum;
 
+        // let's see if we have globally stored contents
+        if ( count( $this->_fillings ) > 0 ) {
+            $this->log()->LogDebug( 'adding fillings to pre-stored contents' );
+            $fillings = array_merge ( $fillings, $this->_fillings );
+        }
+
+        $this->log()->LogDebug( 'string:', $string );
+        $this->log()->LogDebug( 'fillings:', $fillings );
+
         if ( $cache )
         {
 	  
@@ -307,6 +325,7 @@ class wbTemplate extends wbBase {
             if ( file_exists( $this->_config['workdir'].'/'.$this->_config['cachedir'].'/'.$cache_file ) )
             {
                 $this->log()->LogDebug( "loading cached template" );
+                $this->data = $fillings;
                 ob_start();
                 include $this->_config['workdir'].'/'.$this->_config['cachedir'].'/'.$cache_file;
                 return ob_get_clean();
@@ -320,18 +339,11 @@ class wbTemplate extends wbBase {
         $O     = $this->_config['start_tag'];
         $C     = $this->_config['end_tag'];
 
-        // let's see if we have globally stored contents
-        if ( count( $this->_fillings ) > 0 ) {
-            $this->log()->LogDebug( 'adding fillings to pre-stored contents' );
-            $fillings = array_merge ( $fillings, $this->_fillings );
-        }
-
-        $this->log()->LogDebug( 'string:', $string );
-        $this->log()->LogDebug( 'fillings:', $fillings );
-
         // get all included files
         $string = $this->__getIncludes ( $string );
         // ----- now we have a complete template to parse -----
+        
+        $this->log()->LogDebug( 'removing comments' );
         
         // remove simple comments
         $string = preg_replace(
@@ -351,21 +363,24 @@ class wbTemplate extends wbBase {
                   );
 
         // extract loops and if statements
+        $this->log()->LogDebug( 'extracting blocks' );
         $string = $this->__extractBlocks( $string );
         
         // handle translations
+        $this->log()->LogDebug( 'handle lang strings' );
         $trans_regexp = "#$O\s*:(lang|translate)\s*([^$C].*?)\s*$C#eim";
         $string       = preg_replace( $trans_regexp, "\$this->translate( '\\2' )", $string );
 
         // matches normal vars
         $vars_regexp = "$O\s*([^:]\w+)\s*$C";
+        $this->log()->LogDebug( 'match normal vars using regexp: '.$vars_regexp );
 
         while(
                 preg_match( "/$vars_regexp/im",
                             $string,
                             $vars )
         ) {
-        
+
             $code   = '<?php '."\n".
                       '    if ( isset( $fillings["'.$vars[1].'"] ) ) :'."\n".
                       '        echo $fillings["'.$vars[1].'"];'."\n".
@@ -667,7 +682,7 @@ class wbTemplate extends wbBase {
                 $var .= '["'.$el['key'].'"]';
                 $i    = '$'.$this->_loop_vars[ $this->_var_index ];
                 
-                $code = '<?php if ( isset( '.$var.' ) ): '."\n"
+                $code = '<?php if ( isset( '.$var.' ) && is_array( '.$var.' ) && count ( '.$var.' ) > 0 ): '."\n"
                       . '    for ( '.$i.'=0; '.$i.'<count('.$var.'); '.$i.'++ ): ?>'."\n";
                       
                 // replace vars in cdata
