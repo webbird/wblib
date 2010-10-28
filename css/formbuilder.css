@@ -1,54 +1,64 @@
-form.fbform
-{
-    font-family          : Verdana, Helvetica, Arial, sans-serif;
+/*
+    fieldset layout for wbFormBuilder
+*/
+
+form.fbform fieldset {
+    float                : left;
+    clear                : left;
+    width                : 100%;
+    margin               : 0 0 1.5em 0;
+    padding              : 5px;
+    background           : transparent url(fieldset.gif) repeat-x left top;
+ 	  -moz-border-radius   : 11px;
+	  -webkit-border-radius: 11px;
+	  border-radius        : 11px;
+	  z-index              : 2;
 }
 
-form.fbform table.fbtable
-{
-    width                : 80%;
-    margin               : 10px auto;
-    border               : 1px solid #ccc;
-    border-collapse      : collapse;
-    background-color     : #ffffff;
-    /* Mozilla */
-    -moz-border-radius   : 10px;
-    /* Safari / Chrome */
-    -webkit-border-radius: 10px;
-    /* Konquerer */
-    -khtml-border-radius : 10px;
-    /* CSS3 */
-    border-radius        : 10px;
-}
-
-form.fbform table.fbtable th,
-form.fbform table.fbtable td
-{
-    vertical-align       : top;
-}
-
-form.fbform label.fblabel,
-form.fbform table.fbtable td.fbleft,
-form.fbform input.fbsubmit,
-form.fbform .fbheader
-{
+form.fbform legend.fbheader {
+    margin-left          : 1.5em;
+    color                : #000000;
     font-weight          : bold;
-    color                : #000;
+    padding              : 15px;
 }
 
-form.fbform table.fbtable td.fbleft
-{
+form.fbform fieldset ol {
+    padding              : 1em 1em 0 1em;
+    list-style           : none;
+}
+
+form.fbform fieldset li {
+    float                : left;
+    clear                : left;
+    width                : 100%;
+    padding-bottom       : 1em;
+    text-align           : left;
+}
+
+form.fbform fieldset li span {
+    padding-left         : 20px;
+    width                : 20px;
+    height               : 20px;
+    min-height           : 20px;
+    padding              : 2px;
+    display              : inline-block;
+}
+
+form.fbform fieldset.fbsubmit {
+    border-style         : none;
+    float                : none;
+    width                : auto;
+    border               : 0 none #FFF;
+    padding-left         : 30em;
+}
+
+form.fbform label.fblabel {
+    font-weight          : bold;
+    display              : block;
+    float                : left;
+    width                : 30em;
+    margin-right         : 1em;
     text-align           : right;
-}
-
-form.fbform .fbheader
-{
-    border-bottom        : 1px dotted #000;
-}
-
-form.fbform .fbsmall
-{
-    font-size       : x-small;
-    font-weight     : normal;
 }
 
 form.fbform input.fbtext,
@@ -56,36 +66,51 @@ form.fbform input.fbsubmit,
 form.fbform select.fbselect,
 form.fbform textarea.fbtextarea
 {
-    width                : 400px;
+    width                : 30em;
     border               : 1px solid #ccc;
-    /* Mozilla */
-    -moz-border-radius   : 10px;
-    /* Safari / Chrome */
-    -webkit-border-radius: 10px;
-    /* Konquerer */
-    -khtml-border-radius : 10px;
-    /* CSS3 */
-    border-radius        : 10px;
     padding              : 3px;
 }
 
-form.fbform input.fbsubmit
+form.fbform input.fbdisabled,
+form.fbform textarea.fbdisabled
 {
-    text-align           : center;
-    background-color     : #dfdec4 !important;
+    border               : 0;
+    background-color     : transparent;
 }
 
-form.fbform table.fbtable td.fbbutton
-{
-    text-align           : right;
-    background-color     : #ececd8;
-    padding              : 5px;
+
+form.fbform .fberror {
+    display              : block;
+    color                : #C00;
+    font-size            : 85%;
+    font-weight          : normal;
 }
 
-form.fbform .fbinfo
-{
-    padding              : 5px;
-    border               : 2px #dfdec4 solid !important;
-    text-align           : center;
-    font-weight          : bold;
+form.fbform .fbrequired {
+    background           : transparent url(required.png) no-repeat;
+    width                : auto;
+    padding-left         : 22px;
+}
+
+form.fbform .fbicon {
+    height               : 20px;
+    line-height          : 20px;
+    vertical-align       : middle;
+}
+
+form.fbform .fbbuttonpane {
+    width                : 100%;
+}
+
+form.fbform .fbbutton {
+    background           : transparent url(button.gif) repeat-x left top;
+    height               : 30px;
+    border               : 1px outset #606060 !important;
+ 	  -moz-border-radius   : 8px;
+	  -webkit-border-radius: 8px;
+	  border-radius        : 8px;
+    -moz-box-shadow      : 2px 2px 2px #606060;
+	  box-shadow           : 2px 2px 2px #606060;
+	  z-index              : 2;
+	  behavior             : url(ie-css3.htc);
 }

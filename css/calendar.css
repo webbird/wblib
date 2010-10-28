@@ -1,0 +1,48 @@
+.wbcal-month {
+    border          : 1px solid #000;
+    padding         : 0;
+    margin          : 0;
+}
+
+.wbcal-monthname {
+    background-color: #F0C07F;
+    padding         : 2px;
+    border-bottom   : 1px solid #000;
+}
+
+.wbcal-dayname,
+.wbcal-weeknumber
+{
+    background-color: #efd2ac;
+}
+
+.wbcal-day {
+    border          : 1px solid #ccc;
+    padding         : 2px;
+    text-align      : right;
+}
+
+.wbcal-event {
+    font-weight     : bold;
+    background-color: #DDDDDD;
+}
+
+.wbcal-event-text {
+    border          : 1px solid #ccc;
+    background-color: #FFFF99;
+}
+
+.wbcal-daynumber {
+    text-align      : right;
+    border-bottom   : 1px dotted #ccc;
+}
+
+.wbcal_holiday {
+    color           : #f00;
+    font-weight     : bold;
+}
+
+.wbcal-today {
+    font-weight     : bold;
+    background-color: #CCFFCC;
+}
