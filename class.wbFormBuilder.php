@@ -78,7 +78,7 @@ class wbFormBuilder extends wbBase {
               'fb_button_class' => 'fbbutton',
 
               # output as table or fieldset
-              'output_as'       => 'table',
+              'output_as'       => 'fieldset',
           );
     
     /**
@@ -386,6 +386,32 @@ class wbFormBuilder extends wbBase {
     }   // end function setError()
     
     /**
+     * make a field readonly
+     *
+     * @access public
+     * @param  string  $formname
+     * @param  string  $name
+     * @return void
+     *
+     **/
+    public function setReadonly( $formname, $name ) {
+        $formname = $this->__validateFormName( $formname );
+        // find given element
+        $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+        // element found
+        if ( is_array( $path ) ) {
+            $this->log()->LogDebug( 'found element ['.$name.']' );
+            self::$_forms[ $formname ]['elements'][ $path[0] ]['readonly'] = 'readonly';
+            if ( ! isset ( self::$_forms[ $formname ]['elements'][ $path[0] ]['class'] ) ) {
+                self::$_forms[ $formname ]['elements'][ $path[0] ]['class'] = 'fbdisabled';
+            }
+            else {
+                self::$_forms[ $formname ]['elements'][ $path[0] ]['class'] .= ' fbdisabled';
+            }
+        }
+    }   // end function setReadonly
+    
+    /**
      * set value of an already existing element
      *
      * @access public
@@ -549,8 +575,7 @@ echo "</textarea>";
         if ( $elements['req_count'] > 0 ) {
             // add note
             $req_info = $this->translate(
-                            'Required items are marked with {{ marker }}',
-                            array( 'marker' => '*' )
+                            'Required item'
                         );
         }
 
@@ -1029,7 +1054,7 @@ echo "</textarea>";
                     $found_val = true;
                 }
                 
-                $opt[$key] = array(
+                $opt[] = array(
                                  'text'
                                      => $this->lang->translate( $value ),
                                  'attributes'
@@ -1053,7 +1078,7 @@ echo "</textarea>";
             unset( $element['options'] );
 
         }
-
+        
         return $this->tpl->getTemplate(
                    'radio.tpl',
                    array(
@@ -1286,9 +1311,9 @@ echo "</textarea>";
                                     $this->_config['_common_attrs']
                                 );
 
-            $attrs      = array();
-            $id_seen    = false;
-            $class_seen = false;
+            $attrs       = array();
+            $css_classes = array();
+            $id_seen     = false;
 
             $this->log()->LogDebug( 'known attributes:', $known_attributes );
 
@@ -1310,6 +1335,7 @@ echo "</textarea>";
                     $valid = in_array( $value, $known_attributes[$attr] )
                            ? $value
                            : NULL;
+
                 }
                 else {
                     $this->log()->LogDebug(
@@ -1338,7 +1364,7 @@ echo "</textarea>";
 
                 // css class?
                 if ( ! strcasecmp( $attr, 'class' ) ) {
-                    $class_seen = true;
+                    $css_classes = explode( ' ', $valid );
                 }
 
             }
@@ -1347,10 +1373,12 @@ echo "</textarea>";
                 $attrs[] = 'id="'.$element['name'].'"';
             }
 
-            if ( ! $class_seen ) {
-                $attrs[] = 'class="fb'.$element['type'].'"';
+            // add type specific css class to the element
+            if ( ! array_key_exists( 'fb'.$element['type'], $css_classes ) ) {
+                $css_classes[] = 'fb'.$element['type'];
             }
-
+            $attrs[] = 'class="'.implode( ' ', $css_classes ).'"';
+            
             $attributes = implode( ' ', $attrs );
             $this->log()->LogDebug(
                 'returning validated attributes as string: '.$attributes
@@ -1387,6 +1415,15 @@ exit;
         $element['type'] = isset( $element['type'] )
                          ? $element['type']
                          : 'text';
+
+        // set valid value for 'readonly'
+        if (
+             isset( $element['readonly'] ) && $element['readonly']
+             &&
+             ( $element['type'] === 'text' || $element['type'] === 'textarea' )
+        ) {
+            $element['readonly'] = 'readonly';
+        }
                          
         return $element;
         
@@ -1456,12 +1493,10 @@ exit;
 
             // mark errors
             if ( isset( $this->_errors[ $formname ][ $element['name'] ] ) ) {
-
                 $element['class']
                     = isset( $element['class'] )
                     ? ' ' . $this->_config['fb_error_class']
                     : $this->_config['fb_error_class'];
-
             }
             
             // create element
@@ -1488,7 +1523,11 @@ exit;
                          ?  $this->lang->translate( $element['info'] )
                          :  NULL,
                 'field'  => $field,
-                'req'    => ( ( ( isset( $element['required'] ) && $element['required'] === true ) && $element['required'] ) ? '*' : NULL ),
+                'req'    => (
+                                ( ( isset( $element['required'] ) && $element['required'] === true ) && $element['required'] )
+                              ? '*'
+                              : NULL
+                            ),
                 'header' => ( $element['type'] == 'legend' ) ? $field : NULL,
                 'error'  => (
                                 isset( $this->_errors[ $this->_current_form ][ $element['name'] ] )
