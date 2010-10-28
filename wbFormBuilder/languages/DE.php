@@ -24,8 +24,8 @@
 
 $LANG = array(
 
-    'Required items are marked with {{ marker }}'
-        => 'Pflichtfelder sind mit {{ marker }} gekennzeichnet',
+    'Required item'
+        => 'Pflichtfeld',
         
     '<br /><br />Forms defined:<br />{{ forms }}<br /><br />'
         => '<br /><br />Definierte Formulare:<br />{{ forms }}<br /><br />',
