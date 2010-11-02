@@ -406,7 +406,7 @@ class wbTemplate extends wbBase {
         fclose( $fh );
 
         $this->data = $fillings;
-
+        
         ob_start();
         include $this->_config['workdir'].'/'.$this->_config['cachedir'].'/'.$cache_file;
         $output = ob_get_clean();
@@ -512,7 +512,7 @@ class wbTemplate extends wbBase {
     		// none, we just return the string.
     		$cnt = count( $tokens );
     		if( $cnt <= 1 ) {
-            $this->log()->LogDebug( 'No loops found' );
+            $this->log()->LogDebug( 'No blocks found' );
     		    return $string;
         }
 
@@ -529,7 +529,7 @@ class wbTemplate extends wbBase {
 			      $isClosing	= ( strtolower( $tokens[$i++] ) === 'end' ) ? true : false;
 			      $key        = trim($tokens[$i++]); # variable name
 			      $_cData		  = $tokens[$i++]; # text until next token
-
+			      
 #echo "current match:<br />Full -$fullTag-<br />Type -$type-<br />isClosing -$isClosing-<br />Var -$key-<br />",( isset( $_cdata ) ? "Content -$_cdata-<br />" : '' ),"<br />";
 
 			      if ( ! $isClosing ) {
@@ -589,12 +589,20 @@ class wbTemplate extends wbBase {
         
         // reset the data stack
 		    $this->_data[ $this->_depth ] = '';
+		    
+		    $not = false;
+		    
+		    if ( preg_match( "#(\!|not)\s*(.*)#", $key, $match ) ) {
+            $key = $match[2];
+            $not = true;
+		    }
 
         $el = array(
-    			  'fulltag'   => $fullTag,
-    			  'key'       => $key,
-    			  'type'      => $type,
-    			  'path'      => array(),
+    			  'fulltag'     => $fullTag,
+    			  'key'         => $key,
+    			  'type'        => $type,
+    			  'path'        => array(),
+    			  'is_negative' => $not,
     		);
 
         if ( $type == 'loop' )
@@ -681,8 +689,9 @@ class wbTemplate extends wbBase {
                 
                 $var .= '["'.$el['key'].'"]';
                 $i    = '$'.$this->_loop_vars[ $this->_var_index ];
-                
-                $code = '<?php if ( isset( '.$var.' ) && is_array( '.$var.' ) && count ( '.$var.' ) > 0 ): '."\n"
+
+                $code = '<?php if ( '
+                      . 'isset( '.$var.' ) && is_array( '.$var.' ) && count ( '.$var.' ) > 0 ): '."\n"
                       . '    for ( '.$i.'=0; '.$i.'<count('.$var.'); '.$i.'++ ): ?>'."\n";
                       
                 // replace vars in cdata
@@ -728,8 +737,13 @@ class wbTemplate extends wbBase {
                 
                 // handle else
                 $data = preg_replace( "/$O\s*:else\s*$C/im", '<?php else: ?>', $data );
-
-                $code = '<?php if ( isset( '.$var.' ) ): ?>'."\n".$data.'<?php endif; ?>';
+                $neg  = ( isset( $el['is_negative'] ) && $el['is_negative'] ) ? ' ! ' : '';
+                $code = '<?php if ( '
+                      . ( ( $neg ) ? ' ! ' : NULL )
+                      . 'isset( '.$var.' ) ): ?>'
+                      . "\n"
+                      . $data
+                      . '<?php endif; ?>';
 
                 // create a placeholder
                 return array(
