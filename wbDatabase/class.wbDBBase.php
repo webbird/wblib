@@ -175,6 +175,28 @@ class wbDBBase extends PDO {
     public function isError() {
         return isset( $this->lasterror ) ? true : false;
     }   // end function isError()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function max( $fieldname, $options = array() ) {
+        $data = $this->search(
+            array_merge(
+                $options,
+                array(
+                    'limit' => 1,
+                    'fields' => "max($fieldname) as maximum",
+                )
+            )
+        );
+        if ( isset( $data ) && is_array( $data ) && count( $data ) > 0 ) {
+            return $data[0]['maximum'];
+        }
+        return NULL;
+    }   // end function max()
 
     /**
      * Search the DB
@@ -234,7 +256,7 @@ class wbDBBase extends PDO {
                        ? implode( ', ', $fields )
                        : $fields
                      )
-                   . " FROM $tables $where $order $group $limit";
+                   . " FROM $tables $where $group $order $limit";
 
         $this->log->LogDebug( 'executing statement: '.$statement, $params );
 
