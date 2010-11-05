@@ -25,6 +25,7 @@
 require_once dirname( __FILE__ ).'/class.wbBase.php';
 require_once dirname( __FILE__ ).'/class.wbTemplate.php';
 require_once dirname( __FILE__ ).'/class.wbI18n.php';
+require_once dirname( __FILE__ ).'/class.wbHolidays.php';
 
 class wbCalendar extends wbBase {
 
@@ -37,10 +38,13 @@ class wbCalendar extends wbBase {
         'first_day'       => 0, // sunday
         'locale'          => 'de_DE',
         'rows'            => 1,
+        'show_holidays'   => true,
     );
     
     private        $_labels        = array();
     private        $_events        = array();
+    
+    private        $hdays;
     
     /**
      * constructor
@@ -223,13 +227,21 @@ class wbCalendar extends wbBase {
             }
         }
         
+        $data   = array(
+                      'day'    => $day,
+                      'rows'   => $rows
+                  );
+        
+        if ( $this->hdays->isHoliday( $month, $day ) ) {
+            $event = $this->hdays->getHolidayForDate( $month, $day );
+            $data['spanclass'] = 'wbcal_holiday';
+            $data['hovertext'] = implode( "<br />\n", $event );
+        }
+        
         return
             $this->tpl->getTemplate(
                 'table_month_day.tpl',
-                array(
-                    'day'    => $day,
-                    'rows'   => $rows
-                )
+                $data
             );
         
     }   // end function day
@@ -270,6 +282,12 @@ class wbCalendar extends wbBase {
             foreach ( $options['events'] as $i => $item ) {
                 $this->addEvent( $item );
             }
+        }
+        
+        // add holidays
+        if ( $this->_config['show_holidays'] === true ) {
+            $this->hdays = new wbHolidays( $year, $this->_config['locale'] );
+            $hdays = $this->hdays->getHolidaysForMonth( $month );
         }
 
         // prepadding
