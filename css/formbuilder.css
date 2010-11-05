@@ -2,10 +2,19 @@
     fieldset layout for wbFormBuilder
 */
 
-form.fbform fieldset {
+fieldset.fbouter {
     float                : left;
     clear                : left;
     width                : 100%;
+    padding              : 5px;
+    z-index              : 1;
+    border               : 0;
+}
+
+fieldset.fbfieldset {
+    float                : left;
+    clear                : left;
+    width                : 90%;
     margin               : 0 0 1.5em 0;
     padding              : 5px;
     background           : transparent url(fieldset.gif) repeat-x left top;
@@ -15,27 +24,29 @@ form.fbform fieldset {
 	  z-index              : 2;
 }
 
-form.fbform legend.fbheader {
+legend.fblegend {
     margin-left          : 1.5em;
     color                : #000000;
     font-weight          : bold;
-    padding              : 15px;
+    font-size            : 1.2em;
+    padding              : 5px 15px;
 }
 
-form.fbform fieldset ol {
+fieldset.fbfieldset ol {
     padding              : 1em 1em 0 1em;
     list-style           : none;
 }
 
-form.fbform fieldset li {
+fieldset.fbfieldset li {
     float                : left;
     clear                : left;
     width                : 100%;
     padding-bottom       : 1em;
     text-align           : left;
+    list-style           : none;
 }
 
-form.fbform fieldset li span {
+fieldset.fbfieldset li span {
     padding-left         : 20px;
     width                : 20px;
     height               : 20px;
@@ -44,7 +55,7 @@ form.fbform fieldset li span {
     display              : inline-block;
 }
 
-form.fbform fieldset.fbsubmit {
+fieldset.fbsubmit {
     border-style         : none;
     float                : none;
     width                : auto;
@@ -52,57 +63,59 @@ form.fbform fieldset.fbsubmit {
     padding-left         : 30em;
 }
 
-form.fbform label.fblabel {
+label.fblabel {
     font-weight          : bold;
     display              : block;
     float                : left;
-    width                : 30em;
+    width                : 20em;
     margin-right         : 1em;
     text-align           : right;
 }
 
-form.fbform input.fbtext,
-form.fbform input.fbsubmit,
-form.fbform select.fbselect,
-form.fbform textarea.fbtextarea
+input.fbtext,
+input.fbsubmit,
+select.fbselect,
+textarea.fbtextarea
 {
     width                : 30em;
     border               : 1px solid #ccc;
     padding              : 3px;
 }
 
-form.fbform input.fbdisabled,
-form.fbform textarea.fbdisabled
+input.fbdisabled,
+textarea.fbdisabled
 {
     border               : 0;
     background-color     : transparent;
 }
 
 
-form.fbform .fberror {
-    display              : block;
+.fberror {
     color                : #C00;
-    font-size            : 85%;
-    font-weight          : normal;
+    background           : transparent url(error.png) left no-repeat;
+    padding              : 10px;
+    text-align           : center;
+    margin-bottom        : 15px;
 }
 
-form.fbform .fbrequired {
+.fbrequired {
     background           : transparent url(required.png) no-repeat;
     width                : auto;
     padding-left         : 22px;
 }
 
-form.fbform .fbicon {
+.fbicon {
     height               : 20px;
     line-height          : 20px;
     vertical-align       : middle;
+    margin               : 20px auto;
 }
 
-form.fbform .fbbuttonpane {
+.fbbuttonpane {
     width                : 100%;
 }
 
-form.fbform .fbbutton {
+.fbbutton {
     background           : transparent url(button.gif) repeat-x left top;
     height               : 30px;
     border               : 1px outset #606060 !important;
