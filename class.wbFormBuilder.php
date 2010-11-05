@@ -76,6 +76,7 @@ class wbFormBuilder extends wbBase {
               'fb_info_class'   => 'fbinfo',
               'fb_buttonpane_class' => 'fbbuttonpane',
               'fb_button_class' => 'fbbutton',
+              'fb_icon_class'   => 'fbicon',
 
               # output as table or fieldset
               'output_as'       => 'fieldset',
@@ -421,12 +422,12 @@ class wbFormBuilder extends wbBase {
      **/
     public function setVal( $formname = '', $name, $value = NULL ) {
 
+        $formname = $this->__validateFormName( $formname );
+
         $this->log()->LogDebug(
             'setting new value for form ['.$formname.'], element ['.$name.']',
             $value
         );
-
-        $formname = $this->__validateFormName( $formname );
 
         // find given element
         $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
@@ -562,7 +563,7 @@ echo "</textarea>";
         );
 
         // use correct template
-        $template = $this->_config['output_as'].'.tpl';
+        $template = 'block.'.$this->_config['output_as'].'.tpl';
 
         // make sure the form is loaded
         $this->setForm( $formname );
@@ -601,18 +602,64 @@ echo "</textarea>";
 
         // ----- render form elements -----
         $this->tpl->setBehaviour( 'comment' );
+        
+        if ( ! isset ( $elements['blocks'] ) || count( $elements['blocks'] ) < 1 ) {
+            $elements['blocks'][] = 0;
+        }
+        
+        end($elements['fields']);
+        $lastitem  = key($elements['fields']);
+        $blocks    = array();
+        
+        foreach ( $elements['blocks'] as $i => $index ) {
+        
+            // calculate size; $index is the index of the element where the new block begins
+            if ( isset( $elements['blocks'][$i+1] ) && $elements['blocks'][$i+1] < $lastitem ) {
+                $size = $elements['blocks'][$i+1] + 1;
+            }
+            else {
+                $size = $lastitem - $index + 1;
+            }
+            
+            $begin = 0;
+            if ( $index > 0 ) {
+                $begin = $index+1;
+            }
+
+            $blocks[] = $this->tpl->getTemplate(
+                            $template,
+                            array_merge(
+                                $this->_config,
+                                self::$_forms[ $formname ]['config'],
+                                array(
+                                    // form elements
+                                    'header'   => $elements['fields'][$begin]['field'],
+                                    'elements' => array_slice( $elements['fields'], $begin, $size ),# $elements['fields'],
+                                )
+                            )
+                        );
+        }
+        
         $form = $this->tpl->getTemplate(
-                    $template,
+                    $this->_config['output_as'].'.tpl',
                     array_merge(
                         $this->_config,
                         self::$_forms[ $formname ]['config'],
                         array(
-                            // form elements
-                            'elements' => $elements['fields'],
+                            // form contents
+                            'form'     => implode( ' ', $blocks ),
                             // buttons
                             'buttons'  => $this->_buttons[$formname],
                             // info text if there are required fields
                             'req_info' => $req_info,
+                            // errors
+                            'errors'   => ( isset( $this->_errors[ $formname ] ) && is_array( $this->_errors[ $formname ] ) )
+                                       ?  implode( "<br />\n", $this->_errors[ $formname ] )
+                                       :  NULL,
+                            // info messages
+                            'info'     => ( isset( $this->_info[ $formname ] ) && is_array( $this->_info[ $formname ] ) )
+                                       ?  implode( "<br />\n", $this->_info[ $formname ] )
+                                       :  NULL,
                         )
                     )
                 );
@@ -823,31 +870,33 @@ echo "</textarea>";
  * create (render) fields
  ******************************************************************************/
  
-     /**
-      *
-      *
-      *
-      *
-      **/
-     public function legend ( $element ) {
-     
-         $this->log()->LogDebug( 'creating legend field:', $element );
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function legend ( $element ) {
+
+        $this->log()->LogDebug( 'creating legend field:', $element );
          
-         $text = $element['label'];
-         unset( $element['label'] );
-         
-         return
+        $text   = $element['text'];
+        $output =
             $this->tpl->getTemplate(
-                'legend.tpl',
+                'legend.'.$this->_config['output_as'].'.tpl',
                 array(
                     'attributes' => $this->__validateAttributes( $element ),
-                    'value'      => $text
+                    'value'      => $this->lang->translate( $text ),
                 )
             );
             
-     }   // end function legend()
+        $this->log()->LogDebug( 'returning rendered legend: ', $output );
 
-     /**
+        return $output;
+        
+    }   // end function legend()
+
+    /**
      * create <input /> field
      *
      * @access public
@@ -1466,8 +1515,9 @@ exit;
      **/
     private function __renderFormElements( $formname, $formdata ) {
     
-        $form     = array();
+        $fields   = array();
         $hidden   = array();
+        $blocks   = array();
         $required = 0;
 
         // ----- render form elements -----
@@ -1479,7 +1529,7 @@ exit;
             }
 
             // reference to currently used array
-            $add_to_array = & $form;
+            $add_to_array = & $fields;
 
             // hidden elements
             if ( ! strcasecmp( $element['type'], 'hidden' ) ) {
@@ -1490,7 +1540,15 @@ exit;
             if ( ! strcasecmp( $element['type'], 'submit' ) ) {
                 $add_to_array = & $this->_buttons[$formname];
             }
-
+            
+            // mark blocks
+            if ( $element['type'] == 'legend' ) {
+                end($fields);
+                $index = key($fields);
+                $index = isset( $index ) ? $index : 0;
+                $blocks[] = $index;
+            }
+            
             // mark errors
             if ( isset( $this->_errors[ $formname ][ $element['name'] ] ) ) {
                 $element['class']
@@ -1554,7 +1612,7 @@ exit;
                                    ),
                     );
 
-        return array( 'fields' => $form, 'hidden' => $hidden, 'req_count' => $required );
+        return array( 'fields' => $fields, 'hidden' => $hidden, 'req_count' => $required, 'blocks' => $blocks );
         
     }   // end function __renderFormElements()
     
