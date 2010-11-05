@@ -17,6 +17,13 @@
         {{ info }}
       </td>
     </tr>{{ :ifend }}
+    {{ :if errors }}
+    <tr>
+      <td colspan="3" class="{{ fb_icon_class}} {{ fb_error_class }}">
+        {{ errors }}
+      </td>
+    </tr>{{ :ifend }}
+
 {{ :loop elements }}
     {{ :if error }}
     <tr>
@@ -24,15 +31,10 @@
         {{ error }}
       </td>
     </tr>{{ :ifend }}
-<!-- BEGIN template comment -->
+
     {{ :if header }}
-    <tr>
-      <th colspan="3"{{ :if fb_header_class }} class="{{ fb_header_class }}"{{ :ifend }}>
         {{ header }}
-      </th>
-    </tr>
     {{ :else }}
-<!-- END template comment -->
     <tr>
       <td{{ :if fb_left_class }} class="{{ fb_left_class }}"{{ :ifend }}>
         {{ label }}:
@@ -45,9 +47,9 @@
         {{ field }}
       </td>
     </tr>
-<!-- BEGIN template comment -->
+
     {{ :ifend }}
-<!-- END template comment -->
+
 {{ :loopend }}
     <tr>
       <td colspan="3"{{ :if fb_buttonpane_class }} class="{{ fb_buttonpane_class }}"{{ :ifend }}>

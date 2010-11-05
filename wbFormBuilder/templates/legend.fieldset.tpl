@@ -1,3 +1,2 @@
-
-    <legend class="{{ fb_legend_class }}">{{ content }}</legend><br />
+    <legend {{ :if attributes }} {{ attributes }}{{ :ifend }}>{{ value }}</legend>
     

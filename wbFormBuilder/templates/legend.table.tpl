@@ -1,7 +1,7 @@
     <thead>
       <tr>
         <th colspan="3" class="{{ fb_header_class }}">
-         {{ content }}
+         {{ value }}
        </th>
      </tr>
    </thead><!-- /legend.table.tpl -->
