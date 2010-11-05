@@ -1,4 +1,7 @@
-  <span class="wbcal-daynumber">{{ day }}</span><br />
+  <span class="wbcal-daynumber{{ :if spanclass }} {{ spanclass }}{{ :ifend }}">
+      {{ :if hovertext }}<a class="cltitle" title="|{{ hovertext }}">{{ :ifend }}{{ day }}{{ :if hovertext }}</a>{{ :ifend }}
+      </a>
+  </span><br />
   {{ :loop rows }}
   <span class="wbcal-row">
     {{ :loop events }}
