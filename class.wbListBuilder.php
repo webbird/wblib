@@ -54,6 +54,7 @@ class wbListBuilder extends wbBase {
         'more_info'           => '<span class="more_info">%%</span>',
         
         'ul_id_prefix'        => 'ul_',
+        'unique_id'           => true,
         
         '__children_key'      => 'children',
         '__current_key'       => 'current',
@@ -150,7 +151,7 @@ class wbListBuilder extends wbBase {
             }
             
         }
-        
+
 // ---- ????? -----
         if ( is_array($tree) && count( $tree ) > 0 )
         {
@@ -302,28 +303,7 @@ class wbListBuilder extends wbBase {
             return;
         }
         
-        $trailpages = array();
-        $trail      = $this->__getTrail( $tree, $current );
-
-        foreach ( $trail as $page_id )
-        {
-        
-            $path = $this->ArraySearchRecursive(
-                        $page_id,
-                        $tree,
-                        $this->_config['__id_key']
-                    );
-
-            if ( is_array( $path ) )
-            {
-                array_pop($path);
-                eval( '$trailpages[] = $tree[\''.implode( '\'][\'', $path ).'\'];' );
-            }
-
-        }
-        
-        // push the current page to the trailpages array
-        $trailpages[] = $node;
+        $trailpages = $this->__getTrail( $tree, $current );
 
         if ( $as_array )
         {
@@ -465,6 +445,9 @@ class wbListBuilder extends wbBase {
                        ),
                        $this->_config['list_open']
                    );
+                   
+        // remove empty id-attribute
+        $output = str_replace( ' id=""', '', $output );
 
         return $output;
 
@@ -566,6 +549,10 @@ class wbListBuilder extends wbBase {
      **/
     private function _getID() {
     
+        if ( ! $this->_config['unique_id'] ) {
+            return NULL;
+        }
+        
         $this->id++;
         return $this->_config['ul_id_prefix'].$this->id;
     
@@ -580,39 +567,57 @@ class wbListBuilder extends wbBase {
     private function __getTrail( $tree, $current )
     {
     
+        $trail = array();
+    
+        $this->log()->LogDebug( 'getting trail from tree: ', $tree );
+        
         // get the current node
         $path = $this->ArraySearchRecursive(
                     $current,
                     $tree,
                     $this->_config['__id_key']
                 );
+                
+        $this->log()->LogDebug( 'path: ', $path );
 
         array_pop($path);
         eval( '$node = $tree[\''.implode( '\'][\'', $path ).'\'];' );
+        $trail[] = $node;
 
-        // get the trail
-        $cnt   = count( $path );
-        $i     = 0;
-        $trail = array();
-        $node  = & $tree;
-
-        while ( $i < $cnt )
-        {
-            $index = $path[$i++];
-            $child = $path[$i++];
-
-            $node  = &$node[$index];
-
-            array_push( $trail, $node[ 'pageID' ] );
-
-            if ( isset( $child ) && isset( $node[$child] ) )
-            {
-                $node = & $node[$child];
-            }
-
-        }
+        if ( $node[ $this->_config['__parent_key'] ] !== $current ) {
         
-        return $trail;
+            $path = $this->ArraySearchRecursive(
+                        $node[ $this->_config['__parent_key'] ],
+                        $tree,
+                        $this->_config['__id_key']
+                    );
+
+            array_pop( $path );
+            eval( '$parent =& $tree[\''.implode( '\'][\'', $path ).'\'];' );
+
+            $trail[] =  $parent;
+
+            // while we have parents...
+            while (
+                   is_array( $parent )
+                && isset( $parent[ $this->_config['__parent_key'] ] )
+                && $parent[ $this->_config['__parent_key'] ] > 0
+            ) {
+                $path = $this->ArraySearchRecursive(
+                            $node[ $this->_config['__parent_key'] ],
+                            $tree,
+                            $this->_config['__id_key']
+                        );
+
+                array_pop( $path );
+                eval( '$parent =& $tree[\''.implode( '\'][\'', $path ).'\'];' );
+
+                $trail[] = $parent;
+            }
+            
+        }
+
+        return array_reverse( $trail );
         
     }   // end function __getTrail()
     
