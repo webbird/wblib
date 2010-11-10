@@ -272,6 +272,32 @@ class wbBase {
         #}
         
     }   // end function setFile ()
+    
+    /**
+     * find files by a given suffix
+     *
+     *
+     *
+     **/
+    public function findFilesBySuffix( $dir, $suffix = 'php' ) {
+    
+        $files = array();
+        
+        if ( $dh = opendir($dir) ) {
+            while ( false !== ( $file = readdir($dh) ) )
+            {
+                if ( $file != "." && $file != ".." )
+                {
+                    if ( preg_match( '/\.'.$suffix.'$/i', $file ) ) {
+                        $files[] = $file;
+                    }
+                }
+            }
+        }
+        
+        return $files;
+        
+    }   // end function findFilesBySuffix()
 
     /**
      * set config values
