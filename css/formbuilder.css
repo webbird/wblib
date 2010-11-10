@@ -55,6 +55,12 @@ fieldset.fbfieldset li span {
     display              : inline-block;
 }
 
+fieldset.fbfieldset li span.fberror {
+    padding-left         : 5px;
+    width                : auto;
+    border               : 0;
+}
+
 fieldset.fbsubmit {
     border-style         : none;
     float                : none;
@@ -77,9 +83,24 @@ input.fbsubmit,
 select.fbselect,
 textarea.fbtextarea
 {
-    width                : 30em;
     border               : 1px solid #ccc;
     padding              : 3px;
+}
+
+input.fbtext,
+select.fbselect,
+textarea.fbtextarea
+{
+    width                : 30em;
+}
+
+input.fbsubmit {
+    width                : 10em;
+}
+
+
+input.fbfirstbutton {
+    
 }
 
 input.fbdisabled,
@@ -89,13 +110,24 @@ textarea.fbdisabled
     background-color     : transparent;
 }
 
-
 .fberror {
     color                : #C00;
+    border               : 1px solid #c00;
+    padding              : 5px;
+}
+
+div.fberror,
+div.fbinfo
+{
     background           : transparent url(error.png) left no-repeat;
     padding              : 10px;
     text-align           : center;
     margin-bottom        : 15px;
+}
+
+div.fbinfo {
+    background           : url("info.png") no-repeat scroll 15px center transparent;
+    border               : 1px solid #006600;
 }
 
 .fbrequired {
@@ -111,10 +143,6 @@ textarea.fbdisabled
     margin               : 20px auto;
 }
 
-.fbbuttonpane {
-    width                : 100%;
-}
-
 .fbbutton {
     background           : transparent url(button.gif) repeat-x left top;
     height               : 30px;
@@ -125,5 +153,17 @@ textarea.fbdisabled
     -moz-box-shadow      : 2px 2px 2px #606060;
 	  box-shadow           : 2px 2px 2px #606060;
 	  z-index              : 2;
+	  behavior             : url(ie-css3.htc);
+}
+
+.fbbuttonpane {
+    background           : transparent url(button.gif) repeat-x left top;
+    border               : 1px outset #606060 !important;
+    padding              : 15px;
+ 	  width                : 88%;
+ 	  text-align           : center;
+ 	  -moz-border-radius   : 8px;
+	  -webkit-border-radius: 8px;
+	  border-radius        : 8px;
 	  behavior             : url(ie-css3.htc);
 }
