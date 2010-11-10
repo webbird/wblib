@@ -653,7 +653,7 @@ echo "</textarea>";
                             // info text if there are required fields
                             'req_info' => $req_info,
                             // errors
-                            'errors'   => ( isset( $this->_errors[ $formname ] ) && is_array( $this->_errors[ $formname ] ) )
+                            'errors'   => ( isset( $this->_errors[ $formname ] ) && is_array( $this->_errors[ $formname ] ) && count( $this->_errors[ $formname ] ) > 0 )
                                        ?  implode( "<br />\n", $this->_errors[ $formname ] )
                                        :  NULL,
                             // info messages
@@ -921,18 +921,25 @@ echo "</textarea>";
         // is it a button?
         if ( ! strcasecmp( $element[ 'type' ], 'submit' ) ) {
             $this->log()->LogDebug( 'creating button' );
-            $element['value'] = $this->lang->translate( $element['value'] );
+            $element['value'] = $this->lang->translate( $element['label'] );
+            if ( count( $this->_buttons[ $this->_current_form ] ) == 0 ) {
+                $first = 'fbfirstbutton';
+            }
             $this->_buttons[ $this->_current_form ][]
                 = array(
                       'field' => '<input type="submit" '
                               .  'name="'.$element['name'].'" '
                               .  'id="'.$element['name'].'" '
-                              .  'value="'.$element['value'].'" '
-                              .  'class="'.$this->_config['fb_button_class'].'" />'
+                              .  ( isset( $element['value'] ) ? 'value="'.$element['value'].'" ' : '' )
+                              .  'class="fbsubmit '
+                                 . ( isset( $first ) ? "$first " : '' )
+                                 . $this->_config['fb_button_class']
+                                 . '" />'
                   );
+            return;
             #$element['name'];
         }
-
+        
         // is it a checkbox?
         if ( ! strcasecmp( $element[ 'type' ], 'checkbox' ) ) {
             $this->log()->LogDebug( 'creating checkbox' );
