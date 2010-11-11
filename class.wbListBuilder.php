@@ -578,6 +578,8 @@ class wbListBuilder extends wbBase {
                     $this->_config['__id_key']
                 );
                 
+        if ( ! is_array( $path ) ) { return; }
+                
         $this->log()->LogDebug( 'path: ', $path );
 
         array_pop($path);
@@ -591,28 +593,32 @@ class wbListBuilder extends wbBase {
                         $tree,
                         $this->_config['__id_key']
                     );
-
-            array_pop( $path );
-            eval( '$parent =& $tree[\''.implode( '\'][\'', $path ).'\'];' );
-
-            $trail[] =  $parent;
-
-            // while we have parents...
-            while (
-                   is_array( $parent )
-                && isset( $parent[ $this->_config['__parent_key'] ] )
-                && $parent[ $this->_config['__parent_key'] ] > 0
-            ) {
-                $path = $this->ArraySearchRecursive(
-                            $node[ $this->_config['__parent_key'] ],
-                            $tree,
-                            $this->_config['__id_key']
-                        );
+                    
+            if ( is_array( $path ) && count( $path ) > 0 ) {
 
                 array_pop( $path );
                 eval( '$parent =& $tree[\''.implode( '\'][\'', $path ).'\'];' );
 
-                $trail[] = $parent;
+                $trail[] =  $parent;
+
+                // while we have parents...
+                while (
+                       is_array( $parent )
+                    && isset( $parent[ $this->_config['__parent_key'] ] )
+                    && $parent[ $this->_config['__parent_key'] ] > 0
+                ) {
+                    $path = $this->ArraySearchRecursive(
+                                $node[ $this->_config['__parent_key'] ],
+                                $tree,
+                                $this->_config['__id_key']
+                            );
+
+                    array_pop( $path );
+                    eval( '$parent =& $tree[\''.implode( '\'][\'', $path ).'\'];' );
+
+                    $trail[] = $parent;
+                }
+                
             }
             
         }
