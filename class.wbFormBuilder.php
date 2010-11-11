@@ -29,8 +29,8 @@ require_once dirname( __FILE__ ).'/class.wbTemplate.php';
 class wbFormBuilder extends wbBase {
 
     // ----- Debugging -----
-    #protected      $debugLevel      = KLOGGER::OFF;
-    protected      $debugLevel      = KLOGGER::DEBUG;
+    protected      $debugLevel      = KLOGGER::OFF;
+    #protected      $debugLevel      = KLOGGER::DEBUG;
     
     // name of the current form
     private        $_current_form   = NULL;
@@ -237,6 +237,18 @@ class wbFormBuilder extends wbBase {
                 );
             }
         }
+        
+        $this->log()->LogDebug( 'Adding submit flag for form '.$name );
+        
+        // add submit flag
+        $this->addElement(
+            $formname,
+            array(
+                'type'  => 'hidden',
+                'name'  => $name.'_submit',
+                'value' => 1,
+            )
+        );
 
         // merge elements, re-adding the buttons of the original form
         self::$_forms[ $formname ]['elements']
@@ -716,7 +728,10 @@ echo "</textarea>";
      **/
     public function getData( $formname = '' ) {
         $formname = $this->__validateFormName( $formname );
-        return $this->_valid[ $formname ];
+        return
+              isset( $this->_valid[ $formname ] )
+            ? $this->_valid[ $formname ]
+            : array();
     }   // end function getData()
     
     /**
@@ -1480,6 +1495,8 @@ exit;
         ) {
             $element['readonly'] = 'readonly';
         }
+        
+        $this->log()->LogDebug( 'registered element to form '.$formname.':', $element );
                          
         return $element;
         
