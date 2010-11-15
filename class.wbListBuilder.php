@@ -302,7 +302,7 @@ class wbListBuilder extends wbBase {
             $this->log()->LogDebug( 'no breadcrumb items to show' );
             return;
         }
-        
+
         $trailpages = $this->__getTrail( $tree, $current );
 
         if ( $as_array )
@@ -568,7 +568,8 @@ class wbListBuilder extends wbBase {
     {
     
         $trail = array();
-    
+        $i=0;
+        
         $this->log()->LogDebug( 'getting trail from tree: ', $tree );
         
         // get the current node
@@ -578,9 +579,14 @@ class wbListBuilder extends wbBase {
                     $this->_config['__id_key']
                 );
                 
-        if ( ! is_array( $path ) ) { return; }
+        if ( ! is_array( $path ) ) {
+            $this->log()->LogDebug(
+                'current item ['.$current.'] not found in tree, return undef'
+            );
+            return NULL;
+        }
                 
-        $this->log()->LogDebug( 'path: ', $path );
+        $this->log()->LogDebug( 'path for current item ['.$current.']: ', $path );
 
         array_pop($path);
         eval( '$node = $tree[\''.implode( '\'][\'', $path ).'\'];' );
@@ -593,7 +599,7 @@ class wbListBuilder extends wbBase {
                         $tree,
                         $this->_config['__id_key']
                     );
-                    
+
             if ( is_array( $path ) && count( $path ) > 0 ) {
 
                 array_pop( $path );
@@ -608,7 +614,7 @@ class wbListBuilder extends wbBase {
                     && $parent[ $this->_config['__parent_key'] ] > 0
                 ) {
                     $path = $this->ArraySearchRecursive(
-                                $node[ $this->_config['__parent_key'] ],
+                                $parent[ $this->_config['__parent_key'] ],
                                 $tree,
                                 $this->_config['__id_key']
                             );
@@ -617,6 +623,17 @@ class wbListBuilder extends wbBase {
                     eval( '$parent =& $tree[\''.implode( '\'][\'', $path ).'\'];' );
 
                     $trail[] = $parent;
+                    
+                    // avoid deep recursion
+                    if ( $i > 15 ) {
+                        $this->log->LogDebug(
+                            'reached 15 recursions without finding root; break to avoid deep recursion'
+                        );
+                        break;
+                    }
+                    
+                    $i++;
+                    
                 }
                 
             }
