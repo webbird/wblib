@@ -28,8 +28,8 @@ include_once dirname(__FILE__).'/../debug/KLogger.php';
 class wbDBBase extends PDO {
 
     // ----- Debugging -----
-    protected    $debugLevel = KLogger::OFF;
-    private static $debugDir = '/../debug/log';
+    protected      $debugLevel      = KLogger::OFF;
+    private static $defaultDebugDir = '/../debug/log';
 
     protected $dsn        = NULL;
     protected $host       = "localhost";
@@ -92,7 +92,24 @@ class wbDBBase extends PDO {
         if ( get_class($this) === 'wbDBBase' ) {
             die( 'Invalid class: ' . get_class($this) );
         }
-        
+
+        // create logger instance
+        if ( property_exists( get_class($this), 'debugDir' ) ) {
+            if ( empty( $this->debugDir ) ) {
+                $this->debugDir = realpath( dirname(__FILE__) );
+            }
+        }
+        else {
+            $this->debugDir = realpath( dirname(__FILE__) ).self::$defaultDebugDir;
+        }
+
+        $this->log
+            = new KLogger(
+                  $this->debugDir.'/'.get_class($this).'.log' ,
+                  $this->debugLevel,
+                  true
+              );
+
 // ----- TODO: validate options -----
         $this->__initialize($options);
         
@@ -111,23 +128,6 @@ class wbDBBase extends PDO {
 
         //$this->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING );
         
-        // create logger instance
-        if ( property_exists( get_class($this), 'debugDir' ) ) {
-            if ( empty( $this->debugDir ) ) {
-                $this->debugDir = realpath( dirname(__FILE__) );
-            }
-        }
-        else {
-            $this->debugDir = realpath( dirname(__FILE__) ).self::$debugDir;
-        }
-
-        $this->log
-            = new KLogger(
-                  $this->debugDir.'/'.get_class($this).'.log' ,
-                  $this->debugLevel,
-                  true
-              );
-
     }   // end function __construct()
     
     /**
@@ -632,17 +632,6 @@ class wbDBBase extends PDO {
      *
      **/
     private final function __initialize($options) {
-
-        // create logger instance
-        if ( empty( $this->debugDir ) ) {
-            $this->debugDir = dirname(__FILE__);
-        }
-        $this->log
-            = new KLogger(
-                  $this->debugDir.'/wbDB_'.$this->pdo_driver.'.log' ,
-                  $this->debugLevel,
-                  true
-              );
 
         // load defaults
         $this->defaults();
