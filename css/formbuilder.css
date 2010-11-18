@@ -95,7 +95,7 @@ textarea.fbtextarea
 }
 
 input.fbsubmit {
-    width                : 10em;
+    width                : 15em;
 }
 
 
@@ -106,7 +106,7 @@ input.fbfirstbutton {
 input.fbdisabled,
 textarea.fbdisabled
 {
-    border               : 0;
+    border               : 0 !important;
     background-color     : transparent;
 }
 
@@ -157,7 +157,7 @@ div.fbinfo {
 }
 
 .fbbuttonpane {
-    background           : transparent url(button.gif) repeat-x left top;
+    background           : transparent url(buttonpane.gif) repeat-x left top;
     border               : 1px outset #606060 !important;
     padding              : 15px;
  	  width                : 88%;
