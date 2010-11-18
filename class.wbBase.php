@@ -31,7 +31,7 @@ class wbBase {
     #protected        $debugLevel      = KLogger::DEBUG;
     
     // array to store config options
-    protected        $_config         = array();
+    protected        $_config         = array( 'debug' => false );
     
     // array to store already loaded files
     protected        $_loaded         = array();
@@ -69,7 +69,7 @@ class wbBase {
             $this->setPath( $this->_config['workdir'].'/'.$this->_config['path'] );
         }
 
-        // create logger instance
+        // init log directory
         if ( property_exists( get_class($this), 'debugDir' ) ) {
             if ( empty( $this->debugDir ) ) {
                 $this->debugDir = realpath( dirname(__FILE__) );
@@ -77,6 +77,11 @@ class wbBase {
         }
         else {
             $this->debugDir = realpath( dirname(__FILE__) ).self::$defaultDebugDir;
+        }
+        
+        // allow to enable logging on object creation
+        if ( isset( $this->_config['debug'] ) && $this->_config['debug'] === true ) {
+            $this->debugLevel = KLogger::DEBUG;
         }
 
         // create language object
@@ -141,25 +146,18 @@ class wbBase {
   	 *
   	 **/
   	public function log () {
-
         if ( $this->debugLevel < 6 ) {
-
             if ( ! is_object( $this->logObj ) ) {
-                
                 $this->logObj
                     = new KLogger(
                           $this->debugDir.'/'.get_class($this).'.log' ,
                           $this->debugLevel,
-                          true
+                          false
                       );
             }
-            
             return $this->logObj;
-            
         }
-
         return $this;
-        
   	}   // end function log ()
   	
   	/**
