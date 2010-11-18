@@ -50,6 +50,7 @@ class wbFormBuilder extends wbBase {
 
     protected      $_config
         = array(
+              'debug'           => 'false',
               // default path to search inc.forms.php
               'path'            => '/forms',
               // default forms definition file name
