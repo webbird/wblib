@@ -231,13 +231,13 @@ class wbListBuilder extends wbBase {
 
             // first element?
             if ( $isfirst ) {
-                $li_css  .= ' ' . $this->_config['first_li_css'];
+                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['first_li_css'];
                 $isfirst  = 0;
             }
 
             // last element?
             if ( $last_element_id === $item[ $id_key ] ) {
-                $li_css  .= ' ' . $this->_config['last_li_css'];
+                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['last_li_css'];
             }
             
             $text = NULL;
@@ -401,7 +401,7 @@ class wbListBuilder extends wbBase {
         
         return $select;
         
-    }
+    }   // end function buildDropDown ()
 
     /**
      *
@@ -428,6 +428,7 @@ class wbListBuilder extends wbBase {
                )
         ) {
             $class  .= ' '
+                    .  $this->_config['css_prefix']
                     .  $this->_config['ul_css']
                     .  '_'
                     .  intval( ( strlen($space) / 4 ) );
@@ -494,7 +495,8 @@ class wbListBuilder extends wbBase {
      **/
     function getListItemCSS ( $item ) {
 
-        $li_css = $this->_config['li_css'];
+        $li_css = $this->_config['css_prefix']
+                . $this->_config['li_css'];
 
         // special CSS class for each level?
         if (
@@ -511,6 +513,7 @@ class wbListBuilder extends wbBase {
                )
         ) {
             $li_css .= ' '
+                    .  $this->_config['css_prefix']
                     .  $this->_config['li_css']
                     .  '_'
                     .  $item[ $this->_config['__level_key'] ];
@@ -518,12 +521,12 @@ class wbListBuilder extends wbBase {
 
         // markup for current page
         if ( isset( $item[ $this->_config['__current_key'] ] ) ) {
-            $li_css .= ' ' . $this->_config['current_li_css'];
+            $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['current_li_css'];
         }
 
         // markup for pages on current trail
         if ( isset( $item['em_on_current_trail'] ) ) {
-            $li_css .= ' ' . $this->_config['trail_li_css'];
+            $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['trail_li_css'];
         }
 
         // markup for pages that have children
@@ -534,7 +537,7 @@ class wbListBuilder extends wbBase {
                &&
                isset( $this->_config['has_child_li_css'] )
         ) {
-            $li_css .= ' ' . $this->_config['has_child_li_css'];
+            $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['has_child_li_css'];
         }
 
         return $li_css;
