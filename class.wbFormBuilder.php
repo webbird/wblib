@@ -64,20 +64,23 @@ class wbFormBuilder extends wbBase {
               'id'              => '',
               'save_key'        => 'save',
               # use CSS file
-              'fb_css_file'     => '',
-              # CSS classes
-              'fb_label_css'    => 'fblabel',
-              'fb_form_class'   => 'fbform',
-              'fb_left_class'   => 'fbleft',
-              'fb_header_class' => 'fbheader',
-              'fb_info_class'   => 'fbinfo',
-              'fb_req_class'    => 'fbrequired',
-              'fb_table_class'  => 'fbtable',
-              'fb_error_class'  => 'fberror',
-              'fb_info_class'   => 'fbinfo',
-              'fb_buttonpane_class' => 'fbbuttonpane',
-              'fb_button_class' => 'fbbutton',
-              'fb_icon_class'   => 'fbicon',
+              'css_file'            => '',
+              // ----- CSS 'skin'; empty means 'green' -----
+              'skin'                => '',
+              // -----          CSS classes            -----
+              'fieldset_class'   => 'fbfieldset',
+              'label_class'      => 'fblabel',
+              'form_class'       => 'fbform',
+              'left_class'       => 'fbleft',
+              'header_class'     => 'fbheader',
+              'info_class'       => 'fbinfo',
+              'req_class'        => 'fbrequired',
+              'table_class'      => 'fbtable',
+              'error_class'      => 'fberror',
+              'info_class'       => 'fbinfo',
+              'buttonpane_class' => 'fbbuttonpane',
+              'button_class'     => 'fbbutton',
+              'icon_class'       => 'fbicon',
 
               # output as table or fieldset
               'output_as'       => 'fieldset',
@@ -577,6 +580,18 @@ echo "</textarea>";
 
         // use correct template
         $template = 'block.'.$this->_config['output_as'].'.tpl';
+        
+        // set some defaults
+        $this->tpl->setVal(
+            array(
+                'fieldset_class'
+                    => $this->_config['fieldset_class']
+                       . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' ),
+                'buttonpane_class'
+                    => $this->_config['buttonpane_class']
+                       . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' ),
+            )
+        );
 
         // make sure the form is loaded
         $this->setForm( $formname );
@@ -606,7 +621,8 @@ echo "</textarea>";
                                    'type'  => 'submit',
                                    'value' => $this->translate( 'Submit' ),
                                    'name'  => $this->_config['save_key'],
-                                   'class' => $this->_config['fb_button_class']
+                                   'class' => $this->_config['button_class']
+                                            . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' ),
                                )
                            )
             );
@@ -686,12 +702,12 @@ echo "</textarea>";
                    $this->_config,
                    array(
                        // FormBuilder CSS
-                       'cssfile'    => $this->_config['fb_css_file'],
+                       'cssfile'    => $this->_config['css_file'],
                        // form attributes
                        'attributes' => $this->__validateAttributes(
                                            array(
                                                'type'     => 'form',
-                                               'class'    => $this->_config['fb_form_class'],
+                                               'class'    => $this->_config['form_class'],
                                                'enctype'  => $this->_config['enctype'],
                                                'method'   => $this->_config['method'],
                                                'name'     => $formname,
@@ -949,7 +965,8 @@ echo "</textarea>";
                               .  ( isset( $element['value'] ) ? 'value="'.$element['value'].'" ' : '' )
                               .  'class="fbsubmit '
                                  . ( isset( $first ) ? "$first " : '' )
-                                 . $this->_config['fb_button_class']
+                                 . $this->_config['button_class']
+                                 . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' )
                                  . '" />'
                   );
             return;
@@ -1578,8 +1595,8 @@ exit;
             if ( isset( $this->_errors[ $formname ][ $element['name'] ] ) ) {
                 $element['class']
                     = isset( $element['class'] )
-                    ? ' ' . $this->_config['fb_error_class']
-                    : $this->_config['fb_error_class'];
+                    ? ' ' . $this->_config['error_class']
+                    : $this->_config['error_class'];
             }
             
             // create element
@@ -1594,7 +1611,7 @@ exit;
 
             if ( isset ( $element['label'] ) ) {
                 $label = '<label for="'.$element['name'].'" '
-                       . 'class="'.$this->_config['fb_label_css'].'">'
+                       . 'class="'.$this->_config['label_class'].'">'
                        . $this->translate( $element['label'] )
                        . '</label>';
             }
