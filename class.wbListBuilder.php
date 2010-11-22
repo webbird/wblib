@@ -27,8 +27,8 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 class wbListBuilder extends wbBase {
 
     // ----- Debugging -----
-    protected      $debugLevel     = KLOGGER::OFF;
-    #protected      $debugLevel     = KLOGGER::DEBUG;
+    #protected      $debugLevel     = KLOGGER::OFF;
+    protected      $debugLevel     = KLOGGER::DEBUG;
     
     private        $id             = 0;
     private        $_path          = array();
@@ -86,6 +86,11 @@ class wbListBuilder extends wbBase {
         if ( ! is_array( $items ) ) {
             $this->log()->LogDebug( 'no items to build recursion' );
             return;
+        }
+
+        // if there's only one item, no recursion to do
+        if ( ! ( count( $items ) > 1 ) ) {
+            return $items;
         }
 
         $tree    = array();
@@ -189,9 +194,17 @@ class wbListBuilder extends wbBase {
         $isfirst  = 1;
         
         // get id of last element in the tree
-        end( $tree );
-        $last_element_id = $tree[ key( $tree ) ][ $this->_config['__id_key'] ];
-        reset( $tree );
+        #if ( count( $tree ) > 1 ) {
+            end( $tree );
+$this->log()->LogDebug( '', $tree[ key( $tree ) ] );
+            $last_element_id = $tree[ key( $tree ) ][ $this->_config['__id_key'] ];
+            reset( $tree );
+        #}
+        #else {
+        #    $last_element_id = $tree[0][ $this->_config['__id_key'] ];
+        #}
+        
+        $this->log()->LogDebug( 'last element ID: '.$last_element_id );
 
         $output[]  = $this->listStart($space);
         
@@ -332,9 +345,9 @@ class wbListBuilder extends wbBase {
             return;
         }
         
-        $space = isset( $options['space'] )
-               ? $options['space']
-               : $this->_config['space'];
+        $space    = isset( $options['space'] )
+                  ? $options['space']
+                  : $this->_config['space'];
 
         $output   = array();
         
@@ -363,7 +376,7 @@ class wbListBuilder extends wbBase {
                     : 0;
 
             // indent nicely
-            $space  = str_repeat( $space, $level );
+            $prt_space = str_repeat( $space, $level );
             
             // mark selected
             $sel    = NULL;
@@ -381,7 +394,7 @@ class wbListBuilder extends wbBase {
             $output[] = '<option value="'
                       . $item[ $this->_config['__id_key'] ]
                       . '"'.$sel.'>'
-                      . $space
+                      . $prt_space
                       . ' '
                       . $item[ $this->_config['__title_key'] ]
                       . '</option>';
