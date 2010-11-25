@@ -461,6 +461,10 @@ class wbFormBuilder extends wbBase {
                  self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'select'
                  ||
                  self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'multiselect'
+                 ||
+                 self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'checkbox'
+                 ||
+                 self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'radio'
             ) {
             
                 $this->log()->LogDebug(
@@ -619,6 +623,7 @@ echo "</textarea>";
                 'field' => $this->input(
                                array(
                                    'type'  => 'submit',
+                                   'label' => $this->translate( 'Submit' ),
                                    'value' => $this->translate( 'Submit' ),
                                    'name'  => $this->_config['save_key'],
                                    'class' => $this->_config['button_class']
@@ -953,24 +958,20 @@ echo "</textarea>";
         // is it a button?
         if ( ! strcasecmp( $element[ 'type' ], 'submit' ) ) {
             $this->log()->LogDebug( 'creating button' );
-            $element['value'] = $this->lang->translate( $element['label'] );
-            if ( count( $this->_buttons[ $this->_current_form ] ) == 0 ) {
-                $first = 'fbfirstbutton';
+            if ( isset( $element['label'] ) ) {
+                $element['value'] = $this->lang->translate( $element['label'] );
             }
-            $this->_buttons[ $this->_current_form ][]
-                = array(
-                      'field' => '<input type="submit" '
-                              .  'name="'.$element['name'].'" '
-                              .  'id="'.$element['name'].'" '
-                              .  ( isset( $element['value'] ) ? 'value="'.$element['value'].'" ' : '' )
-                              .  'class="fbsubmit '
-                                 . ( isset( $first ) ? "$first " : '' )
-                                 . $this->_config['button_class']
-                                 . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' )
-                                 . '" />'
-                  );
-            return;
-            #$element['name'];
+            if (
+                    ! isset( $this->_buttons[ $this->_current_form ] )
+                 ||   count( $this->_buttons[ $this->_current_form ] ) == 0
+            ) {
+                if ( ! isset( $element['class'] ) ) {
+                    $element['class'] = 'fbfirstbutton';
+                }
+                else {
+                    $element['class'] .= ' fbfirstbutton';
+                }
+            }
         }
         
         // is it a checkbox?
@@ -1101,6 +1102,22 @@ echo "</textarea>";
     }   // end function select()
     
     /**
+     * create checkbox(es)
+     *
+     * This works the same way like radio(s), so it's just an accessor to
+     * the radio() method
+     * The 'type' key in the $element array forces this to be a checkbox
+     *
+     * @access private
+     * @param  array    $element - element definition
+     * @return HTML
+     *
+     **/
+    public function checkbox( $element ) {
+        return $this->radio( $element );
+    }   // end function checkbox()
+    
+    /**
      * create a radio
      *
      * @access private
@@ -1141,6 +1158,19 @@ echo "</textarea>";
                 ) {
                     $checked   = 'checked';
                     $found_val = true;
+                }
+                
+                // key 'selected' allows to set a list of selected options;
+                // this is only useful for checkboxes
+                if ( $element['type'] == 'checkbox' && isset( $element['selected'] ) && is_array( $element['selected'] ) ) {
+                    $this->log()->LogDebug(
+                        'setting selected elements for checkbox',
+                        $element['selected']
+                    );
+                    if ( in_array( $value, $element['selected'] ) ) {
+                        $checked   = 'checked';
+                        $found_val = true;
+                    }
                 }
                 
                 $opt[] = array(
@@ -1476,11 +1506,11 @@ echo "</textarea>";
 
         }
         else {
-echo "invalid call to _getAttributes()<br />";
-echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
-var_export( debug_backtrace() );
-echo "</textarea>";
-exit;
+            echo "invalid call to _getAttributes()<br />";
+            echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+            var_export( debug_backtrace() );
+            echo "</textarea>";
+            exit;
         }
 
     }   // end function __validateAttributes()
@@ -1619,6 +1649,7 @@ exit;
             // add rendered element to referenced array
             $add_to_array[] = array(
                 'label'  => $label,
+                'name'   => $element['name'],
                 'info'   => isset ( $element['info'] )
                          ?  $this->lang->translate( $element['info'] )
                          :  NULL,
