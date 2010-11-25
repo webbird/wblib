@@ -27,44 +27,45 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 class wbListBuilder extends wbBase {
 
     // ----- Debugging -----
-    #protected      $debugLevel     = KLOGGER::OFF;
-    protected      $debugLevel     = KLOGGER::DEBUG;
+    protected      $debugLevel     = KLOGGER::OFF;
+    #protected      $debugLevel     = KLOGGER::DEBUG;
     
     private        $id             = 0;
     private        $_path          = array();
     protected      $_config        = array(
     
-        'create_level_css'    => true,
+        'create_level_css'      => true,
     
-        'css_prefix'          => '',
-        'current_href_css'    => 'current_link',
-        'current_li_css'      => 'current_item',
-        'first_li_css'        => 'first_item',
-        'has_child_li_css'    => 'has_child',
-        'href_css'            => 'link',
-        'item_close'          => '</li>',
-        'item_open'           => '<li class="%%">',
-        'last_li_css'         => 'last_item',
-        'li_css'              => 'item',
-        'list_close'          => '</ul>',
-        'list_open'           => '<ul id="%%id%%" class="%%">',
-        'trail_li_css'        => 'trail_item',
-        'ul_css'              => 'list',
-        'space'               => '    ',
-        'more_info'           => '<span class="more_info">%%</span>',
+        'css_prefix'            => '',
+        'current_li_class'      => 'current_item',
+        'first_li_class'        => 'first_item',
+        'has_child_li_class'    => 'has_child',
+// these options make no sense if href is already set by caller...
+//        'href_class'            => 'link',
+//        'current_href_css'    => 'current_link',
+        'item_close'            => '</li>',
+        'item_open'             => '<li class="%%">',
+        'last_li_class'         => 'last_item',
+        'li_class'              => 'item',
+        'list_close'            => '</ul>',
+        'list_open'             => '<ul id="%%id%%" class="%%">',
+        'trail_li_class'        => 'trail_item',
+        'ul_class'              => 'list',
+        'space'                 => '    ',
+        'more_info'             => '<span class="more_info">%%</span>',
         
-        'ul_id_prefix'        => 'ul_',
-        'unique_id'           => true,
+        'ul_id_prefix'          => 'ul_',
+        'unique_id'             => true,
         
-        '__children_key'      => 'children',
-        '__current_key'       => 'current',
-        '__hidden_key'        => 'hidden',
-        '__href_key'          => 'href',
-        '__id_key'            => 'id',
-        '__level_key'         => 'level',
-        '__parent_key'        => 'parent',
-        '__title_key'         => 'title',
-        '__more_info_key'     => '',
+        '__children_key'        => 'children',
+        '__current_key'         => 'current',
+        '__hidden_key'          => 'hidden',
+        '__href_key'            => 'href',
+        '__id_key'              => 'id',
+        '__level_key'           => 'level',
+        '__parent_key'          => 'parent',
+        '__title_key'           => 'title',
+        '__more_info_key'       => '',
         
     );
     
@@ -244,13 +245,13 @@ $this->log()->LogDebug( '', $tree[ key( $tree ) ] );
 
             // first element?
             if ( $isfirst ) {
-                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['first_li_css'];
+                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['first_li_class'];
                 $isfirst  = 0;
             }
 
             // last element?
             if ( $last_element_id === $item[ $id_key ] ) {
-                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['last_li_css'];
+                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['last_li_class'];
             }
             
             $text = NULL;
@@ -424,7 +425,7 @@ $this->log()->LogDebug( '', $tree[ key( $tree ) ] );
      **/
     function listStart( $space = NULL ) {
     
-        $class = $this->_config['ul_css'];
+        $class = $this->_config['ul_class'];
         
         // special CSS class for each level?
         if (
@@ -435,14 +436,14 @@ $this->log()->LogDebug( '', $tree[ key( $tree ) ] );
                )
                &&
                (
-                      isset( $this->_config['ul_css'] )
+                      isset( $this->_config['ul_class'] )
                    &&
-                   ! empty ( $this->_config['ul_css'] )
+                   ! empty ( $this->_config['ul_class'] )
                )
         ) {
             $class  .= ' '
                     .  $this->_config['css_prefix']
-                    .  $this->_config['ul_css']
+                    .  $this->_config['ul_class']
                     .  '_'
                     .  intval( ( strlen($space) / 4 ) );
         }
@@ -509,7 +510,7 @@ $this->log()->LogDebug( '', $tree[ key( $tree ) ] );
     function getListItemCSS ( $item ) {
 
         $li_css = $this->_config['css_prefix']
-                . $this->_config['li_css'];
+                . $this->_config['li_class'];
 
         // special CSS class for each level?
         if (
@@ -520,26 +521,26 @@ $this->log()->LogDebug( '', $tree[ key( $tree ) ] );
                )
                &&
                (
-                      isset( $this->_config['li_css'] )
+                      isset( $this->_config['li_class'] )
                    &&
-                   ! empty ( $this->_config['li_css'] )
+                   ! empty ( $this->_config['li_class'] )
                )
         ) {
             $li_css .= ' '
                     .  $this->_config['css_prefix']
-                    .  $this->_config['li_css']
+                    .  $this->_config['li_class']
                     .  '_'
                     .  $item[ $this->_config['__level_key'] ];
         }
 
         // markup for current page
         if ( isset( $item[ $this->_config['__current_key'] ] ) ) {
-            $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['current_li_css'];
+            $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['current_li_class'];
         }
 
         // markup for pages on current trail
         if ( isset( $item['em_on_current_trail'] ) ) {
-            $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['trail_li_css'];
+            $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['trail_li_class'];
         }
 
         // markup for pages that have children
@@ -548,9 +549,9 @@ $this->log()->LogDebug( '', $tree[ key( $tree ) ] );
                &&
                count( $item[ $this->_config['__children_key'] ] ) > 0
                &&
-               isset( $this->_config['has_child_li_css'] )
+               isset( $this->_config['has_child_li_class'] )
         ) {
-            $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['has_child_li_css'];
+            $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['has_child_li_class'];
         }
 
         return $li_css;
