@@ -1,25 +1,25 @@
-    <table class="{{ fb_table_class }}">
+    <table class="{{ table_class }}">
     {{ :if header }}
     <tr>
-      <th colspan="3"{{ :if fb_header_class }} class="{{ fb_header_class }}"{{ :ifend }}>
+      <th colspan="3"{{ :if header_class }} class="{{ header_class }}"{{ :ifend }}>
         {{ header }}
       </th>
     </tr>{{ :ifend }}
     {{ :if req_info }}
     <tr>
-      <td colspan="3"{{ :if fb_req_class }} class="{{ fb_req_class }}"{{ :ifend }}>
+      <td colspan="3"{{ :if req_class }} class="{{ req_class }}"{{ :ifend }}>
         {{ req_info }}
       </td>
     </tr>{{ :ifend }}
     {{ :if info }}
     <tr>
-      <td colspan="3"{{ :if fb_info_class }} class="{{ fb_info_class }}"{{ :ifend }}>
+      <td colspan="3"{{ :if info_class }} class="{{ info_class }}"{{ :ifend }}>
         {{ info }}
       </td>
     </tr>{{ :ifend }}
     {{ :if errors }}
     <tr>
-      <td colspan="3" class="{{ fb_icon_class}} {{ fb_error_class }}">
+      <td colspan="3" class="{{ icon_class}} {{ error_class }}">
         {{ errors }}
       </td>
     </tr>{{ :ifend }}
@@ -27,7 +27,7 @@
 {{ :loop elements }}
     {{ :if error }}
     <tr>
-      <td colspan="3"{{ :if fb_error_class }} class="{{ fb_error_class }}"{{ :ifend }}>
+      <td colspan="3"{{ :if error_class }} class="{{ error_class }}"{{ :ifend }}>
         {{ error }}
       </td>
     </tr>{{ :ifend }}
@@ -36,14 +36,14 @@
         {{ header }}
     {{ :else }}
     <tr>
-      <td{{ :if fb_left_class }} class="{{ fb_left_class }}"{{ :ifend }}>
+      <td{{ :if left_class }} class="{{ left_class }}"{{ :ifend }}>
         {{ label }}:
         {{ :if info }}<br /><span class="fbsmall">{{ info }}</span>{{ :ifend }}
       </td>
-      <td{{ :if fb_req_class }} class="{{ fb_req_class }}"{{ :ifend }}>
+      <td{{ :if req_class }} class="{{ req_class }}"{{ :ifend }}>
         {{ :if req }}{{ req }}{{ :ifend }}
       </td>
-      <td{{ :if fb_right_class }} class="{{ fb_right_class }}"{{ :ifend }}>
+      <td{{ :if right_class }} class="{{ right_class }}"{{ :ifend }}>
         {{ field }}
       </td>
     </tr>
@@ -52,7 +52,7 @@
 
 {{ :loopend }}
     <tr>
-      <td colspan="3"{{ :if fb_buttonpane_class }} class="{{ fb_buttonpane_class }}"{{ :ifend }}>
+      <td colspan="3"{{ :if buttonpane_class }} class="{{ buttonpane_class }}"{{ :ifend }}>
       {{ :loop buttons }}{{ :if field }}{{ field }}{{ :ifend }}{{ :loopend }}
       </td>
     </tr>

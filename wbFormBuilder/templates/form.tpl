@@ -1,5 +1,4 @@
 <!-- wblib/wbFormBuilder/form.tpl -->
-  {{ :include formbuilder.js }}
 <form {{ attributes }} {{ :if style }}style="{{ style }}"{{ :ifend }}>
   {{ :if toplink }}<a name="fbtop">&nbsp;</a>{{ :ifend }}
   {{ :loop hidden }}{{ field }}{{ :loopend }}

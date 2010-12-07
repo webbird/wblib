@@ -1,3 +1,3 @@
     {{ :loop options }}
-      <input {{ attributes }} {{ checked }} />{{ text }}
+      <input {{ attributes }} {{ checked }} /> {{ text }}
     {{ :loopend }}

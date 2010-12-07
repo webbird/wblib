@@ -1,6 +1,6 @@
     <thead>
       <tr>
-        <th colspan="3" class="{{ fb_header_class }}">
+        <th colspan="3" class="{{ header_class }}">
          {{ value }}
        </th>
      </tr>

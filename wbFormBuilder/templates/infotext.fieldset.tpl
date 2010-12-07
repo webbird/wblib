@@ -1,3 +1,1 @@
-
-    <div>{{ content }}</div>
-    
+    <span {{ :if attributes }} {{ attributes }}{{ :ifend }}>{{ value }}</span><br />
