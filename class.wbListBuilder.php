@@ -88,6 +88,9 @@ class wbListBuilder extends wbBase {
             $this->log()->LogDebug( 'no items to build recursion' );
             return;
         }
+        
+        $this->log()->LogDebug( 'building recursion from items:', $items );
+        $this->log()->LogDebug( 'config: ', $this->_config );
 
         // if there's only one item, no recursion to do
         if ( ! ( count( $items ) > 1 ) ) {
@@ -131,18 +134,21 @@ class wbListBuilder extends wbBase {
                  &&
                  $node[ $lk ] <= $min
             ) {
+                $this->log()->LogDebug( 'skipping node (level <= min level ['.$min.']', $node );
                 continue;
             }
             
             // avoid error messages on missing parent key
             if ( ! isset( $node[$pk] ) )
             {
+                $this->log()->LogDebug( 'adding missing parent key to node', $node );
                 $node[$pk] = null;
             }
             
             // root node
-            if ( $node[$pk] === null )
+            if ( $node[$pk] === null && $root_id === 0 )
             {
+                $this->log()->LogDebug( 'found root node', $node );
                 $tree[$id] = &$node;
                 $root_id   = $id;
             }
