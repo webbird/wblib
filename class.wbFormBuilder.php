@@ -63,6 +63,7 @@ class wbFormBuilder extends wbBase {
               'enctype'         => '',
               'id'              => '',
               'save_key'        => 'save',
+              'cancel_key'      => 'cancel',
               # use CSS file
               'css_file'            => '',
               // ----- CSS 'skin'; empty means 'green' -----
@@ -81,6 +82,7 @@ class wbFormBuilder extends wbBase {
               'buttonpane_class' => 'fbbuttonpane',
               'button_class'     => 'fbbutton',
               'icon_class'       => 'fbicon',
+              'infotext_class'   => 'fbinfotext',
 
               # output as table or fieldset
               'output_as'       => 'fieldset',
@@ -164,7 +166,11 @@ class wbFormBuilder extends wbBase {
                 }
 
                 // let's see if the form is already sent
-                if ( $this->val->param( $formname.'_submit', 'PCRE_INT' ) ) {
+                if (
+                       $this->val->param( $formname.'_submit', 'PCRE_INT' )
+                     &&
+                     ! $this->val->param( $this->_config['cancel_key'] )
+                ) {
                     $this->log()->LogDebug( 'auto-checking form '.$formname );
                     $this->checkForm( $formname );
                 }
@@ -631,6 +637,18 @@ echo "</textarea>";
                                )
                            )
             );
+            $this->_buttons[$formname][1] = array(
+                'field' => $this->input(
+                               array(
+                                   'type'  => 'submit',
+                                   'label' => $this->translate( 'Cancel' ),
+                                   'value' => $this->translate( 'Cancel' ),
+                                   'name'  => $this->_config['cancel_key'],
+                                   'class' => $this->_config['button_class']
+                                            . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' ),
+                               )
+                           )
+            );
 
         }
 
@@ -691,7 +709,7 @@ echo "</textarea>";
                                        ?  implode( "<br />\n", $this->_errors[ $formname ] )
                                        :  NULL,
                             // info messages
-                            'info'     => ( isset( $this->_info[ $formname ] ) && is_array( $this->_info[ $formname ] ) )
+                            'info'     => ( isset( $this->_info[ $formname ] ) && is_array( $this->_info[ $formname ] ) && count( $this->_info[ $formname ] ) > 0 )
                                        ?  implode( "<br />\n", $this->_info[ $formname ] )
                                        :  NULL,
                         )
@@ -729,7 +747,7 @@ echo "</textarea>";
                                   ?  implode( "<br />\n", $this->_errors[ $formname ] )
                                   :  NULL,
                        // info messages
-                       'info'     => ( isset( $this->_info[ $formname ] ) && is_array( $this->_info[ $formname ] ) )
+                       'info'     => ( isset( $this->_info[ $formname ] ) && is_array( $this->_info[ $formname ] ) && count( $this->_info[ $formname ] ) > 0  )
                                   ?  implode( "<br />\n", $this->_info[ $formname ] )
                                   :  NULL,
                    )
@@ -900,12 +918,47 @@ echo "</textarea>";
         return $return;
 
     }   // end function isChecked()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function isCanceled ( $formname = '' ) {
+        if ( $this->val->param( $this->_config['cancel_key'] ) ) {
+            return true;
+        }
+        return false;
+    }   // end function isCanceled ()
 
 
 
 /*******************************************************************************
  * create (render) fields
  ******************************************************************************/
+ 
+    public function infotext ( $element ) {
+
+        $this->log()->LogDebug( 'creating infotext field:', $element );
+
+        $text   = $element['label'];
+        $output =
+            $this->tpl->getTemplate(
+                'infotext.'.$this->_config['output_as'].'.tpl',
+                array(
+                    'attributes' => $this->__validateAttributes( $element ),
+                    'label'      => $this->lang->translate( $text ),
+                    'value'      => $element['value'],
+                    'labelclass' => $this->_config['label_class'],
+                )
+            );
+
+        $this->log()->LogDebug( 'returning rendered infotext: ', $output );
+
+        return $output;
+
+    }   // end function infotext
  
     /**
      *
@@ -1136,6 +1189,10 @@ echo "</textarea>";
              &&
              count( $element['options'] ) > 0
         ) {
+        
+            if ( ! preg_match( '#\[\]$#', $element['name'] ) ) {
+                $element['name'] .= '[]';
+            }
         
             $opt       = array();
             $isIndexed = array_values( $element['options'] ) === $element['options'];
@@ -1650,7 +1707,7 @@ echo "</textarea>";
             $add_to_array[] = array(
                 'label'  => $label,
                 'name'   => $element['name'],
-                'info'   => isset ( $element['info'] )
+                'info'   => ( isset ( $element['info'] ) && ( ! empty( $element['info'] ) ) )
                          ?  $this->lang->translate( $element['info'] )
                          :  NULL,
                 'field'  => $field,
