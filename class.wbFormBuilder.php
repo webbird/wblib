@@ -70,6 +70,7 @@ class wbFormBuilder extends wbBase {
               'skin'                => '',
               // -----          CSS classes            -----
               'fieldset_class'   => 'fbfieldset',
+              'legend_class'     => 'fblegend',
               'label_class'      => 'fblabel',
               'form_class'       => 'fbform',
               'left_class'       => 'fbleft',
@@ -1190,7 +1191,7 @@ echo "</textarea>";
              count( $element['options'] ) > 0
         ) {
         
-            if ( ! preg_match( '#\[\]$#', $element['name'] ) ) {
+            if ( $element['type'] == 'checkbox' && ! preg_match( '#\[\]$#', $element['name'] ) ) {
                 $element['name'] .= '[]';
             }
         
