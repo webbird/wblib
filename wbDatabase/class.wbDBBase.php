@@ -527,14 +527,22 @@ class wbDBBase extends PDO {
      *
      **/
     protected function __parse_where( $where ) {
+    
+        if ( is_array( $where ) ) {
+            $where = implode( ' AND ', $where );
+        }
 
         // replace conjunctions "'\\1'.strtoupper('\\2').'\\3'",
         $string = $this->replaceConj( $where );
 
         // replace operators
         $string = $this->replaceOps( $string );
-
-        return ' WHERE '.$string;
+        
+        if ( ! empty( $string ) ) {
+            return ' WHERE '.$string;
+        }
+        
+        return NULL;
 
     }   // end function __parse_where()
     
