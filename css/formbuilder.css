@@ -1,6 +1,6 @@
-/*
+/*******************************************************************************
     fieldset layout for wbFormBuilder
-*/
+*******************************************************************************/
 
 fieldset.fbouter {
     float                : left;
@@ -11,13 +11,14 @@ fieldset.fbouter {
     border               : 0;
 }
 
-fieldset.fbfieldset {
+fieldset.fbfieldset,
+fieldset.fbfieldset_blue {
     float                : left;
     clear                : left;
     width                : 90%;
     margin               : 0 0 1.5em 0;
     padding              : 5px;
-    background           : transparent url(fieldset.gif) repeat-x left top;
+    background           : white url(fieldset.gif) repeat-x left top;
  	  -moz-border-radius   : 11px;
 	  -webkit-border-radius: 11px;
 	  border-radius        : 11px;
@@ -32,12 +33,23 @@ legend.fblegend {
     padding              : 5px 15px;
 }
 
-fieldset.fbfieldset ol {
+.fbheader {
+    color                : #000000;
+    font-weight          : bold;
+    font-size            : 1.2em;
+    padding              : 5px 15px;
+}
+
+fieldset.fbfieldset ol,
+fieldset.fbfieldset_blue ol
+{
     padding              : 1em 1em 0 1em;
     list-style           : none;
 }
 
-fieldset.fbfieldset li {
+fieldset.fbfieldset li,
+fieldset.fbfieldset_blue li
+{
     float                : left;
     clear                : left;
     width                : 100%;
@@ -46,27 +58,26 @@ fieldset.fbfieldset li {
     list-style           : none;
 }
 
-fieldset.fbfieldset li span {
+fieldset.fbfieldset li span,
+fieldset.fbfieldset_blue li span
+{
     padding-left         : 20px;
     width                : 20px;
     height               : 20px;
     min-height           : 20px;
     padding              : 2px;
-    display              : inline-block;
+    display              : block;
+    float                : left;
 }
 
-fieldset.fbfieldset li span.fberror {
+fieldset.fbfieldset li span.fberror,
+fieldset.fbfieldset_blue li span.fberror,
+fieldset.fbfieldset li span.fbinfotext,
+fieldset.fbfieldset_blue li span.fbinfotext
+{
     padding-left         : 5px;
     width                : auto;
     border               : 0;
-}
-
-fieldset.fbsubmit {
-    border-style         : none;
-    float                : none;
-    width                : auto;
-    border               : 0 none #FFF;
-    padding-left         : 30em;
 }
 
 label.fblabel {
@@ -79,8 +90,11 @@ label.fblabel {
 }
 
 input.fbtext,
+input.fbfile,
 input.fbsubmit,
+span.fbinfotext,
 select.fbselect,
+select.fbmultiselect,
 textarea.fbtextarea
 {
     border               : 1px solid #ccc;
@@ -88,19 +102,20 @@ textarea.fbtextarea
 }
 
 input.fbtext,
+span.fbinfotext,
 select.fbselect,
+select.fbmultiselect,
 textarea.fbtextarea
 {
     width                : 30em;
 }
 
-input.fbsubmit {
-    width                : 15em;
+select.fbmultiselect {
+    max-height           : 100px;
 }
 
-
-input.fbfirstbutton {
-    
+span.fbinfotext {
+    border               : none;
 }
 
 input.fbdisabled,
@@ -143,7 +158,41 @@ div.fbinfo {
     margin               : 20px auto;
 }
 
-.fbbutton {
+/*******************************************************************************
+     Buttons
+*******************************************************************************/
+
+fieldset.fbsubmit {
+    border-style         : none;
+    float                : none;
+    width                : auto;
+    border               : 0 none #FFF;
+    padding-left         : 30em;
+}
+
+input.fbsubmit {
+    width                : 15em;
+}
+
+input.fbfirstbutton {
+
+}
+
+.fbbuttonpane,
+.fbbuttonpane_blue {
+    background           : transparent url(buttonpane.gif) repeat-x left top;
+    border               : 1px outset #606060 !important;
+    padding              : 15px;
+ 	  width                : 88%;
+ 	  text-align           : center;
+ 	  -moz-border-radius   : 8px;
+	  -webkit-border-radius: 8px;
+	  border-radius        : 8px;
+	  behavior             : url(ie-css3.htc);
+}
+
+.fbbutton,
+.fbbutton_blue {
     background           : transparent url(button.gif) repeat-x left top;
     height               : 30px;
     border               : 1px outset #606060 !important;
@@ -156,14 +205,15 @@ div.fbinfo {
 	  behavior             : url(ie-css3.htc);
 }
 
-.fbbuttonpane {
-    background           : transparent url(buttonpane.gif) repeat-x left top;
-    border               : 1px outset #606060 !important;
-    padding              : 15px;
- 	  width                : 88%;
- 	  text-align           : center;
- 	  -moz-border-radius   : 8px;
-	  -webkit-border-radius: 8px;
-	  border-radius        : 8px;
-	  behavior             : url(ie-css3.htc);
+/*******************************************************************************
+    blue 'skin'
+*******************************************************************************/
+fieldset.fbfieldset_blue {
+    background           : transparent url(fieldset_blue.gif) repeat-x left top;
+}
+.fbbutton_blue {
+    background           : transparent url(button_blue.gif) repeat-x left top;
+}
+.fbbuttonpane_blue {
+    background           : transparent url(buttonpane_blue.gif) repeat-x left top;
 }
