@@ -26,22 +26,25 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 
 class wbValidate extends wbBase {
 
+    // ----- Debugging -----
+    protected      $debugLevel      = KLOGGER::OFF;
+    #protected      $debugLevel      = KLOGGER::DEBUG;
+
     private static $_tainted  = array();
     private static $_server   = array();
     private static $_valid    = array();
     private static $_initialized = false;
-    
     protected      $_errors   = array();
-
-    // ----- Debugging -----
-    #protected      $debugLevel      = KLOGGER::OFF;
-    protected      $debugLevel      = KLOGGER::DEBUG;
+    protected      $_config
+        = array(
+              'debug'           => false,
+          );
 
     /**
      * constructor
      **/
-    function __construct () {
-        parent::__construct();
+    function __construct ( $options = array() ) {
+        parent::__construct( $options );
         $this->__init();
         $this->import();
     }   // end function __construct()
@@ -56,9 +59,12 @@ class wbValidate extends wbBase {
     public function import( $weak = true ) {
     
         // initialize only once (singleton)
-        if ( self::$_initialized ) {
-            return;
-        }
+        #if ( self::$_initialized ) {
+        #    $this->log()->LogDebug( 'already initialized' );
+        #    return;
+        #}
+        
+        $this->log()->LogDebug( 'getting form data' );
 
         // read request data into $tainted array
         self::$_tainted = array_merge(
@@ -281,8 +287,10 @@ echo "</textarea>";
 
         // check array
         else {
+            $this->log()->LogDebug( 'validating array' );
             $valid = array();
             foreach ( $value as $item ) {
+                $this->log()->LogDebug( 'checking value ['.$item.']' );
                 $is_valid = preg_match( constant( $constant ), $item );
                 if ( $is_valid ) {
                     $valid[] = $is_valid;
