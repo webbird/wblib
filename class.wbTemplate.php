@@ -66,6 +66,9 @@ class wbTemplate extends wbBase {
     // data array to transfer the template data to the compiled template
     public    $data            = array();
     
+    //
+    private static $_globals;
+    
     
     /**
      * constructor
@@ -118,6 +121,27 @@ class wbTemplate extends wbBase {
 /*******************************************************************************
  *
  ******************************************************************************/
+ 
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function setGlobal( $var, $value = NULL ) {
+
+        if ( ! is_array( $var ) && isset( $value ) ) {
+           self::$_globals[ $var ] = $value;
+           return;
+        }
+
+        if ( is_array( $var ) ) {
+            foreach ( $var as $k => $v ) {
+                self::$_globals[ $k ] = $v;
+            }
+        }
+
+    }  // end function setGlobal()
 
     /**
      *
@@ -314,7 +338,7 @@ class wbTemplate extends wbBase {
             $this->log()->LogDebug( 'adding fillings to pre-stored contents' );
             $fillings = array_merge ( $fillings, $this->_fillings );
         }
-
+        
         $this->log()->LogDebug( 'string:', $string );
         $this->log()->LogDebug( 'fillings:', $fillings );
 
@@ -400,13 +424,15 @@ class wbTemplate extends wbBase {
         // store compiled template
         $fh = fopen( $this->_config['workdir'].'/'.$this->_config['cachedir'].'/'.$cache_file, 'w' );
         fwrite( $fh, '<'.'?php'."\n" );
-        fwrite( $fh, '    $fillings = $this->data;'."\n".'?'.'>'."\n" );
+        fwrite( $fh, '    $fillings = $this->data;'."\n" );
+        fwrite( $fh, '    $globals  = $this->globals'."\n".'?'.'>'."\n" );
         fwrite( $fh, $string );
         fwrite( $fh, "\n" );
         fclose( $fh );
 
-        $this->data = $fillings;
-        
+        $this->data    = $fillings;
+        $this->globals = self::$_globals;
+
         ob_start();
         include $this->_config['workdir'].'/'.$this->_config['cachedir'].'/'.$cache_file;
         $output = ob_get_clean();
@@ -703,7 +729,7 @@ class wbTemplate extends wbBase {
                     $this_var    = $var.'['.$i.']["'.$vars[1].'"]';
                     $data        = str_replace(
                                        $vars[0],
-                                       '<?php if ( isset( '.$this_var.' ) ): echo '.$this_var.'; else: echo "' . $this->handleMissing( $vars[1], "no data for var -".$vars[1]."-" ) . '"; endif; ?>',
+                                       '<?php if ( isset( '.$this_var.' ) ): echo '.$this_var.'; elseif ( isset( $globals["'.$vars[1].'"] ) ): echo $globals["'.$vars[1].'"]; else: echo "' . $this->handleMissing( $vars[1], "no data for var -".$vars[1]."-" ) . '"; endif; ?>',
                                        $data
                                    );
                 }
@@ -734,7 +760,7 @@ class wbTemplate extends wbBase {
                     $index = count($el['path'])+1;
                 }
                 $var .= '["'.$el['key'].'"]';
-                
+
                 // handle else
                 $data = preg_replace( "/$O\s*:else\s*$C/im", '<?php else: ?>', $data );
                 $neg  = ( isset( $el['is_negative'] ) && $el['is_negative'] ) ? ' ! ' : '';
