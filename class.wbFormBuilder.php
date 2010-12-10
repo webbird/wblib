@@ -410,6 +410,17 @@ class wbFormBuilder extends wbBase {
     }   // end function setError()
     
     /**
+     *
+     *
+     *
+     *
+     **/
+    public function getErrors( $formname ) {
+        $formname = $this->__validateFormName( $formname );
+        return $this->_errors[$formname];
+    }
+    
+    /**
      * make a field readonly
      *
      * @access public
