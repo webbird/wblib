@@ -408,6 +408,8 @@ class wbTemplate extends wbBase {
             $code   = '<?php '."\n".
                       '    if ( isset( $fillings["'.$vars[1].'"] ) ) :'."\n".
                       '        echo $fillings["'.$vars[1].'"];'."\n".
+                      '    elseif ( isset( $globals["'.$vars[1].'"] ) ) :'."\n".
+                      '        echo $globals["'.$vars[1].'"];'."\n".
                       '    else:'."\n".
                       '        echo "'.$this->handleMissing( $vars[1], "no data for var -".$vars[1]."-" ).'";'."\n".
                       '    endif;'."\n".
