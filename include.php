@@ -22,11 +22,19 @@
 
 **/
 
-include_once dirname( __FILE__ ).'/class.wbDatabase.php';
-include_once dirname( __FILE__ ).'/class.wbFormBuilder.php';
-require_once dirname( __FILE__ ).'/class.wbTemplate.php';
-require_once dirname( __FILE__ ).'/class.wbI18n.php';
-require_once dirname( __FILE__ ).'/class.wbListBuilder.php';
-require_once dirname( __FILE__ ).'/class.wbHolidays.php';
+foreach (
+    array(
+        'wbDatabase',
+        'wbFormBuilder',
+        'wbTemplate',
+        'wbI18n',
+        'wbListBuilder',
+        'wbHolidays'
+    ) as $class
+) {
+    if ( ! class_exists($class) ) {
+        include_once dirname( __FILE__ ).'/class.'.$class.'.php';
+    }
+}
 
 ?>
