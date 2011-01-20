@@ -395,11 +395,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                     if ( ! is_array( $options['selected'] ) ) {
                         $options['selected'] = array( $options['selected'] );
                     }
-                    $key  = array_keys($options['selected']);
-                    $size = sizeOf($key);
-                    for ($i=0; $i<$size; $i++) {
-    #                foreach ( $options['selected'] as $i => $id ) {
-                        $id = $options['selected'][ $key[$i] ];
+                foreach ( $options['selected'] as $i => $id ) {
                         if ( $id === $item[ $this->_config['__id_key'] ] ) {
                             $sel = ' selected="selected"';
                         }
