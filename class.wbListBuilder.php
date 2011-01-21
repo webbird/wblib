@@ -33,10 +33,12 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
         #protected      $debugLevel     = KLOGGER::DEBUG;
 
         private        $id             = 0;
+        private        $depth          = 0;
         private        $_path          = array();
         protected      $_config        = array(
 
             'create_level_css'      => true,
+            'deep_recursion_level'  => 25,
 
             'css_prefix'            => '',
             'current_li_class'      => 'current_item',
@@ -176,19 +178,155 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             return $tree;
 
         }   // end function buildRecursion ()
+        
+        /**
+         * http://codjng.blogspot.com/2010/10/how-to-build-unlimited-level-of-menu.html
+         *
+         * This function creates a nested list from a flat array using an
+         * iterative loop
+         *
+         * @access public
+         * @param  array  $list    - flat array
+         * @param  int    $root_id - id of the root element
+         * @param  array  $options - additional options
+         * @return string HTML
+         *
+         **/
+        public function buildListIter( $list, $root_id = 0, $options = array() ) {
+        
+            if ( empty($list) || ! is_array( $list ) ) {
+                $this->log()->LogDebug( 'no list items to show' );
+                return;
+            }
+            
+            // skip hidden
+            $hidden  = ( isset($this->_config['__hidden_key']) ? $this->_config['__hidden_key'] : '' );
+            $p_key   = $this->_config['__parent_key'];
+            
+            // create a list of children for each page
+            foreach ( $list as $item ) {
+                if ( isset($item[$hidden]) ) {
+                    continue;
+                }
+                $children[$item[$p_key]][] = $item;
+            }
+            
+            $ar_k    = array_keys($list);
+            $last_id = $ar_k[count($ar_k)-1];
+            unset($ar_k);
+            
+            // loop will be false if the root has no children (i.e., an empty menu!)
+            $loop      = !empty( $children[$root_id] );
+            
+            // spare some typing
+            $ul_id     = ( isset($options['ul_id']) ? $options['ul_id'] : NULL );
+            $space     = ( isset($options['space']) ? $options['space'] : "\t" );
+            $id_key    = $this->_config['__id_key'];
+            $level_key = $this->_config['__level_key'];
+            $href_key  = $this->_config['__href_key'];
+            $title_key = $this->_config['__title_key'];
+            $m_key     = '';
+            $m_before  = NULL;
+            $m_after   = NULL;
+            
+            if ( isset($this->_config['__more_info_key']) ) {
+                $m_key = $this->_config['__more_info_key'];
+                list( $m_before, $m_after ) = split( '%%', $this->_config['more_info'] );
+            }
+
+            // initializing $parent as the root
+            $parent       = $root_id;
+            $parent_stack = array();
+            $out          = array();
+            $isfirst      = 1;
+
+            while ( $loop && ( ( $option = each( $children[$parent] ) ) || ( $parent > $root_id ) ) )
+            {
+                if ( $option === false ) // no more children
+                {
+                    $parent = array_pop( $parent_stack );
+                    // HTML for menu item containing children (close)
+                    $out[] = str_repeat( "\t", ( count( $parent_stack ) + 1 ) * 2 ) . $this->listEnd();
+                    $out[] = str_repeat( "\t", ( count( $parent_stack ) + 1 ) * 2 - 1 ) . $this->itemEnd();
+                }
+                // current page has children (i.e. page_id is in $children array)
+                elseif ( ! empty( $children[ $option['value'][$id_key] ] ) )
+                {
+                    $tab    = str_repeat( $space, ( count( $parent_stack ) + 1 ) * 2 - 1 );
+                    $li_css = $this->getListItemCSS( $option['value'], $isfirst, $last_id );
+                    $text   = $option['value'][$title_key];
+                    if ( isset( $option['value'][$href_key] ) ) {
+                        $text = '<a href="'.$option['value'][$href_key].'" alt="'.$text.'">'.$text.'</a>';
+                    }
+                    if ( isset( $option['value'][ $m_key ] ) ) {
+                        $text .= $m_before
+                              .  $option['value'][$m_key]
+                              .  $m_after;
+                    }
+                    // HTML for menu item containing children (open)
+                    $out[] = sprintf(
+                        '%1$s'.$this->itemStart( $li_css, $space ).'%2$s',
+                        $tab,   // %1$s = tabulation
+                        $text   // %2$s = title
+                    );
+                    $out[]  = $tab . "\t" . $this->listStart( $space, $ul_id );
+                    array_push( $parent_stack, $option['value'][$p_key] );
+                    $parent = $option['value'][$id_key];
+                }
+                // handle leaf
+                else {
+                    $li_css = $this->getListItemCSS( $option['value'], $isfirst, $last_id );
+                    $text   = $option['value'][$title_key];
+                    if ( isset( $option['value'][$href_key] ) ) {
+                        $text = '<a href="'.$option['value'][$href_key].'" alt="'.$text.'">'.$text.'</a>';
+                    }
+                    if ( isset( $option['value'][ $m_key ] ) ) {
+                        $text .= $m_before
+                              .  $option['value'][$m_key]
+                              .  $m_after;
+                    }
+                    // HTML for menu item with no children (aka "leaf")
+                    $out[] = sprintf(
+                        '%1$s'.$this->itemStart( $li_css, $space ).'%2$s'.$this->itemEnd(),
+                        str_repeat( "\t", ( count( $parent_stack ) + 1 ) * 2 - 1 ),   // %1$s = tabulation
+                        $text   // %2$s = title
+                    );
+                }
+                $isfirst = 0;
+            }
+
+            return $this->listStart( $space, $ul_id )
+                 . implode( "\r\n", $out )
+                 . $this->listEnd();
+
+        }
 
         /**
+         * Build a list from a nested (multi-dimensional) array; this is much
+         * slower than using the iterative approach. Still here for backward
+         * compatibility, but marked as deprecated.
          *
-         *
-         *
+         * @access public
+         * @param  array  $tree - multi-dimensional array
+         * @param  string $space
+         * @param  array  $options
+         * @return string HTML
          *
          **/
         public function buildList ( $tree, $space = NULL, $options = array() ) {
 
-            if ( ! empty($tree) && ! is_array( $tree ) ) {
+            if ( empty($tree) || ! is_array( $tree ) ) {
                 $this->log()->LogDebug( 'no list items to show' );
                 return;
             }
+            
+            if ( $this->depth >= $this->_config['deep_recursion_level'] ) {
+                $this->log()->LogDebug( 'ERROR: DEEP RECURSION!' );
+                $this->printError( 'buildDropDown() ERROR: DEEP RECURSION! Recursion level '.$this->depth );
+                return;
+            }
+
+            $this->depth++;
 
             $this->log()->LogDebug(
                 'building list from tree:',
@@ -216,12 +354,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             $title_key = $this->_config['__title_key'];
 
             // for each item in the tree...
-            $key  = array_keys($tree);
-            $size = sizeOf($key);
-            for ( $i=0; $i<$size; $i++ ) {
-            #foreach ( $tree as $parent => $item ) {
-
-                $item = $tree[ $key[$i] ];
+            foreach ( $tree as $parent => $item ) {
 
                 // skip hidden
                 if (
@@ -300,6 +433,8 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             }
 
             $output[] = $this->listEnd();
+            
+            $this->depth--;
 
             if ( isset($options['as_array']) ) {
                 return $output;
@@ -334,7 +469,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                 return $trailpages;
             }
 
-            return $this->buildList( $trailpages );
+            return $this->buildListIter( $trailpages );
 
         }   // end function buildBreadcrumb()
 
@@ -350,8 +485,16 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                 'building dropdown from tree:',
                 $tree
             );
+            
+            if ( $this->depth >= $this->_config['deep_recursion_level'] ) {
+                $this->log()->LogDebug( 'ERROR: DEEP RECURSION!' );
+                $this->printError( 'buildDropDown() ERROR: DEEP RECURSION! Recursion level '.$this->depth );
+                return;
+            }
+            
+            $this->depth++;
 
-            if ( ! empty($tree) && ! is_array( $tree ) ) {
+            if ( empty($tree) || ! is_array( $tree ) || count($tree) == 0 ) {
                 $this->log()->LogDebug( 'no list items to show' );
                 return;
             }
@@ -427,6 +570,8 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             }
 
             $select = implode( "\n", $output );
+            
+            $this->depth--;
 
             return $select;
 
@@ -529,7 +674,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
          **/
         function itemEnd( $space = NULL ) {
             return $space . $this->_config['item_close'];
-        }   // end function _EM_itemEnd()
+        }   // end function itemEnd()
 
         /**
          *
@@ -537,7 +682,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
          *
          *
          **/
-        function getListItemCSS ( $item ) {
+        function getListItemCSS ( $item, $isfirst = false, $last_id = NULL ) {
 
             $li_css = $this->_config['css_prefix']
                     . $this->_config['li_class'];
@@ -568,10 +713,12 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                 $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['current_li_class'];
             }
 
+// ----- TODO -----
             // markup for pages on current trail
             if ( isset( $item['em_on_current_trail'] ) ) {
                 $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['trail_li_class'];
             }
+// ----- TODO -----
 
             // markup for pages that have children
             if (
@@ -582,6 +729,16 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                    isset( $this->_config['has_child_li_class'] )
             ) {
                 $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['has_child_li_class'];
+            }
+            
+            // markup for first element
+            if ( $isfirst ) {
+                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['first_li_class'];
+            }
+
+            // markup for last element
+            if ( $last_id === $item[ $this->_config['__id_key'] ] ) {
+                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['last_li_class'];
             }
 
             return $li_css;
