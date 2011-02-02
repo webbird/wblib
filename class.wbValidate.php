@@ -209,7 +209,8 @@ class wbValidate extends wbBase {
         if ( $this->validate( $constant, self::$_tainted[ $varname ], $options ) ) {
 
             // cache validated value
-            self::$_valid[ $varname ] = self::$_tainted[ $varname ];
+            $value = ( get_magic_quotes_gpc() ? stripslashes(self::$_tainted[ $varname ]) : self::$_tainted[ $varname ] );
+            self::$_valid[ $varname ] = $value;
 
             // delete tainted value
             unset( self::$_tainted[ $varname ] );
@@ -315,12 +316,12 @@ class wbValidate extends wbBase {
                 return false;
             }
 
-if ( ! is_scalar($constant) ) {
-echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
-print_r( $constant );
-print_r( debug_backtrace() );
-echo "</textarea>";
-}
+            if ( ! is_scalar($constant) ) {
+                echo "ERROR: Invalid constant<br /><textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+                print_r( $constant );
+                print_r( debug_backtrace() );
+                echo "</textarea>";
+            }
             // check pattern; returns 0 (false) or 1 (true)
             if ( preg_match( constant( $constant ), $value ) ) {
                 $this->log()->LogDebug( 'valid value:', $value );
