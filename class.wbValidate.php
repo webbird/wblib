@@ -127,6 +127,54 @@ class wbValidate extends wbBase {
     }   // end function delete()
     
     /**
+     * Retrieve validated params by a given prefix
+     *
+     * Note: Validates all params as string!
+     *
+     * @access public
+     * @param  string $prefix  - prefix to search for
+     * @param  array  $options - more options
+     * @return array
+     *
+     * Options:
+     *     remove_prefix
+     *        remove the given prefix from the var name in result array
+     *        boolean; default true
+     *
+     **/
+    public function by_prefix( $prefix, $options = array() ) {
+
+        $remove_prefix = true;
+        if ( isset( $options['remove_prefix'] ) && $options['remove_prefix'] === false ) {
+            $remove_prefix = false;
+        }
+        
+        $values = array();
+        
+        // search vars in tainted array
+        foreach ( self::$_tainted as $var => $ignore ) {
+            if ( preg_match( "#^$prefix#i", $var ) ) {
+                $value = $this->param( $var );
+                if( $value ) {
+                    $var = ( $remove_prefix ? str_ireplace( $prefix, '', $var ) : $var );
+                    $values[$var] = $value;
+                }
+            }
+        }
+        
+        // search vars in validated array
+        foreach ( self::$_valid as $var => $value ) {
+            if ( preg_match( "#^$prefix#i", $var ) ) {
+                $var = ( $remove_prefix ? str_ireplace( $prefix, '', $var ) : $var );
+                $values[$var] = $value;
+            }
+        }
+
+        return $values;
+        
+    }   // end function by_prefix()
+    
+    /**
      * retrieve validated form param
      *
      * @access public
