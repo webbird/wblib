@@ -152,7 +152,7 @@
 		
 		private function getTimeLine( $level )
 		{
-			$time = date( $this->DateFormat );
+			$time = gmdate( $this->DateFormat );
 		
 			switch( $level )
 			{
