@@ -207,9 +207,22 @@ class wbValidate extends wbBase {
         $this->log()->LogDebug( 'checking var '.$varname.' with constant '.$constant );
         
         if ( $this->validate( $constant, self::$_tainted[ $varname ], $options ) ) {
+        
+            $value = self::$_tainted[ $varname ];
+            if ( get_magic_quotes_gpc() ) {
+                if ( is_array( $value ) ) {
+                    $temp = array();
+                    foreach( $value as $v ) {
+                        $temp[] = stripslashes($v);
+                    }
+                    $value = $temp;
+                }
+                else {
+                    $value = stripslashes($value);
+                }
+            }
 
             // cache validated value
-            $value = ( get_magic_quotes_gpc() ? stripslashes(self::$_tainted[ $varname ]) : self::$_tainted[ $varname ] );
             self::$_valid[ $varname ] = $value;
 
             // delete tainted value
@@ -574,6 +587,30 @@ class wbValidate extends wbBase {
     public function isValidMime( $value, $options = array() ) {
         return $this->validate( 'PCRE_MIME', $value, $options );
     }
+    
+    /**
+     * dump all stored items; you should NEVER use this method in production code!
+     *
+     *
+     *
+     **/
+    public function dump() {
+    
+        echo "<h2>wbValidate var dump</h2>";
+
+        echo "VALIDATED<br /><textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+        print_r( self::$_valid );
+        echo "</textarea>";
+
+        echo "TAINTED<br /><textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+        print_r( self::$_tainted );
+        echo "</textarea>";
+
+        echo "SERVER<br /><textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+        print_r( self::$_server );
+        echo "</textarea>";
+
+    }   // end function dump()
     
     /**
      * define regexp
