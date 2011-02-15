@@ -38,6 +38,8 @@ $LANG = array(
         
     'Submit' => 'Absenden',
     'Reset'  => 'Zur&uuml;cksetzen',
+    'Y'      => 'Ja',
+    'N'      => 'Nein',
 );
 
 ?>
