@@ -49,7 +49,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             'has_child_li_class'    => 'has_child',
             'is_open_li_class'      => 'is_open',
             'item_close'            => '</li>',
-            'item_open'             => '<li id="%%id%%" class="%%">',
+            'item_open'             => '<li id="%%id%%" class="%%{{lastcss}}">',
             'last_li_class'         => 'last_item',
             'li_class'              => 'item',
             'list_close'            => '</ul>',
@@ -237,7 +237,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                 $children[$item[$p_key]][] = $item;
             }
             $this->log()->LogDebug( 'children list:', $children );
-
+            
             // loop will be false if the root has no children (i.e., an empty menu!)
             $loop      = !empty( $children[$root_id] );
             
@@ -297,10 +297,11 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                     }
                     // only add children if in open_nodes array and level <= $maxlevel
                     if (
-                         ( !isset($option['value'][$level_key]) || $option['value'][$level_key] <= $maxlevel          )
+                         ( !isset($option['value'][$level_key]) || $option['value'][$level_key] <= $maxlevel                )
                          &&
                          ( !count($this->open_nodes)            || in_array( $option['value'][$id_key], $this->open_nodes ) )
                     ) {
+                        $this->log()->LogDebug( 'showing children for element '.$option['value'][$title_key] );
                         // are we going to show next level?
                         $first_child = $children[$option['value'][$id_key]][0];
                         if ( $first_child[$level_key] <= $maxlevel ) {
@@ -317,13 +318,6 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                     else {
                         $this->log()->LogDebug( 'skipping children for element '.$option['value'][$title_key] );
                         $this->log()->LogDebug( $option['value'][$level_key] .' <= ' . $maxlevel . ' || ' . $option['value'][$id_key] . ' ! in_array ', $this->open_nodes );
-#$this->log()->LogDebug(
-#"if (
-# ( !isset(".$option['value'][$level_key].") || ".$option['value'][$level_key]." <= $maxlevel          )
-# &&
-# (  empty(\$this->open_nodes)            || in_array( ".$option['value'][$id_key].", ".print_r($this->open_nodes,1)." ) )
-#) {"
-#);
                         // HTML for menu item containing children (open)
                         $out[] = sprintf(
                             '%1$s'.$this->itemStart( $li_css, $space ).'%2$s',
@@ -331,10 +325,12 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                             $text   // %2$s = title
                         );
                     }
+                    // get id for last child
                     end($children[ $option['value'][$id_key] ]);
                     $key = key($children[ $option['value'][$id_key] ]);
                     reset($children[ $option['value'][$id_key] ]);
                     $this->last_id = $children[ $option['value'][$id_key] ][$key][$id_key];
+                    $this->log()->LogDebug( 'last child id: '.$this->last_id );
                 }
                 // handle leaf
                 else {
@@ -361,13 +357,27 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                             $text   // %2$s = title
                         );
                     }
+                    else {
+                        $this->log()->LogDebug( 'leaf not shown because level ['.$option['value'][$level_key]." <= $maxlevel" );
+                    }
                 }
                 $isfirst = 0;
             }
-
-            return $this->listStart( $space, $ul_id )
-                 . implode( "\r\n", $out )
-                 . $this->listEnd();
+            
+            if ( isset( $this->_config['last_li_class'] ) && ! empty($this->_config['last_li_class']) ) {
+                // get the very last element
+                $last   = array_splice( $out, -1, 1 );
+                // add last item css
+                $last   = str_ireplace( '{{lastcss}}', ' '.$this->_config['last_li_class'], $last );
+                $out[]  = $last[0];
+            }
+            
+            $output = $this->listStart( $space, $ul_id )
+                    . implode( "\r\n", $out )
+                    . $this->listEnd();
+            $output = str_ireplace( '{{lastcss}}', '', $output );
+            
+            return $output;
 
         }   // end function buildListIter()
 
@@ -843,7 +853,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             }
             $start = str_replace(
                 array( '%%id%%', '%%' ),
-                array( $id, $css ),
+                array( $id     , $css ),
                 $this->_config['item_open']
             );
             // remove empty id-attribute
