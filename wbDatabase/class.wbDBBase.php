@@ -25,24 +25,32 @@
 include_once dirname(__FILE__).'/../class.wbBase.php';
 include_once dirname(__FILE__).'/../debug/KLogger.php';
 
+// ----- including sseq-lib -----
+$_SEQ_ONERROR_REDIRECT_TO        = '';
+$_SEQ_ONERROR_REDIRECT_TO_PRESET = true;
+$_SEQ_BASEDIR                    = dirname( __FILE__ ).'/../sseq-lib/';
+$_SEQ_BASEDIR_PRESET             = true;
+include_once $_SEQ_BASEDIR.'seq_lib.php';
+// ----- including sseq-lib -----
+
 class wbDBBase extends PDO {
 
     // ----- Debugging -----
     protected      $debugLevel      = KLogger::OFF;
     private static $defaultDebugDir = '/../debug/log';
 
-    protected $dsn        = NULL;
-    protected $host       = "localhost";
-    protected $port       = 80;
-    protected $user       = "root";
-    protected $pass       = "password";
-    protected $dbname     = "mydb";
-    protected $pdo_driver = 'mysql';
-    protected $prefix     = NULL;
-    protected $timeout    = 5;
-    protected $errors     = array();
-    protected $lasterror  = NULL;
-    protected $lastInsertID = NULL;
+    protected $dsn                  = NULL;
+    protected $host                 = "localhost";
+    protected $port                 = 80;
+    protected $user                 = "root";
+    protected $pass                 = "password";
+    protected $dbname               = "mydb";
+    protected $pdo_driver           = 'mysql';
+    protected $prefix               = NULL;
+    protected $timeout              = 5;
+    protected $errors               = array();
+    protected $lasterror            = NULL;
+    protected $lastInsertID         = NULL;
 
 // ----- Operators used in WHERE-clauses -----
     protected $operators  = array(
@@ -74,11 +82,11 @@ class wbDBBase extends PDO {
         if ( is_object( $this ) && is_object($this->log) )
         {
             $this->log->LogError(
-                'Uncaught exception: '. $exception->getMessage()
+                '[wbDatabase] Uncaught exception: '. $exception->getMessage()
             );
         }
-        die( 'Uncaught exception: '. $exception->getMessage() );
-    }
+        die( '[wbDatabase] Uncaught exception: '. $exception->getMessage() );
+    }   // end function exception_handler()
 
     /**
      * inheritable constructor
@@ -130,10 +138,38 @@ class wbDBBase extends PDO {
         
     }   // end function __construct()
     
+/*******************************************************************************
+ * ACCESSOR FUNCTIONS
+ ******************************************************************************/
+
     /**
+     * Accessor to last error
      *
+     * @access public
+     * @return string
      *
+     **/
+    public function getError() {
+        return $this->lasterror;
+    }   // end function getError()
+
+    /**
+     * Accessor to PDO::lastInsertId
      *
+     * @access public
+     * @return mixed
+     *
+     **/
+    public function getLastInsertID() {
+        return $this->lastInsertID;
+    }   // end function getLastInsertID()
+
+
+    /**
+     * Create valid DSN and store it for later use
+     *
+     * @access public
+     * @return void
      *
      **/
     public function getDSN() {
@@ -147,39 +183,27 @@ class wbDBBase extends PDO {
     }   // end function getDSN()
     
     /**
+     * Check if last action set lasterror
      *
-     *
-     *
-     *
-     **/
-    public function getError() {
-        return $this->lasterror;
-    }   // end function getError()
-    
-    /**
-     *
-     *
-     *
-     *
-     **/
-    public function getLastInsertID() {
-        return $this->lastInsertID;
-    }   // end function getLastInsertID()
-    
-    /**
-     *
-     *
-     *
+     * @access public
+     * @return boolean
      *
      **/
     public function isError() {
         return isset( $this->lasterror ) ? true : false;
     }   // end function isError()
-    
+
+/*******************************************************************************
+ * CONVENIENCE FUNCTIONS
+ ******************************************************************************/
+
     /**
+     * Get the max value of a given field
      *
-     *
-     *
+     * @access public
+     * @param  string   $fieldname - field to check
+     * @param  array    $options   - additional options (where-Statement, for example)
+     * @return mixed
      *
      **/
     public function max( $fieldname, $options = array() ) {
@@ -197,6 +221,35 @@ class wbDBBase extends PDO {
         }
         return NULL;
     }   // end function max()
+    
+    /**
+     * Get the min value of a given field
+     *
+     * @access public
+     * @param  string   $fieldname - field to check
+     * @param  array    $options   - additional options (where-Statement, for example)
+     * @return mixed
+     *
+     **/
+    public function min( $fieldname, $options = array() ) {
+        $data = $this->search(
+            array_merge(
+                $options,
+                array(
+                    'limit' => 1,
+                    'fields' => "min($fieldname) as minimum",
+                )
+            )
+        );
+        if ( isset( $data ) && is_array( $data ) && count( $data ) > 0 ) {
+            return $data[0]['minimum'];
+        }
+        return NULL;
+    }   // end function min()
+
+/*******************************************************************************
+ * CORE FUNCTIONS
+ ******************************************************************************/
 
     /**
      * Search the DB
@@ -242,7 +295,7 @@ class wbDBBase extends PDO {
                 : NULL;
                 
         $params = isset( $options['params'] ) && is_array( $options['params'] )
-                ? array_values( $options['params'] )
+                ? $this->__get_params( $options['params'] )
                 : NULL;
                 
         $group  = isset( $options['group_by'] )
@@ -385,6 +438,9 @@ class wbDBBase extends PDO {
                 : NULL;
         
         $carr = array();
+        if ( isset( $options['fields'] ) && ! is_array( $options['fields'] ) ) {
+            $options['fields'] = array( $options['fields'] );
+        }
         foreach ( $options['fields'] as $key ) {
             $carr[] = "$key = ?";
         }
@@ -407,8 +463,11 @@ class wbDBBase extends PDO {
         if ( isset ( $options['params'] ) ) {
             $params = $options['params'];
         }
+        
+        $execute_params = array_merge( $options['values'], $params );
+        $this->log->LogDebug( 'executing with params:', $execute_params );
 
-        if ( $stmt->execute( array_merge( $options['values'], $params ) ) ) {
+        if ( $stmt->execute( $execute_params ) ) {
             $this->log->LogDebug( 'statement successful:', $statement );
             return true;
         }
@@ -479,9 +538,12 @@ class wbDBBase extends PDO {
             }
         }
                    
-    }
-    
-    
+    }   // end function delete()
+
+/*******************************************************************************
+ * PROTECTED / PRIVATE FUNCTIONS
+ ******************************************************************************/
+
     /**
      *
      *
@@ -532,11 +594,11 @@ class wbDBBase extends PDO {
             $where = implode( ' AND ', $where );
         }
 
-        // replace conjunctions "'\\1'.strtoupper('\\2').'\\3'",
-        $string = $this->replaceConj( $where );
+        // replace conjunctions 
+        $string = $this->__replaceConj( $where );
 
         // replace operators
-        $string = $this->replaceOps( $string );
+        $string = $this->__replaceOps( $string );
         
         if ( ! empty( $string ) ) {
             return ' WHERE '.$string;
@@ -545,6 +607,19 @@ class wbDBBase extends PDO {
         return NULL;
 
     }   // end function __parse_where()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    protected function __get_params( $params ) {
+        foreach ( $params as $i => $param ) {
+            $params[$i] = SEQ_MYSQL($param);
+        }
+        return $params;
+    }   // end function __get_params()
     
     /**
      * parse join statement
@@ -593,7 +668,7 @@ class wbDBBase extends PDO {
         
         $this->log->LogDebug( 'join string before replacing ops/conj: ', $join_string );
         
-        $join = $this->replaceConj( $this->replaceOps( $join_string ) );
+        $join = $this->__replaceConj( $this->__replaceOps( $join_string ) );
         
         $this->log->LogDebug( 'returning parsed join: ', $join );
             
@@ -602,25 +677,29 @@ class wbDBBase extends PDO {
     }   // end function __parse_join()
     
     /**
+     * Replace operators in string
      *
-     *
-     *
+     * @access protected
+     * @param  string    $string - string to convert
+     * @return string
      *
      **/
-    protected function replaceOps( $string ) {
+    protected function __replaceOps( $string ) {
         $reg_exp = implode( '|', array_keys( $this->operators ) );
         reset( $this->operators );
         $this->log->LogDebug( 'replacing ('.$reg_exp.') from: ', $string );
         return preg_replace( "/(\s{1,})($reg_exp)(\s{1,})/eisx", '" ".$this->operators["\\2"]." "', $string );
-    }   // end function replaceOps()
+    }   // end function __replaceOps()
     
     /**
+     * Replace conjunctions in string
      *
-     *
-     *
+     * @access protected
+     * @param  string    $string - string to convert
+     * @return string
      *
      **/
-    protected function replaceConj( $string ) {
+    protected function __replaceConj( $string ) {
          $reg_exp = implode( '|', array_keys( $this->conjunctions ) );
          $this->log->LogDebug( 'replacing ('.$reg_exp.') from: ', $string );
          return preg_replace(
@@ -628,7 +707,7 @@ class wbDBBase extends PDO {
                       '"\\1".$this->conjunctions["\\2"]."\\3"',
                       $string
                   );
-    }
+    }   // end function __replaceConj()
     
     /**
      * initialize database class:
