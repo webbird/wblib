@@ -410,7 +410,7 @@ if ( ! class_exists( 'wbBase' ) ) {
             // server name
            	$servername = isset( $matches[1] )
                         ? $matches[1]
-                        : $_SERVER['SERVER_NAME'];
+                        : $_SERVER['HTTP_HOST'];
 
             // remove leading /
             if ( $servername ) {
