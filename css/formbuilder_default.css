@@ -1,0 +1,85 @@
+/*******************************************************************************
+    wbFormBuilder basic CSS
+*******************************************************************************/
+
+fieldset.fbfieldset ol {
+    padding              : 1em 1em 0 1em;
+    list-style           : none;
+}
+fieldset.fbfieldset li {
+    float                : left;
+    clear                : left;
+    width                : 100%;
+    padding-bottom       : 1em;
+    text-align           : left;
+    list-style           : none;
+}
+fieldset.fbfieldset li span
+{
+    padding-left         : 20px;
+    width                : 20px;
+    height               : 20px;
+    min-height           : 20px;
+    padding              : 2px;
+    display              : block;
+    float                : left;
+}
+fieldset.fbfieldset li span.fberror,
+fieldset.fbfieldset li span.fbinfotext
+{
+    padding-left         : 5px;
+    width                : auto;
+    border               : 0;
+}
+.fberror {
+    color                : #C00;
+    border               : 1px solid #c00;
+    padding              : 5px;
+}
+div.fberror, div.fbinfo {
+    padding              : 10px;
+    text-align           : center;
+    margin-bottom        : 15px;
+}
+div.fbinfo {
+    border               : 1px solid #006600;
+}
+label.fblabel {
+    font-weight          : bold;
+    display              : block;
+    float                : left;
+    width                : 20em;
+    margin-right         : 1em;
+    text-align           : right;
+}
+input.fbtext, input.fbfile, input.fbsubmit,
+span.fbinfotext,
+select.fbselect, select.fbmultiselect,
+textarea.fbtextarea
+{
+    border               : 1px solid #ccc;
+    padding              : 3px;
+}
+select.fbmultiselect {
+    max-height           : 100px;
+}
+span.fbinfotext {
+    border               : none;
+}
+input.fbdisabled,
+textarea.fbdisabled
+{
+    border               : 0 !important;
+    background-color     : transparent;
+}
+.fbicon {
+    height               : 20px;
+    line-height          : 20px;
+    vertical-align       : middle;
+    margin               : 20px auto;
+}
+.fbrequired {
+		background            :	transparent url(required.png) no-repeat center left;
+		padding-left          : 30px;
+		font-weight           : bold;
+}
