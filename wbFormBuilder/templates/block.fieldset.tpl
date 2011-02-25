@@ -6,7 +6,7 @@
           {{ :if label }}{{ label }}{{ :ifend }}
           <span{{ :if req }} class="fbrequired"{{ :ifend }}>&nbsp;</span>
           {{ field }}
-          {{ :if error }}<span class="fbspan fberror">{{ error }}</span>{{ :ifend }}
+          {{ :if error }}<span class="fbspan fberror" style="float: right;">{{ error }}</span>{{ :ifend }}
           {{ :if info }}<span class="fbspan fbinfo" id="{{ name }}_info">{{ info }}</span>{{ :ifend }}
         </li>
 {{ :ifend }}{{ :loopend }}
