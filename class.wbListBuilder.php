@@ -197,6 +197,16 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
         }   // end function buildRecursion ()
         
         /**
+         * This is for downward compatibility only
+         **/
+        public function buildListIter( $list, $options = array() ) {
+            $this->log()->LogDebug(
+                'This function is marked as deprecated! Use buildList() instead!'
+            );
+            return $this->buildList($list,$options);
+        }   // end function buildListIter()
+        
+        /**
          *
          * This function creates a nested list from a flat array using an
          * iterative loop
@@ -211,7 +221,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
          * http://codjng.blogspot.com/2010/10/how-to-build-unlimited-level-of-menu.html
          *
          **/
-        public function buildListIter( $list, $options = array() ) {
+        public function buildList( $list, $options = array() ) {
 
             if ( empty($list) || ! is_array( $list ) ) {
                 $this->log()->LogDebug( 'no list items to show' );
@@ -379,7 +389,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             
             return $output;
 
-        }   // end function buildListIter()
+        }   // end function buildList()
 
         /**
          * Build a list from a nested (multi-dimensional) array; this is much
@@ -393,7 +403,11 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
          * @return string HTML
          *
          **/
-        public function buildList ( $tree, $space = NULL, $options = array() ) {
+        public function buildListRecursive ( $tree, $space = NULL, $options = array() ) {
+        
+            $this->log()->LogDebug(
+                'This function is marked as deprecated! Use buildList() instead!'
+            );
 
             if ( empty($tree) || ! is_array( $tree ) ) {
                 $this->log()->LogDebug( 'no list items to show' );
@@ -522,7 +536,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
 
             return implode( "\n", $output );
 
-        }   // end function buildList()
+        }   // end function buildListRecursive()
 
         /**
          *
@@ -554,12 +568,22 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
         }   // end function buildBreadcrumb()
         
         /**
+         * This is for backward compatibility only
+         **/
+        public function buildDropDownIter( $list, $options = array() ) {
+            $this->log()->LogDebug(
+                'This function is marked as deprecated! Use buildDropDown() instead!'
+            );
+            return $this->buildDropDown( $list, $options );
+        }   // end function buildDropDownIter()
+        
+        /**
          *
          *
          *
          *
          **/
-        public function buildDropDownIter ( $list, $options = array() ) {
+        public function buildDropDown ( $list, $options = array() ) {
 
             $this->log()->LogDebug(
                 'building dropdown from tree:',
@@ -667,7 +691,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             
             return join( "\n", $output );
 
-        }   // end function buildDropDownIter ()
+        }   // end function buildDropDown ()
 
         /**
          * deprecated
@@ -675,7 +699,11 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
          *
          *
          **/
-        public function buildDropDown ( $tree, $options = array() ) {
+        public function buildDropDownRecursive ( $tree, $options = array() ) {
+        
+            $this->log()->LogDebug(
+                'This function is marked as deprecated! Use buildDropDown() instead!'
+            );
 
             $this->log()->LogDebug(
                 'building dropdown from tree:',
@@ -771,7 +799,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
 
             return $select;
 
-        }   // end function buildDropDown ()
+        }   // end function buildDropDownRecursive ()
 
         /**
          *
