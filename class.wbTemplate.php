@@ -36,6 +36,7 @@ class wbTemplate extends wbBase {
         = array (
               'unknowns'       => 'remove',
               'path'           => '/templates',
+              'fallback_path'  => '/templates',
               'file'           => 'index.tpl',
               'cachedir'       => '/wbTemplate/compiled',
               'start_tag'      => '{{',
@@ -471,15 +472,27 @@ class wbTemplate extends wbBase {
 
         while( preg_match( $regexp, $string, $matches ) ) {
 
-            $file    = $this->_config['path'].'/'.trim( $matches[1] );
+            $file    = trim( $matches[1] );
+            
+            // array of locations to search for $file
+            $try = array(
+                       $this->_config['path'].'/'.$file,
+                       $this->_config['fallback_path'].'/'.$file,
+                       $this->_config['workdir'].'/'.$file,
+                       $file,
+                   );
+                   
             $content = NULL;
 
             // see if the file exists
-            if ( file_exists( $file ) ) {
-                $this->log()->LogDebug( 'found file: ', $file );
-                $content = $this->slurp( $file );
+            foreach ( $try as $filename ) {
+                if ( file_exists( $filename ) ) {
+                    $this->log()->LogDebug( 'found file: ', $filename );
+                    $content = $this->slurp( $filename );
+                    break;
+                }
             }
-            else {
+            if ( empty( $content ) ) {
                 $file = basename( $file );
                 $this->printError( "Template error: Included file -$file- does not exist!" );
             }

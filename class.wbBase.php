@@ -234,6 +234,7 @@ if ( ! class_exists( 'wbBase' ) ) {
             // array of locations to search for $file
             $try = array(
                        $this->_config['path'].'/'.$file,
+                       $this->_config['fallback_path'].'/'.$file,
                        $this->_config['workdir'].'/'.$file,
                        $file,
                    );
