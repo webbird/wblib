@@ -185,6 +185,9 @@ class wbValidate extends wbBase {
      **/
     public function param ( $varname, $constant = 'PCRE_STRING', $options = array() ) {
 
+        // remove [] from var name
+        $varname = preg_replace( '#\[\]$#', '', $varname );
+
         $this->log()->LogDebug( 'var ['.$varname.']', $options );
         
         if ( empty ( $constant ) ) {
@@ -196,7 +199,7 @@ class wbValidate extends wbBase {
             $this->log()->LogDebug( 'returning already validated var '.$varname, self::$_valid[ $varname ] );
             return self::$_valid[ $varname ];
         }
-
+        
         // value available?
         if ( ! isset( self::$_tainted[ $varname ] ) ) {
             $this->log()->LogDebug( 'no data found for var '.$varname );
