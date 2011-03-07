@@ -270,7 +270,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
 
             if ( isset($this->_config['__more_info_key']) ) {
                 $m_key = $this->_config['__more_info_key'];
-                list( $m_before, $m_after ) = split( '%%', $this->_config['more_info'] );
+                list( $m_before, $m_after ) = explode( '%%', $this->_config['more_info'] );
             }
 
             // initializing $parent as the root
@@ -534,7 +534,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                 return $output;
             }
 
-            return implode( "\n", $output );
+            return str_ireplace( '{{lastcss}}', '', implode( "\n", $output ) );
 
         }   // end function buildListRecursive()
 
@@ -628,6 +628,8 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                 }
                 $children[$item[$p_key]][] = $item;
             }
+            
+            $this->log()->LogDebug( 'children array:', $children );
 
             // loop will be false if the root has no children (i.e., an empty menu!)
             $loop         = !empty( $children[$root_id] );
@@ -688,6 +690,8 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                 }
 
             }
+            
+            $this->log()->LogDebug( 'output:', $output );
             
             return join( "\n", $output );
 
