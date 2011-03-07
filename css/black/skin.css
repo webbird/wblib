@@ -1,0 +1,89 @@
+/*
+    wbFormBuilder Black Block Skin
+    Based on a tutorial found here:
+    http://aceinfowayindia.com/blog/2009/06/how-create-good-looking-form-without-table/
+*/
+
+@import url(../formbuilder_default.css);
+
+form, input, select, textarea {
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+}
+
+fieldset.fbouter, fieldset.fbfieldset {
+  margin: 0 auto;
+  background: #222222;
+  position: relative;
+  top: 50px;
+  border: 1px solid #262626;
+}
+
+fieldset.fbouter h2 {
+    color: #FFF5CC;
+    border-bottom: 2px solid #fff5cc;
+    font-size: 18px;
+    padding: 5px 0 5px 5px;
+    margin-left: 20px;
+    text-transform: uppercase;
+}
+fieldset .fbicon {
+    margin-left: 20px;
+}
+fieldset.fbfieldset legend.fblegend span.fblegendleft,
+fieldset.fbfieldset legend.fblegend span.fblegendright
+{
+  display: inline-block;
+  width: 100px;
+  background: transparent url(left.png) no-repeat left center;
+}
+fieldset.fbfieldset legend.fblegend span.fblegendright {
+  background: transparent url(right.png) no-repeat right center;
+}
+fieldset.fbfieldset legend.fblegend {
+  color: #ffffff;
+  font-size: 18px;
+  text-transform: uppercase;
+  padding: 5px
+}
+
+fieldset.fbfieldset li {
+  width: 100%;
+  display: block;
+  background: #1C1C1C;
+  border-top: 1px solid #262626;
+  border-bottom: 1px solid #161712;
+  padding: 10px 0 10px 0;
+}
+
+fieldset.fbfieldset input.fbtext,
+fieldset.fbfieldset textarea.fbtextarea,
+fieldset.fbfieldset select.fbselect,
+fieldset.fbfieldset select.fbmultiselect,
+fieldset.fbfieldset input.fbfile {
+  padding: 10px 10px;
+  background: #262626;
+  border-bottom: 1px double #171717;
+  border-top: 1px double #171717;
+  border-left: 1px double #333333;
+  border-right: 1px double #333333;
+  width: 40em;
+}
+
+input.fbbutton {
+  padding: 4px 7px;
+  background: #CC0000;
+  width: 200px;
+  margin-right: 15px;
+  border-bottom: 1px double #660000;
+  border-top: 1px double #660000;
+  border-left: 1px double #FF0033;
+  border-right: 1px double #FF0033;
+}
+
+.fbbuttonpane {
+  margin-top: 30px !important;
+  padding-top: 15px;
+  text-align: center !important;
+}

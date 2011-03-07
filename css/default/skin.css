@@ -1,0 +1,229 @@
+/*******************************************************************************
+    fieldset layout for wbFormBuilder
+*******************************************************************************/
+@import url(../formbuilder_default.css);
+fieldset.fbouter {
+    float                : left;
+    clear                : left;
+    width                : 100%;
+    padding              : 5px;
+    z-index              : 1;
+    border               : 0;
+}
+
+fieldset.fbfieldset
+{
+    float                : left;
+    clear                : left;
+    width                : 90%;
+    margin               : 0 0 1.5em 0;
+    padding              : 5px;
+    background           : white url(fieldset.gif) repeat-x left top;
+ 	  -moz-border-radius   : 11px;
+	  -webkit-border-radius: 11px;
+	  border-radius        : 11px;
+	  z-index              : 2;
+}
+
+legend.fblegend {
+    margin-left          : 1.5em;
+    color                : #000000;
+    font-weight          : bold;
+    font-size            : 1.2em;
+    padding              : 5px 15px;
+    border               : 1px solid #000;
+    background-color     : #fff;
+}
+
+.fbheader {
+    color                : #000000;
+    font-weight          : bold;
+    font-size            : 1.5em;
+    padding              : 5px 15px;
+}
+
+fieldset.fbfieldset ol
+{
+    padding              : 1em 1em 0 1em;
+    list-style           : none;
+}
+
+fieldset.fbfieldset li
+{
+    float                : left;
+    clear                : left;
+    width                : 100%;
+    padding-bottom       : 1em;
+    text-align           : left;
+    list-style           : none;
+}
+
+fieldset.fbfieldset li span
+{
+    padding-left         : 20px;
+    width                : 20px;
+    height               : 20px;
+    min-height           : 20px;
+    padding              : 2px;
+    display              : block;
+    float                : left;
+}
+
+fieldset.fbfieldset li span.fberror,
+fieldset.fbfieldset li span.fbinfotext
+{
+    padding-left         : 5px;
+    width                : auto;
+    border               : 0;
+}
+
+label.fblabel {
+    font-weight          : bold;
+    display              : block;
+    float                : left;
+    width                : 20em;
+    margin-right         : 1em;
+    text-align           : right;
+}
+
+input.fbtext,
+input.fbfile,
+input.fbsubmit,
+span.fbinfotext,
+select.fbselect,
+select.fbmultiselect,
+textarea.fbtextarea
+{
+    border               : 1px solid #ccc;
+    padding              : 3px;
+}
+
+input.fbtext,
+span.fbinfotext,
+select.fbselect,
+select.fbmultiselect,
+textarea.fbtextarea
+{
+    width                : 30em;
+}
+
+select.fbmultiselect {
+    max-height           : 100px;
+}
+
+span.fbinfotext {
+    border               : none;
+}
+
+input.fbdisabled,
+textarea.fbdisabled
+{
+    border               : 0 !important;
+    background-color     : transparent;
+}
+
+.fberror {
+    color                : #C00;
+    border               : 1px solid #c00;
+    padding              : 5px;
+}
+
+div.fberror,
+div.fbinfo
+{
+    background           : transparent url(error.png) left no-repeat;
+    padding              : 10px;
+    text-align           : center;
+    margin-bottom        : 15px;
+}
+
+div.fbinfo {
+    background           : url("info.png") no-repeat scroll 15px center transparent;
+    border               : 1px solid #006600;
+}
+
+.fbrequired {
+    background           : transparent url(required.png) no-repeat;
+    width                : auto;
+    padding-left         : 22px;
+}
+
+.fbicon {
+    height               : 20px;
+    line-height          : 20px;
+    vertical-align       : middle;
+    margin               : 20px auto;
+}
+
+/*******************************************************************************
+     Buttons
+*******************************************************************************/
+
+fieldset.fbsubmit {
+    border-style         : none;
+    float                : none;
+    width                : auto;
+    border               : 0 none #FFF;
+    padding-left         : 30em;
+}
+
+input.fbsubmit {
+    width                : 15em;
+}
+
+input.fbfirstbutton {
+
+}
+
+.fbbuttonpane
+{
+    background           : transparent url(buttonpane.gif) repeat-x left top;
+    border               : 1px outset #606060 !important;
+    padding              : 15px;
+ 	  width                : 88%;
+ 	  text-align           : center;
+ 	  -moz-border-radius   : 8px;
+	  -webkit-border-radius: 8px;
+	  border-radius        : 8px;
+	  behavior             : url(ie-css3.htc);
+}
+
+.fbbutton
+{
+    background           : transparent url(button.gif) repeat-x left top;
+    height               : 30px;
+    border               : 1px outset #606060 !important;
+ 	  -moz-border-radius   : 8px;
+	  -webkit-border-radius: 8px;
+	  border-radius        : 8px;
+    -moz-box-shadow      : 2px 2px 2px #606060;
+	  box-shadow           : 2px 2px 2px #606060;
+	  z-index              : 2;
+	  behavior             : url(ie-css3.htc);
+}
+
+/*******************************************************************************
+    blue 'skin'
+*******************************************************************************/
+fieldset.fbblue {
+    background           : transparent url(fieldset_blue.gif) repeat-x left top;
+}
+.fbbutton.fbblue {
+    background           : transparent url(button_blue.gif) repeat-x left top;
+}
+.fbbuttonpane.fbblue {
+    background           : transparent url(buttonpane_blue.gif) repeat-x left top;
+}
+
+/*******************************************************************************
+    grey 'skin'
+*******************************************************************************/
+fieldset.fbgrey {
+    background           : transparent url(fieldset_grey.gif) repeat-x left top;
+}
+.fbbutton.fbgrey {
+    background           : transparent url(button_grey.gif) repeat-x left top;
+}
+.fbbuttonpane.fbgrey {
+    background           : transparent url(buttonpane_grey.gif) repeat-x left top;
+}

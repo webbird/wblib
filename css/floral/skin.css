@@ -1,0 +1,43 @@
+/*
+    wbFormBuilder Floral Skin
+    Based on a tutorial found here:
+    http://www.webdesignermag.co.uk/tutorial-files/issue-152-tutorial-files/
+*/
+
+@import url(../formbuilder_default.css); 
+
+fieldset.fbouter {
+		background            : #ffffff url(pagebg.gif) repeat-y left top;
+		padding-left          : 160px;
+		padding-right         : 160px;
+}
+fieldset.fbfieldset {
+		background            :	white url(fieldsetbg.gif) no-repeat bottom right;
+		padding               : 15px;
+}
+legend.fblegend {
+		text-transform        : uppercase;
+		font-size             :	1.3em;
+		padding               :	5px;
+		margin-left           :	1em;
+		color                 :	#ffffff;
+		background            :	#493F0B;
+}
+.fbrequired {
+		background            :	transparent url(required.gif) no-repeat center left;
+		padding-left          : 30px;
+		font-weight           : bold;
+}
+input.fbinput {
+		padding               :	5px;
+		font-size             :	1.4em;
+		border                :	1px solid #493F0B;
+		color                 :	#1E1903;
+		background            :	#F5F6D4;
+}
+div.fberror, div.fbinfo {
+    background           : transparent url(error.png) left no-repeat;
+}
+div.fbinfo {
+    background           : url("info.png") no-repeat scroll 15px center transparent;
+}

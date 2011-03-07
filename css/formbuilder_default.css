@@ -73,8 +73,7 @@ textarea.fbdisabled
     background-color     : transparent;
 }
 .fbicon {
-    height               : 20px;
-    line-height          : 20px;
+    min-height           : 20px;
     vertical-align       : middle;
     margin               : 20px auto;
 }
