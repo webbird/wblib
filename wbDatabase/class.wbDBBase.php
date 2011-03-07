@@ -124,12 +124,15 @@ class wbDBBase extends PDO {
         $this->log->LogDebug(
             'connection dsn: '.$this->dsn
         );
+        
+        // get driver options
+        $driver_options = $this->getDriverOptions();
 
         // Temporarily change the PHP exception handler while we ...
         set_exception_handler(array(__CLASS__, 'exception_handler'));
 
         // ... create a PDO object
-        parent::__construct( $this->dsn, $this->user, $this->pass );
+        parent::__construct( $this->dsn, $this->user, $this->pass, $driver_options );
 
         // Change the exception handler back to whatever it was before
         restore_exception_handler();
@@ -163,6 +166,16 @@ class wbDBBase extends PDO {
     public function getLastInsertID() {
         return $this->lastInsertID;
     }   // end function getLastInsertID()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getDriverOptions() {
+        return array();
+    }   // end function getDriverOptions()
 
 
     /**
