@@ -24,8 +24,9 @@
 
 interface wbDBDriver {
 
-    function defaults ();
-    function getDSN   ();
+    function defaults        ();
+    function getDSN          ();
+    function getDriverOptions();
     
     function search ();
     function insert ( $options );
