@@ -12,13 +12,15 @@
 */
 
 $_SEQ_DEBUG = 0; /* 1: show; 0: hide */
+
 restore_error_handler();
 
 /**
  * Error reporting is disabled to avoid informative output.
  */
 if ($_SEQ_DEBUG || $_SEQ_ERRORS) {
-    error_reporting(E_USER_ERROR | E_USER_WARNING);
+    #error_reporting(E_USER_ERROR | E_USER_WARNING);
+    error_reporting(E_ALL^E_NOTICE);
     set_error_handler('seq_error_handler_');
 } else {
     error_reporting(0);
@@ -620,6 +622,9 @@ function seq_error_handler_($code_ = '', $msg_ = '', $file_ = '', $line_ = '') {
         break;
     default:
         break;
+    }
+    if( function_exists( 'xdebug_get_function_stack' ) ) {
+        xdebug_get_function_stack();
     }
 }
 
