@@ -27,11 +27,11 @@ require_once dirname( __FILE__ ).'/class.wbValidate.php';
 require_once dirname( __FILE__ ).'/class.wbTemplate.php';
 
 // ----- including sseq-lib -----
-$_SEQ_ONERROR_REDIRECT_TO        = '';
+$_SEQ_ONERROR_REDIRECT_TO        = $_SERVER['SCRIPT_NAME'];
 $_SEQ_ONERROR_REDIRECT_TO_PRESET = true;
 $_SEQ_BASEDIR                    = dirname( __FILE__ ).'/sseq-lib/';
 $_SEQ_BASEDIR_PRESET             = true;
-include_once $_SEQ_BASEDIR.'seq_lib.php';
+#include_once $_SEQ_BASEDIR.'seq_lib.php';
 // ----- including sseq-lib -----
 
 if ( ! class_exists( 'wbFormBuilder' ) ) {
@@ -97,9 +97,6 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
 
                   # output as table or fieldset
                   'output_as'        => 'fieldset',
-
-                  // sseq-lib integration
-                  'onerror_redirect_to' => '',
               );
 
         /**
@@ -125,7 +122,11 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             $this->setFile( $this->_config['file'] );
 
             // create validator object
-            $this->val  = new wbValidate();
+            $this->val  = new wbValidate(
+                array(
+#                    'debug' => true,
+                )
+            );
 
             // create template object
             $this->tpl  = new wbTemplate();
@@ -481,6 +482,13 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                 }
             }
         }   // end function setReadonly
+        
+        /**
+         * convenience function
+         **/
+        public function setValue( $formname = '', $name, $value = NULL ) {
+            return $this->setVal( $formname, $name, $value );
+        }   // end function setValue()
 
         /**
          * set value of an already existing element
@@ -581,20 +589,20 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     );
                     return false;
                 }
+                $this->log()->LogDebug( 'setting key [value] for select field ['.$name.']' );
                 self::$_forms[ $formname ]['elements'][ $path[0] ]['value'] = $value;
-    /*
-    	echo "$name<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
-    print_r( self::$_forms[ $formname ]['elements'][ $path[0] ] );
-    echo "</textarea>";
-    */        }
+                $this->log()->LogDebug( 'result:', self::$_forms[ $formname ]['elements'][ $path[0] ] );
+                return true;
+            }
             else {
                 $this->log()->LogDebug(
                     'element not found!',
                     self::$_forms[ $formname ]['elements']
                 );
+                return false;
             }
 
-        }
+        }   // end function setSelected()
 
         /**
          *
@@ -604,7 +612,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
          **/
         public function setHeader( $formname = '', $header ) {
             $formname = $this->__validateFormName( $formname );
-            self::$_forms[ $formname ]['config']['header'] = $header;
+            self::$_forms[ $formname ]['config']['formheader'] = $header;
         }   // end function setHeader()
 
 
@@ -644,10 +652,10 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                 array(
                     'fieldset_class'
                         => $this->_config['fieldset_class']
-                           . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' ),
+                           . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
                     'buttonpane_class'
                         => $this->_config['buttonpane_class']
-                           . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' ),
+                           . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
                 )
             );
 
@@ -681,7 +689,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                                        'value' => $this->translate( 'Submit' ),
                                        'name'  => $this->_config['save_key'],
                                        'class' => $this->_config['button_class']
-                                                . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' ),
+                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
                                    )
                                )
                 );
@@ -693,7 +701,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                                        'value' => $this->translate( 'Cancel' ),
                                        'name'  => $this->_config['cancel_key'],
                                        'class' => $this->_config['button_class']
-                                                . ( ! empty( $this->_config['skin'] ) ? '_'.$this->_config['skin'] : '' ),
+                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
                                    )
                                )
                 );
@@ -701,8 +709,6 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             }
 
             // ----- render form elements -----
-            $this->tpl->setBehaviour( 'comment' );
-
             if ( ! isset ( $elements['blocks'] ) || count( $elements['blocks'] ) < 1 ) {
                 $elements['blocks'][] = 0;
             }
@@ -711,19 +717,19 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             $lastitem  = key($elements['fields']);
             $blocks    = array();
 
-            foreach ( $elements['blocks'] as $i => $index ) {
+            foreach ( $elements['blocks'] as $i => $offset ) {
 
                 // calculate size; $index is the index of the element where the new block begins
                 if ( isset( $elements['blocks'][$i+1] ) && $elements['blocks'][$i+1] < $lastitem ) {
-                    $size = $elements['blocks'][$i+1] + 1;
+                    $size = ( $elements['blocks'][$i+1] - $elements['blocks'][$i] ) + 1;
                 }
                 else {
-                    $size = $lastitem - $index + 1;
+                    $size = $lastitem - $offset + 1;
                 }
 
                 $begin = 0;
-                if ( $index > 0 ) {
-                    $begin = $index+1;
+                if ( $offset > 0 ) {
+                    $begin = $offset+1;
                 }
 
                 $blocks[] = $this->tpl->getTemplate(
@@ -765,7 +771,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     );
 
             // add security token to hidden fields
-            $elements['hidden'][]['field'] = SEQ_FTOKEN($formname);
+#            $elements['hidden'][]['field'] = SEQ_FTOKEN($formname);
 
             // ----- render the form -----
             $output =
@@ -1165,10 +1171,8 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                         if ( ! is_array( $element['value'] ) ) {
                             $element['value'] = array( $element['value'] );
                         }
-
                         foreach ( $element['value'] as $i => $v ) {
-                            if ( ! strcasecmp( $v, $key )
-                            ) {
+                            if ( ! strcasecmp( $v, $key ) ) {
                                 $selected  = 'selected="selected"';
                                 $found_val = true;
                             }
