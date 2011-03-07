@@ -26,32 +26,37 @@
 
 class wbDatabase {
 
-    public static $instance = null;
-    public static $driver   = 'wbMySQL';
+    public static $instances = array();
+    public static $instance  = null;
+    public static $driver    = 'wbMySQL';
+    public        $options   = array();
     
+    public static function getInstance( $connection = 'default', $options = array() ) {
+        if ( !array_key_exists( $connection, self::$instances ) ) {
+            self::$instances[$connection] = self::__connect($options);
+        }
+        return self::$instances[$connection];
+    }   // end function getInstance()
+
     // private to make sure that constructor can only be called
     // using singleton()
     private function __construct() {}
     
     public static function singleton( $options = array() ) {
-    
         if ( ! is_object( self::$instance ) ) {
-        
-            if ( isset( $options['driver'] ) ) {
-                self::$driver = $options['driver'];
-            }
-        
-            $driver_file = dirname(__FILE__).'/wbDatabase/class.'.self::$driver.'.php';
-            
-            include_once $driver_file;
-
-            self::$instance = new self::$driver($options);
-            
+            self::$instance = self::__connect($options);
         }
-
         return self::$instance;
-
     }   // end function singleton()
+    
+    private static function __connect( $options ) {
+        if ( isset( $options['driver'] ) ) {
+            self::$driver = $options['driver'];
+        }
+        $driver_file = dirname(__FILE__).'/wbDatabase/class.'.self::$driver.'.php';
+        include_once $driver_file;
+        return new self::$driver($options);
+    }   // end function __connect()
 
     // no cloning!
     private function __clone() {}
