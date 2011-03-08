@@ -227,3 +227,21 @@ fieldset.fbgrey {
 .fbbuttonpane.fbgrey {
     background           : transparent url(buttonpane_grey.gif) repeat-x left top;
 }
+
+/*******************************************************************************
+    Tooltip
+*******************************************************************************/
+#DHTMLgoodies_formTooltipDiv {
+    background-color     : #fff !important;
+}
+.DHTMLgoodies_formTooltipDiv {
+    background           : white url(buttonpane.gif) repeat-x left top;
+    padding              : 5px;
+    border               : 2px solid #E2F7BA;
+}
+#DHTMLgoodies_formTooltipContent {
+    margin-bottom        : 10px;
+}
+.DHTMLgoodies_formTooltip_closeMessage {
+	  font-size            : 0.8em;
+}
