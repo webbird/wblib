@@ -331,6 +331,67 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             return NULL;
 
         }   // end function addElement()
+        
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public function addButtons( $formname = NULL, $buttons, $preserve_default = true ) {
+        
+            // ----- check if we have a submit button -----
+            if (
+                    $preserve_default
+                 && (
+                         ! isset ( $this->_buttons[$formname] )
+                      || count( $this->_buttons[$formname] ) == 0
+                    )
+            ) {
+
+                $this->_buttons[$formname][0] = array(
+                    'field' => $this->input(
+                                   array(
+                                       'type'  => 'submit',
+                                       'label' => $this->translate( 'Submit' ),
+                                       'value' => $this->translate( 'Submit' ),
+                                       'name'  => $this->_config['save_key'],
+                                       'class' => $this->_config['button_class']
+                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
+                                   )
+                               )
+                );
+                $this->_buttons[$formname][1] = array(
+                    'field' => $this->input(
+                                   array(
+                                       'type'  => 'submit',
+                                       'label' => $this->translate( 'Cancel' ),
+                                       'value' => $this->translate( 'Cancel' ),
+                                       'name'  => $this->_config['cancel_key'],
+                                       'class' => $this->_config['button_class']
+                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
+                                   )
+                               )
+                );
+
+            }
+            
+            foreach( $buttons as $button ) {
+                $this->_buttons[$formname][] = array(
+                    'field' => $this->input(
+                                   array(
+                                       'type'  => 'submit',
+                                       'label' => $this->translate( $button['label'] ),
+                                       'value' => $this->translate( $button['label'] ),
+                                       'name'  => $button['name'],
+                                       'class' => $this->_config['button_class']
+                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
+                                   )
+                               )
+                );
+            }
+
+        }   // end function addButtons()
 
         /**
       	 * Insert an element at a given position
@@ -545,7 +606,6 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     );
 
                 }
-
                 self::$_forms[ $formname ]['elements'][ $path[0] ][$key] = $value;
                 return true;
             }
@@ -1113,7 +1173,8 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                 $this->tpl->getTemplate(
                     $template,
                     array(
-                        'attributes' => $attributes
+                        'attributes' => $attributes,
+                        'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL )
                     )
                 );
 
@@ -1202,6 +1263,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                            'attributes' => $this->__validateAttributes( $element ),
                            'options'    => ( isset ( $opt ) ? $opt : NULL ),
                            'content'    => ( isset ( $element['content'] ) ? $element['content'] : '' ),
+                           'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
                        )
                    );
 
@@ -1316,6 +1378,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                        'radio.tpl',
                        array(
                            'options'    => ( isset ( $opt ) ? $opt : array() ),
+                           'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
                            'content'    => ( isset ( $element['content'] ) ? $element['content'] : '' ),
                        )
                    );
@@ -1347,6 +1410,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                        'textarea.tpl',
                        array(
                            'attributes' => $this->__validateAttributes( $element ),
+                           'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
                            'style'      => $style,
                            'value'      => ( isset ( $element['value'] ) ? $element['value'] : '' ),
                        )
@@ -1751,7 +1815,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     $field = $this->input( $element );
                 }
 
-                $label = NULL;
+                $label    = NULL;
 
                 if ( isset ( $element['label'] ) ) {
                     $label = '<label for="'.$element['name'].'" '
@@ -1762,23 +1826,24 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
 
                 // add rendered element to referenced array
                 $add_to_array[] = array(
-                    'label'  => $label,
-                    'name'   => $element['name'],
-                    'info'   => ( isset ( $element['info'] ) && ( ! empty( $element['info'] ) ) )
-                             ?  $this->lang->translate( $element['info'] )
-                             :  NULL,
-                    'field'  => $field,
-                    'req'    => (
+                    'label'    => $label,
+                    'infotext' => $infotext,
+                    'name'     => $element['name'],
+                    'info'     => ( isset ( $element['info'] ) && ( ! empty( $element['info'] ) ) )
+                               ?  $this->lang->translate( $element['info'] )
+                               :  NULL,
+                    'field'    => $field,
+                    'req'      => (
                                     ( ( isset( $element['required'] ) && $element['required'] === true ) && $element['required'] )
-                                  ? '*'
-                                  : NULL
-                                ),
-                    'header' => ( $element['type'] == 'legend' ) ? $field : NULL,
-                    'error'  => (
-                                    isset( $this->_errors[ $this->_current_form ][ $element['name'] ] )
-                                  ? $this->_errors[ $this->_current_form ][ $element['name'] ]
-                                  : NULL
-                                ),
+                                    ? '*'
+                                    : NULL
+                                  ),
+                    'header'   => ( $element['type'] == 'legend' ) ? $field : NULL,
+                    'error'    => (
+                                      isset( $this->_errors[ $this->_current_form ][ $element['name'] ] )
+                                    ? $this->_errors[ $this->_current_form ][ $element['name'] ]
+                                    : NULL
+                                  ),
                 );
 
                 if ( isset( $element['required'] ) && $element['required'] === true ) {
