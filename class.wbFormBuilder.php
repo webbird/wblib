@@ -31,7 +31,7 @@ $_SEQ_ONERROR_REDIRECT_TO        = $_SERVER['SCRIPT_NAME'];
 $_SEQ_ONERROR_REDIRECT_TO_PRESET = true;
 $_SEQ_BASEDIR                    = dirname( __FILE__ ).'/sseq-lib/';
 $_SEQ_BASEDIR_PRESET             = true;
-#include_once $_SEQ_BASEDIR.'seq_lib.php';
+include_once $_SEQ_BASEDIR.'seq_lib.php';
 // ----- including sseq-lib -----
 
 if ( ! class_exists( 'wbFormBuilder' ) ) {
@@ -44,7 +44,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
 
         // name of the current form
         private        $_current_form   = NULL;
-
+        
         // store buttons we've already seen
         protected      $_buttons        = array();
 
@@ -76,6 +76,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                   'cancel_key'      => 'cancel',
                   # use CSS file
                   'css_file'            => '',
+                  'wblib_base_url'      => '',
                   // ----- CSS 'skin'; empty means 'green' -----
                   'skin'                => '',
                   // -----          CSS classes            -----
@@ -476,6 +477,16 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             }
             return NULL;
         }   // end function setAction()
+        
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public function setURI( $uri ) {
+            $this->_config['wblib_base_url'] = $uri;
+        }   // end function setURI()
 
         /**
          * add info text
@@ -502,9 +513,14 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
          * @return void
          *
          **/
-        public function setError( $formname, $msg ) {
+        public function setError( $formname, $msg, $on_top = false ) {
             $formname = $this->__validateFormName( $formname );
-            $this->_errors[$formname][] = $this->translate( $msg );
+            if ( $on_top ) {
+                array_unshift( $this->_errors[$formname], $this->translate( $msg ) );
+            }
+            else {
+                $this->_errors[$formname][] = $this->translate( $msg );
+            }
         }   // end function setError()
 
         /**
@@ -708,7 +724,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             $template = 'block.'.$this->_config['output_as'].'.tpl';
 
             // set some defaults
-            $this->tpl->setVal(
+            $this->tpl->setGlobal(
                 array(
                     'fieldset_class'
                         => $this->_config['fieldset_class']
@@ -716,6 +732,8 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     'buttonpane_class'
                         => $this->_config['buttonpane_class']
                            . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
+                    'WBLIB_BASE_URL'
+                        => $this->_config['wblib_base_url'],
                 )
             );
 
@@ -740,32 +758,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                  ||
                  count( $this->_buttons[$formname] ) == 0
             ) {
-
-                $this->_buttons[$formname][0] = array(
-                    'field' => $this->input(
-                                   array(
-                                       'type'  => 'submit',
-                                       'label' => $this->translate( 'Submit' ),
-                                       'value' => $this->translate( 'Submit' ),
-                                       'name'  => $this->_config['save_key'],
-                                       'class' => $this->_config['button_class']
-                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
-                                   )
-                               )
-                );
-                $this->_buttons[$formname][1] = array(
-                    'field' => $this->input(
-                                   array(
-                                       'type'  => 'submit',
-                                       'label' => $this->translate( 'Cancel' ),
-                                       'value' => $this->translate( 'Cancel' ),
-                                       'name'  => $this->_config['cancel_key'],
-                                       'class' => $this->_config['button_class']
-                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
-                                   )
-                               )
-                );
-
+                $this->addButtons( $formname, array(), true );
             }
 
             // ----- render form elements -----
@@ -1067,8 +1060,8 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     'infotext.'.$this->_config['output_as'].'.tpl',
                     array(
                         'attributes' => $this->__validateAttributes( $element ),
-                        'label'      => $this->lang->translate( $text ),
-                        'value'      => $element['value'],
+                        'label'      => SEQ_OUTPUT( $this->lang->translate( $text ) ),
+                        'value'      => SEQ_OUTPUT( $element['value'] ),
                         'labelclass' => $this->_config['label_class'],
                     )
                 );
@@ -1095,7 +1088,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     'legend.'.$this->_config['output_as'].'.tpl',
                     array(
                         'attributes' => $this->__validateAttributes( $element ),
-                        'value'      => $this->lang->translate( $text ),
+                        'value'      => SEQ_OUTPUT( $this->lang->translate( $text ) ),
                     )
                 );
 
@@ -1162,13 +1155,13 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             }
 
             // quote value
-            if ( isset( $element['value'] ) ) {
-                $element['value'] = htmlentities($element['value']);
+            if ( strlen( $element['value'] ) > 0 ) {
+                $element['value'] = SEQ_OUTPUT($element['value']);
             }
 
             // get attributes
             $attributes = $this->__validateAttributes( $element );
-
+            
             $output =
                 $this->tpl->getTemplate(
                     $template,
@@ -1242,7 +1235,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
 
                     $opt[] = array(
                                      'key'      => $key,
-                                     'value'    => $this->lang->translate( $value ),
+                                     'value'    => SEQ_OUTPUT( $this->lang->translate( $value ) ),
                                      'selected' => $selected
                                  );
 
@@ -1263,7 +1256,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                            'attributes' => $this->__validateAttributes( $element ),
                            'options'    => ( isset ( $opt ) ? $opt : NULL ),
                            'content'    => ( isset ( $element['content'] ) ? $element['content'] : '' ),
-                           'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
+                           'tooltip'    => ( isset ( $element['infotext'] ) ? SEQ_OUTPUT( $this->translate( $element['infotext'] ) ) : NULL ),
                        )
                    );
 
@@ -1351,7 +1344,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
 
                     $opt[] = array(
                                      'text'
-                                         => $this->lang->translate( $value ),
+                                         => SEQ_OUTPUT( $this->lang->translate( $value ) ),
                                      'attributes'
                                          => $this->__validateAttributes(
                                                 array_merge(
@@ -1362,6 +1355,8 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                                                     )
                                                 )
                                             ),
+                                     'tooltip'
+                                         => ( isset ( $element['infotext'] ) ? SEQ_OUTPUT( $this->translate( $element['infotext'] ) ) : NULL ),
                                  );
 
                 }
@@ -1378,8 +1373,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                        'radio.tpl',
                        array(
                            'options'    => ( isset ( $opt ) ? $opt : array() ),
-                           'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
-                           'content'    => ( isset ( $element['content'] ) ? $element['content'] : '' ),
+                           'content'    => ( isset ( $element['content'] ) ? SEQ_OUTPUT( $element['content'] ) : ''   ),
                        )
                    );
 
@@ -1412,7 +1406,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                            'attributes' => $this->__validateAttributes( $element ),
                            'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
                            'style'      => $style,
-                           'value'      => ( isset ( $element['value'] ) ? $element['value'] : '' ),
+                           'value'      => ( isset ( $element['value'] ) ? SEQ_OUTPUT($element['value']) : '' ),
                        )
                    );
 
@@ -1653,17 +1647,17 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                         continue;
                     }
 
-                    $attrs[] = $attr.'="'.$valid.'"';
-
-                    if ( ! strcasecmp( $attr, 'id' ) ) {
-                        $id_seen = true;
-                    }
-
                     // css class?
                     if ( ! strcasecmp( $attr, 'class' ) ) {
                         $css_classes = explode( ' ', $valid );
                     }
+                    else {
+                        $attrs[] = $attr.'="'.$valid.'"';
+                    }
 
+                    if ( ! strcasecmp( $attr, 'id' ) ) {
+                        $id_seen = true;
+                    }
                 }
 
                 if ( ! $id_seen ) {
@@ -1674,8 +1668,8 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                 if ( ! array_key_exists( 'fb'.$element['type'], $css_classes ) ) {
                     $css_classes[] = 'fb'.$element['type'];
                 }
-                $attrs[] = 'class="'.implode( ' ', $css_classes ).'"';
 
+                $attrs[] = 'class="'.implode( ' ', $css_classes ).'"';
                 $attributes = implode( ' ', $attrs );
                 $this->log()->LogDebug(
                     'returning validated attributes as string: '.$attributes
