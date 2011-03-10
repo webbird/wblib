@@ -19,8 +19,7 @@ restore_error_handler();
  * Error reporting is disabled to avoid informative output.
  */
 if ($_SEQ_DEBUG || $_SEQ_ERRORS) {
-    #error_reporting(E_USER_ERROR | E_USER_WARNING);
-    error_reporting(E_ALL^E_NOTICE);
+    error_reporting($_SEQ_PHP_ERROR_LEVEL);
     set_error_handler('seq_error_handler_');
 } else {
     error_reporting(0);
