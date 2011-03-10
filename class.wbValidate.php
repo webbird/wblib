@@ -592,6 +592,16 @@ class wbValidate extends wbBase {
     }
     
     /**
+     * return all validated params
+     *
+     *
+     *
+     **/
+    public function getAllValid() {
+        return self::$_valid;
+    }   // end function getAllValid()
+    
+    /**
      * dump all stored items; you should NEVER use this method in production code!
      *
      *
