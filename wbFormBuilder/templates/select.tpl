@@ -1,4 +1,4 @@
-    <select {{ attributes }}>
+    <select {{ attributes }}{{ :if tooltip }} tooltipText="{{ tooltip }}"{{ :ifend }}>
     {{ :if options }}
     {{ :loop options }}
       <option value="{{ key }}" {{ selected }}>{{ value }}</option>

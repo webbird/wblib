@@ -1,1 +1,1 @@
-    <textarea {{ attributes }} {{ style}}>{{ value }}</textarea>
+    <textarea {{ attributes }} {{ style}}{{ :if tooltip }} tooltipText="{{ tooltip }}"{{ :ifend }}>{{ value }}</textarea>

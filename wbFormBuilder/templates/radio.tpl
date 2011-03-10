@@ -1,3 +1,3 @@
     {{ :loop options }}
-      <input {{ attributes }} {{ checked }} /> {{ text }}
+      <input {{ attributes }} {{ checked }}{{ :if tooltip }} tooltipText="{{ tooltip }}"{{ :ifend }} /> {{ text }}
     {{ :loopend }}
