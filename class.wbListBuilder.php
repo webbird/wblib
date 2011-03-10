@@ -654,7 +654,10 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                     $text   = $option['value'][$title_key];
                     // mark selected
                     $sel    = NULL;
-                    if ( in_array( $option['value'][ $id_key ], $options['selected'] ) ) {
+                    if (     isset   ( $options['selected'] )
+                         && is_array( $options['selected'] )
+                         && in_array( $option['value'][ $id_key ], $options['selected'] )
+                    ) {
                         $sel = ' selected="selected"';
                     }
                     $output[] = '<option value="'
@@ -677,7 +680,10 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                     $text   = $option['value'][$title_key];
                     // mark selected
                     $sel    = NULL;
-                    if ( in_array( $option['value'][ $id_key ], $options['selected'] ) ) {
+                    if (    isset   ( $options['selected'] )
+                         && is_array( $options['selected'] )
+                         && in_array( $option['value'][ $id_key ], $options['selected'] )
+                    ) {
                         $sel = ' selected="selected"';
                     }
                     $output[] = '<option value="'
