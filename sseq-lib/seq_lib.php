@@ -74,7 +74,7 @@ $_SEQ_SESSION_HEADERSCHECK = 1;
  * OPTIONS:
  * 1: show; 0: hide (recommended)
  */
-$_SEQ_ERRORS = 0;
+$_SEQ_ERRORS = 1;
 
 /* $_SEQ_LOG
  * Error messages, detected attacks and token failure can be written to an logfile.
@@ -138,7 +138,11 @@ $_SEQ_IDS_ONATTACK_ACTION = 'logout redirect';
  */                 
 $_SEQ_FILTER_NOMATCH_ACTION = 'redirect';
 
-
+/* $_SEQ_PHP_ERROR_LEVEL
+ * Set the PHP error level to your needs.
+ * See the PHP docs for details about valid settings.
+ */
+$_SEQ_PHP_ERROR_LEVEL = E_ALL^E_NOTICE;
 
 /****************************************************************
 * No changes from here!
