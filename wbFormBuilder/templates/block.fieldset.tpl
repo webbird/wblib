@@ -1,4 +1,4 @@
-    <fieldset class="{{ fieldset_class }}">
+    <fieldset id="block-{{ block_number }}" class="{{ fieldset_class }}">
       {{ :if header }}{{ header }}{{ :ifend }}
       <ol>
 {{ :loop elements }}{{ :if ! header }}

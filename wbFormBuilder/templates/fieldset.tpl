@@ -1,4 +1,4 @@
-  <fieldset class="fbouter">
+  <fieldset class="fbouter" id="fbform-{{ formname }}">
     {{ :if formheader }}
     <legend class="{{ header_class }}">{{ formheader }}</legend>
     {{ :ifend }}
