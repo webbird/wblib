@@ -37,6 +37,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
         private        $depth          = 0;
         private        $last_id        = 0;
         private        $list_last      = 0;
+        private        $last_ul_id     = NULL;
         private        $_path          = array();
         protected      $_config        = array(
 
@@ -841,12 +842,14 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             $id      = $ul_id;
             if ( $this->_config['unique_id'] !== false ) {
                 if ( empty($id) ) {
-                    $id  = $this->_config['ul_id_prefix'].$this->_getID();
+                    $id  = $this->_config['ul_id_prefix'].$this->__getID();
                 }
                 else {
-                    $id .= '_' . $this->_getID();
+                    $id .= '_' . $this->__getID();
                 }
             }
+            
+            $this->last_ul_id = $id;
 
             $output = $space
                     . str_replace(
@@ -887,7 +890,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
         function itemStart( $css, $space = NULL ) {
             $id      = NULL;
             if ( $this->_config['unique_id'] !== false ) {
-                $id  = $this->_config['li_id_prefix'].$this->_getID();
+                $id  = $this->_config['li_id_prefix'].$this->__getID();
             }
             $start = str_replace(
                 array( '%%id%%', '%%' ),
@@ -986,6 +989,16 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             return $li_css;
 
         }   // end function getListItemCSS()
+        
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public function getLastULID() {
+            return $this->last_ul_id;
+        }   // end function getLastULID()
 
         /**
          * get id for list start;
@@ -997,7 +1010,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
          * @return string
          *
          **/
-        private function _getID() {
+        private function __getID() {
             if ( $this->_config['unique_id'] === false ) {
                 return NULL;
             }
@@ -1006,7 +1019,7 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             }
             $this->id++;
             return $this->id;
-        }   // end function _getID()
+        }   // end function __getID()
 
         /**
          *
