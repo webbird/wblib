@@ -421,7 +421,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
 
             // element found
             if ( is_array( $path ) ) {
-                array_splice( self::$_forms[ $formname ]['elements'], $path[0], 0, $element );
+                array_splice( self::$_forms[ $formname ]['elements'], $path[0], 0, array( $element ) );
             }
             // element not found; add to top
             else {
@@ -679,6 +679,40 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             }
 
         }   // end function setSelected()
+        
+        /**
+         * set infotext of an already existing element
+         *
+         * @access public
+         * @param  string   $name  - element name
+         * @param  string   $value - new value
+         *
+         **/
+        public function setInfotext( $formname = '', $name, $value = NULL ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+            $this->log()->LogDebug(
+                'setting new value for form ['.$formname.'], element ['.$name.']',
+                $value
+            );
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+
+            // element found
+            if ( is_array( $path ) ) {
+
+                $this->log()->LogDebug(
+                    'found element ['.$name.']'
+                );
+                
+                self::$_forms[ $formname ]['elements'][ $path[0] ]['infotext'] = $value;
+
+            }
+            
+        }   // end function setInfotext()
+
 
         /**
          *
@@ -794,6 +828,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                                         // form elements
                                         'header'   => $elements['fields'][$begin]['field'],
                                         'elements' => array_slice( $elements['fields'], $begin, $size ),# $elements['fields'],
+                                        'block_number' => $i,
                                     )
                                 )
                             );
@@ -805,6 +840,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                             $this->_config,
                             self::$_forms[ $formname ]['config'],
                             array(
+                                'formname' => $formname,
                                 // form contents
                                 'form'     => implode( ' ', $blocks ),
                                 // buttons
@@ -1061,7 +1097,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     array(
                         'attributes' => $this->__validateAttributes( $element ),
                         'label'      => SEQ_OUTPUT( $this->lang->translate( $text ) ),
-                        'value'      => SEQ_OUTPUT( $element['value'] ),
+                        'value'      => $element['value'],
                         'labelclass' => $this->_config['label_class'],
                     )
                 );
@@ -1097,6 +1133,13 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             return $output;
 
         }   // end function legend()
+        
+        /**
+         * create a file upload field
+         **/
+        public function file( $element ) {
+            return $this->input( array_merge( $element, array( 'type' => 'file' ) ) );
+        }   // end function file
 
         /**
          * create <input /> field
@@ -1678,7 +1721,10 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
 
             }
             else {
-                echo "invalid call to _getAttributes()<br />";
+                echo "invalid call to __validateAttributes(): element is not an array!<br />";
+                echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+                print_r( $element );
+                echo "</textarea>";
                 echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
                 var_export( debug_backtrace() );
                 echo "</textarea>";
