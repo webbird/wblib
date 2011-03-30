@@ -23,6 +23,7 @@
 **/
 
 include_once dirname(__FILE__).'/../class.wbBase.php';
+include_once dirname(__FILE__).'/../class.wbValidate.php';
 include_once dirname(__FILE__).'/../debug/KLogger.php';
 
 // ----- including sseq-lib -----
@@ -51,6 +52,43 @@ class wbDBBase extends PDO {
     protected $errors               = array();
     protected $lasterror            = NULL;
     protected $lastInsertID         = NULL;
+    private   $val;
+    
+// ----- Known options for constructor -----
+    protected $_options = array(
+        array(
+            'name' => 'dsn',
+            'type' => 'PCRE_STRING',
+        ),
+        array(
+            'name' => 'host',
+            'type' => 'PCRE_ALPHANUM',
+        ),
+        array(
+            'name' => 'port',
+            'type' => 'PCRE_INT',
+        ),
+        array(
+            'name' => 'user',
+            'type' => 'PCRE_ALPHANUM',
+        ),
+        array(
+            'name' => 'pass',
+            'type' => 'PCRE_PLAIN',
+        ),
+        array(
+            'name' => 'dbname',
+            'type' => 'PCRE_ALPHANUM',
+        ),
+        array(
+            'name' => 'timeout',
+            'type' => 'PCRE_INT',
+        ),
+        array(
+            'name' => 'prefix',
+            'type' => 'PCRE_STRING',
+        ),
+    );
 
 // ----- Operators used in WHERE-clauses -----
     protected $operators  = array(
@@ -117,8 +155,9 @@ class wbDBBase extends PDO {
                   $this->debugLevel,
                   true
               );
+        $this->val
+            = new wbValidate();
 
-// ----- TODO: validate options -----
         $this->__initialize($options);
         
         $this->log->LogDebug(
@@ -168,9 +207,10 @@ class wbDBBase extends PDO {
     }   // end function getLastInsertID()
     
     /**
+     * Function prototype; override this in your driver
      *
-     *
-     *
+     * @access public
+     * @return array
      *
      **/
     public function getDriverOptions() {
@@ -324,7 +364,7 @@ class wbDBBase extends PDO {
                      )
                    . " FROM $tables $where $group $order $limit";
 
-        $this->log->LogDebug( 'executing statement: '.$statement, $params );
+        $this->log->LogDebug( wbDatabase::interpolateQuery($statement,$params) );
 
         $stmt      = $this->prepare( $statement );
         
@@ -389,9 +429,8 @@ class wbDBBase extends PDO {
                    . implode( ', ', $values )
                    . " )";
                        
-        $this->log->LogDebug( 'executing statement: '.$statement, $options['values'] );
-
         $stmt      = $this->prepare( $statement );
+        $this->log->LogDebug( wbDatabase::interpolateQuery($statement,$options['values']) );
 
         if ( ! is_object( $stmt ) ) {
             $error_info = '['.implode( "] [", $this->errorInfo() ).']';
@@ -463,38 +502,8 @@ class wbDBBase extends PDO {
                    . implode( ', ', $carr )
                    . " $where";
 
-        $this->log->LogDebug( 'executing statement: '.$statement, $options['values'] );
-
-        $stmt      = $this->prepare( $statement );
+        return $this->__prepare_and_execute( $statement, $options );
         
-        if ( ! is_object( $stmt ) ) {
-            $error_info = '['.implode( "] [", $this->errorInfo() ).']';
-            $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
-        }
-        
-        $params = array();
-        if ( isset ( $options['params'] ) ) {
-            $params = $options['params'];
-        }
-        
-        $execute_params = array_merge( $options['values'], $params );
-        $this->log->LogDebug( 'executing with params:', $execute_params );
-
-        if ( $stmt->execute( $execute_params ) ) {
-            $this->log->LogDebug( 'statement successful:', $statement );
-            return true;
-        }
-        else {
-            if ( $stmt->errorInfo() ) {
-                $error = '['.implode( "] [", $stmt->errorInfo() ).']';
-                $this->errors[] = $error;
-                $this->lasterror = $error;
-                $this->log->LogFatal(
-                    $error
-                );
-            }
-        }
-    
     }   // end function update()
     
     /**
@@ -503,8 +512,7 @@ class wbDBBase extends PDO {
      *
      *
      **/
-    public function delete( $options )
-    {
+    public function delete( $options ) {
     
         if ( ! isset( $options['tables'] ) ) {
             return NULL;
@@ -522,36 +530,40 @@ class wbDBBase extends PDO {
         $statement = "DELETE FROM $tables "
                    . " $where";
                    
-        $stmt      = $this->prepare( $statement );
-
-        if ( ! is_object( $stmt ) ) {
-            $error_info = '['.implode( "] [", $this->errorInfo() ).']';
-            $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
-        }
-
-        $params = array();
-        if ( isset ( $options['params'] ) ) {
-            $params = $options['params'];
-        }
-
-        $this->log->LogDebug( 'executing statement: '.$statement, $options['params'] );
-
-        if ( $stmt->execute( $params ) ) {
-            $this->log->LogDebug( 'statement successful:', $statement );
-            return true;
-        }
-        else {
-            if ( $stmt->errorInfo() ) {
-                $error = '['.implode( "] [", $stmt->errorInfo() ).']';
-                $this->errors[] = $error;
-                $this->lasterror = $error;
-                $this->log->LogFatal(
-                    $error
-                );
-            }
-        }
+        return $this->__prepare_and_execute( $statement, $options );
                    
     }   // end function delete()
+    
+    /**
+     * Truncate table
+     *
+     * @access public
+     * @param  array   $options
+     * @return boolean
+     *
+     **/
+    public function truncate( $options ) {
+
+        if ( ! isset( $options['tables'] ) ) {
+            return NULL;
+        }
+
+        $this->lasterror = NULL;
+        $options['__is_delete'] = true;
+        
+        $tables = $this->__map_tables( $options['tables'], $options, true );
+        $where  = isset( $options['where'] )
+                ? $this->__parse_where( $options['where'] )
+                : NULL;
+
+        // create the statement
+        $statement = "TRUNCATE $tables "
+                   . " $where";
+
+        return $this->__prepare_and_execute( $statement, $options );
+        
+    }   // end function truncate()
+
 
 /*******************************************************************************
  * PROTECTED / PRIVATE FUNCTIONS
@@ -593,6 +605,58 @@ class wbDBBase extends PDO {
         
         
     }   // end function __map_tables()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    protected function __prepare_and_execute( $statement, $options ) {
+    
+        $this->log->LogDebug( 'preparing statement: '.$statement );
+
+        $stmt = $this->prepare( $statement );
+
+        if ( ! is_object( $stmt ) ) {
+            $error_info = '['.implode( "] [", $this->errorInfo() ).']';
+            $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
+        }
+
+        $params = array();
+        if ( isset ( $options['params'] ) ) {
+            $params = $options['params'];
+        }
+
+        if ( isset( $options['values'] ) ) {
+            if ( ! is_array( $options['values'] ) ) {
+                $options['values'] = array($options['values']);
+            }
+            $execute_params = array_merge( $options['values'], $params );
+        }
+        else {
+            $execute_params = $params;
+        }
+        
+        $this->log->LogDebug( wbDatabase::interpolateQuery($statement,$execute_params) );
+
+        if ( $stmt->execute( $execute_params ) ) {
+            $this->log->LogDebug( 'statement successful:', $statement );
+            return true;
+        }
+        else {
+            if ( $stmt->errorInfo() ) {
+                $error = '['.implode( "] [", $stmt->errorInfo() ).']';
+                $this->errors[] = $error;
+                $this->lasterror = $error;
+                $this->log->LogFatal(
+                    $error
+                );
+            }
+            return false;
+        }
+        
+    }   // end function __prepare_and_execute()
     
 
     /**
@@ -732,19 +796,23 @@ class wbDBBase extends PDO {
      *
      **/
     private final function __initialize($options) {
-
+    
         // load defaults
         $this->defaults();
 
         // check options
-        foreach (
-            array(
-                'dsn', 'host', 'port', 'user', 'pass', 'dbname', 'timeout', 'prefix'
-            ) as $key
-        ) {
-            if ( isset( $options[$key] ) ) {
-                $this->log->LogDebug( 'setting key ['.$key.'] to ['.$options[$key].']' );
-                $this->$key = $options[$key];
+        foreach ( $this->_options as $opt ) {
+            $key  = $opt['name'];
+            $type = $opt['type'];
+            if ( isset( $options[$key] ) && ! empty( $options[$key] ) ) {
+                // check value
+                if ( $this->val->validate( $type, $options[$key] ) === true ) {
+                    $this->log->LogDebug( 'setting key ['.$key.'] to ['. ( $key == 'pass' ? '*****' : $options[$key] ).']' );
+                    $this->$key = $options[$key];
+                }
+                else {
+                    $this->log->LogFatal( 'Invalid value ['.$options[$key].'] for key ['.$key.'] ('.$type.')' );
+                }
             }
         }
 
