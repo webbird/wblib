@@ -75,11 +75,13 @@ class wbDatabase {
     public static function interpolateQuery($query, $params) {
         $keys = array();
         # build a regular expression for each parameter
-        foreach ($params as $key => $value) {
-            if (is_string($key)) {
-                $keys[] = '/:'.$key.'/';
-            } else {
-                $keys[] = '/[?]/';
+        if ( is_array($params) ) {
+            foreach ($params as $key => $value) {
+                if (is_string($key)) {
+                    $keys[] = '/:'.$key.'/';
+                } else {
+                    $keys[] = '/[?]/';
+                }
             }
         }
         $query = preg_replace($keys, $params, $query, 1, $count);
