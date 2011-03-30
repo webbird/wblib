@@ -289,7 +289,8 @@ class wbValidate extends wbBase {
      * 
      *
      * @param   string   $constant   - constant name
-     * @param   string   $varname    - variable to validate
+     * @param   string   $value      - value to validate
+     * @param   array    $options    - additional options (optional)
      *
      **/
     public function validate( $constant, $value, $options = array() ) {
@@ -600,6 +601,19 @@ class wbValidate extends wbBase {
     public function getAllValid() {
         return self::$_valid;
     }   // end function getAllValid()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function getErrors( $varname = NULL ) {
+        if ( $varname ) {
+            return isset( $this->_errors[$varname] ) ? $this->_errors[$varname] : NULL;
+        }
+        return $this->_errors;
+    }
     
     /**
      * dump all stored items; you should NEVER use this method in production code!
