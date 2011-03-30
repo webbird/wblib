@@ -57,6 +57,9 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
         // variable to store forms
         // 'formname' => array of elements
         private static $_forms;
+        
+        //
+        private        $_invalid    = array();
 
         protected      $_config
             = array(
@@ -208,7 +211,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     if (
                            $this->val->param( $formname.'_submit', 'PCRE_INT' )
                          &&
-                         ! $this->val->param( $this->_config['cancel_key'] )
+                         ! $this->val->param( $this->_config['cancel_key'].'_'.$formname )
                     ) {
                         $this->log()->LogDebug( 'auto-checking form '.$formname );
                         $this->checkForm( $formname );
@@ -356,7 +359,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                                        'type'  => 'submit',
                                        'label' => $this->translate( 'Submit' ),
                                        'value' => $this->translate( 'Submit' ),
-                                       'name'  => $this->_config['save_key'],
+                                       'name'  => $this->_config['save_key'].'_'.$formname,
                                        'class' => $this->_config['button_class']
                                                 . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
                                    )
@@ -368,7 +371,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                                        'type'  => 'submit',
                                        'label' => $this->translate( 'Cancel' ),
                                        'value' => $this->translate( 'Cancel' ),
-                                       'name'  => $this->_config['cancel_key'],
+                                       'name'  => $this->_config['cancel_key'].'_'.$formname,
                                        'class' => $this->_config['button_class']
                                                 . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
                                    )
@@ -969,6 +972,18 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                                      'default' => ( isset( $element['default'] ) ? $element['default'] : NULL )
                                  )
                              );
+                    $val_errors = $this->val->getErrors($element['name']);
+                    if ( $val_errors ) {
+                        if ( $val_errors == 'invalid' ) {
+                            $this->_invalid[$formname][$element['name']]
+                                = isset( $element['invalid'] )
+                                ? $this->translate( $element['invalid'] )
+                                : $this->translate( 'Please insert a valid value' );
+                        }
+                        else {
+                            $errors[$element['name']] = $val_errors;
+                        }
+                    }
                 }
                 // allow can be a list of allowed values
                 else {
@@ -995,13 +1010,17 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                        &&
                        $element['required'] === true
                      )
-                     &&
-                     ( ! isset( $value ) || strlen( $value ) == 0 )
                 ) {
-                    $errors[ $element['name'] ]
-                        = isset( $element['missing'] )
-                        ? $this->translate( $element['missing'] )
-                        : $this->translate( 'Please insert a value' );
+                    if ( isset( $this->_invalid[$formname][$element['name']] ) ) {
+                        $errors[ $element['name'] ] = $this->_invalid[$formname][$element['name']];
+                    }
+                    // field empty?
+                    elseif ( ! isset( $value ) || strlen( $value ) == 0 ) {
+                        $errors[ $element['name'] ]
+                            = isset( $element['missing'] )
+                            ? $this->translate( $element['missing'] )
+                            : $this->translate( 'Please insert a value' );
+                    }
                     continue;
                 }
 
@@ -1031,6 +1050,11 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
 
             $formname = $this->__validateFormName( $formname );
 
+            $this->log()->LogDebug(
+                'form valid?',
+                $this->_errors[$formname]
+            );
+            
             if (
                  isset( $this->_errors[$formname] )
                  &&
@@ -1038,9 +1062,11 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                  &&
                  count ( $this->_errors[$formname] ) > 0
             ) {
+                $this->log()->LogDebug( 'form invalid (errors found)' );
                 return false;
             }
 
+            $this->log()->LogDebug( 'form is valid' );
             return true;
 
         }   // end function isValid()
@@ -1074,7 +1100,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
          *
          **/
         public function isCanceled ( $formname = '' ) {
-            if ( $this->val->param( $this->_config['cancel_key'] ) ) {
+            if ( $this->val->param( $this->_config['cancel_key'].'_'.$formname ) ) {
                 return true;
             }
             return false;
@@ -1097,7 +1123,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     array(
                         'attributes' => $this->__validateAttributes( $element ),
                         'label'      => SEQ_OUTPUT( $this->lang->translate( $text ) ),
-                        'value'      => $element['value'],
+                        'value'      => SEQ_OUTPUT( $this->lang->translate( $element['value'] ) ),
                         'labelclass' => $this->_config['label_class'],
                     )
                 );
@@ -1840,7 +1866,11 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                 }
 
                 // mark errors
-                if ( isset( $this->_errors[ $formname ][ $element['name'] ] ) ) {
+                if (
+                      isset( $this->_errors[ $formname ][ $element['name'] ] )
+                      ||
+                      isset( $this->_invalid[ $formname ][ $element['name'] ] )
+                ) {
                     $element['class']
                         = isset( $element['class'] )
                         ? ' ' . $this->_config['error_class']
@@ -1882,7 +1912,11 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                     'error'    => (
                                       isset( $this->_errors[ $this->_current_form ][ $element['name'] ] )
                                     ? $this->_errors[ $this->_current_form ][ $element['name'] ]
-                                    : NULL
+                                    : (
+                                          isset( $this->_invalid[ $this->_current_form ][ $element['name'] ] )
+                                        ? $this->_invalid[ $this->_current_form ][ $element['name'] ]
+                                        : NULL
+                                      )
                                   ),
                 );
 
