@@ -1013,6 +1013,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                 ) {
                     if ( isset( $this->_invalid[$formname][$element['name']] ) ) {
                         $errors[ $element['name'] ] = $this->_invalid[$formname][$element['name']];
+                        continue;
                     }
                     // field empty?
                     elseif ( ! isset( $value ) || strlen( $value ) == 0 ) {
@@ -1020,8 +1021,9 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                             = isset( $element['missing'] )
                             ? $this->translate( $element['missing'] )
                             : $this->translate( 'Please insert a value' );
+                        continue;
                     }
-                    continue;
+                    
                 }
 
                 $this->_valid[ $formname ][ $element['name'] ] = $value;
