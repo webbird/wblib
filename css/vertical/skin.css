@@ -1,0 +1,62 @@
+@import url(../formbuilder_default.css);
+
+fieldset.fbfieldset {
+	display: block;
+	width: 30em;
+	margin: 0 0 3em 0;
+	padding: 1em;
+	background-color: #eee;
+}
+
+input.fbsubmit {
+	background-color: #ddd;
+  text-align: center;
+  width: 10em;
+}
+
+legend.fblegend {
+	display: block;
+	padding: 0.5em 1em;
+	background-color: #ddd;
+	border: 1px solid #000;
+}
+
+fieldset.fbfieldset input.fbtext,
+fieldset.fbfieldset input.fbpassword,
+fieldset.fbfieldset textarea.fbtextarea,
+fieldset.fbfieldset select.fbselect,
+fieldset.fbfieldset select.fbmultiselect,
+fieldset.fbfieldset input.fbfile
+{
+	display: block;
+	width: 20em;
+}
+
+label.fblabel {
+	display: block;
+	margin-bottom: 1em;
+	font-weight: bold;
+	text-align: left;
+	float: none;
+}
+
+select.fbselect {
+	display: block;
+}
+
+.fbtyperadio {
+	width: 15em;
+	margin: 1em 0 2em 0;
+	background-color: #ddd;
+	padding: 5px;
+}
+
+.fbtyperadio input.fbinput {
+	clear: both;
+	float: left;
+	width: auto;
+}
+
+fieldset.fbfieldset li span {
+  float: right;
+}
