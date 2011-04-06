@@ -32,7 +32,7 @@ foreach (
         'wbHolidays'
     ) as $class
 ) {
-    if ( ! class_exists($class) ) {
+    if ( ! class_exists($class,false) ) {
         include_once dirname( __FILE__ ).'/class.'.$class.'.php';
     }
 }
