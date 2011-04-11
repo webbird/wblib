@@ -34,7 +34,7 @@ $_SEQ_BASEDIR_PRESET             = true;
 include_once $_SEQ_BASEDIR.'seq_lib.php';
 // ----- including sseq-lib -----
 
-if ( ! class_exists( 'wbFormBuilder' ) ) {
+if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
     class wbFormBuilder extends wbBase {
 
@@ -60,6 +60,9 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
         
         //
         private        $_invalid    = array();
+        
+        //
+        private        $_js         = array();
 
         protected      $_config
             = array(
@@ -638,6 +641,46 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             return false;
 
         }  // end function setVal()
+        
+        /**
+         * set option of an already existing element
+         *
+         * @access public
+         * @param  string   $name   - element name
+         * @param  string   $option - option to set
+         * @param  string   $value  - new value
+         *
+         **/
+        public function setOption( $formname = '', $name, $option, $value = NULL ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+            $this->log()->LogDebug(
+                'setting option ['.$option.'] for form ['.$formname.'], element ['.$name.']',
+                $value
+            );
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+
+            // element found
+            if ( is_array( $path ) ) {
+                $this->log()->LogDebug(
+                    'found element ['.$name.']; old option value: ['.self::$_forms[ $formname ]['elements'][ $path[0] ][$option].']'
+                );
+                self::$_forms[ $formname ]['elements'][ $path[0] ][$option] = $value;
+                return true;
+            }
+            else {
+                $this->log()->LogDebug(
+                    'element not found!',
+                    self::$_forms[ $formname ]['elements']
+                );
+            }
+
+            return false;
+
+        }  // end function setOption()
 
         /**
          *
@@ -865,6 +908,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
             // add security token to hidden fields
 #            $elements['hidden'][]['field'] = SEQ_FTOKEN($formname);
 
+
             // ----- render the form -----
             $output =
                 $this->tpl->getTemplate(
@@ -899,6 +943,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                            'info'     => ( isset( $this->_info[ $formname ] ) && is_array( $this->_info[ $formname ] ) && count( $this->_info[ $formname ] ) > 0  )
                                       ?  implode( "<br />\n", $this->_info[ $formname ] )
                                       :  NULL,
+                           'js'       => implode( "\n", $this->_js )
                        )
                    )
                 );
@@ -922,6 +967,33 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                 ? $this->_valid[ $formname ]
                 : array();
         }   // end function getData()
+        
+        /**
+         * returns the registered element for a block
+         * (start element named $start -> next legend element)
+         *
+         * @access public
+         * @param  string   $formname
+         * @param  string   $start      - name of a legend element
+         * @return array
+         *
+         **/
+        public function getOptionsForArea( $formname, $start ) {
+            $formname = $this->__validateFormName( $formname );
+            // find given element
+            $path = $this->ArraySearchRecursive( $start, self::$_forms[ $formname ]['elements'], 'name' );
+            if ( ! is_array($path) || empty( $path[0] ) ) {
+                return array();
+            }
+            // find next legend (=end of block)
+            $temp = array_slice( self::$_forms[ $formname ]['elements'], $path[0] );
+            $path = $this->ArraySearchRecursive( 'legend', self::$_forms[ $formname ]['elements'], 'type' );
+            if ( ! is_array($path) || empty( $path[0] ) ) {
+                $path[0] = count($temp)-1;
+            }
+            $temp = array_slice( $temp, $path[0] );
+            return $temp;
+        }   // end function getOptionsForArea()
 
         /**
          * check form data sent by user
@@ -1471,6 +1543,14 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                 $style = ' style="'.$this->_error_style.'"';
             }
 
+            if ( isset( $element['maxlength'] ) ) {
+                $this->_js[] = "jQuery('#" . $element['name'] . "').jqEasyCounter({ "
+  			                     . "maxChars: " . $element['maxlength'] . ", "
+			                       . "maxCharsWarning: " . ( $element['maxlength'] - intval( ($element['maxlength']*10/100 ) ) ) . ", "
+			                       . "msgText: '" . $this->lang->translate("Characters") . ": '"
+			                       . " });\n";
+            }
+
             return $this->tpl->getTemplate(
                        'textarea.tpl',
                        array(
@@ -1478,6 +1558,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                            'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
                            'style'      => $style,
                            'value'      => ( isset ( $element['value'] ) ? SEQ_OUTPUT($element['value']) : '' ),
+                           'js'         => $js,
                        )
                    );
 
@@ -1899,6 +1980,7 @@ if ( ! class_exists( 'wbFormBuilder' ) ) {
                 // add rendered element to referenced array
                 $add_to_array[] = array(
                     'label'    => $label,
+                    'type'     => $element['type'],
                     'infotext' => $infotext,
                     'name'     => $element['name'],
                     'info'     => ( isset ( $element['info'] ) && ( ! empty( $element['info'] ) ) )
