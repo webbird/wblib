@@ -146,88 +146,88 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end __construct()
 
         /**
-         * set config values
          *
-         * Have to override this function here to allow to set
-         * 'onerror_redirect_to' ($_SEQ_ONERROR_REDIRECT_TO) at runtime
          *
-         * @access public
-         * @param  string   $option
-         * @param  string   $value
-         * @return void
+         *
          *
          **/
-        public function config( $option, $value = NULL ) {
-            parent::config( $option, $value );
-            if ( $option == 'onerror_redirect_to' ) {
-                $_SEQ_ONERROR_REDIRECT_TO = $value;
-            }
-        } // end function config
+        public function addButtons( $formname = NULL, $buttons, $preserve_default = true ) {
 
-        /**
-         * set current form to use
-         *
-         * @access public
-         * @param  string   $formname
-         * @return void
-         *
-         **/
-        public function setForm( $formname ) {
+            // ----- check if we have a submit button -----
+            if (
+                    $preserve_default
+                 && (
+                         ! isset ( $this->_buttons[$formname] )
+                      || count( $this->_buttons[$formname] ) == 0
+                    )
+            ) {
 
-            $this->log()->LogDebug( 'setting current form: '.$formname );
-            $this->_current_form = $this->__validateFormName($formname);
-
-            // let's see if the form is already registered
-            if ( ! isset( self::$_forms[$formname] ) ) {
-
-                // do we have a config file?
-                if ( ! isset( $this->_config['current_file'] ) ) {
-                    $this->printError(
-                        'Unable to register form ['.$formname.']; '
-                      . 'there seems to be no config file. Use setFile() to add one.'
-                    );
-                }
-                // config file found, let's see if we find the form there
-                else {
-
-                    $ref = NULL;
-                    @eval( "\$ref = & \$".$this->_config['var'].";" );
-
-                    if ( ! isset( $ref ) || ! is_array( $ref ) ) {
-                        include_once $this->_config['current_file'];
-                        eval( "\$ref = & \$".$this->_config['var'].";" );
-                        if ( ! isset( $ref[$formname] ) || ! is_array( $ref[$formname] ) ) {
-                            $this->printError(
-                                'Unable to register form ['.$formname.']; '
-                              . 'the config file seems to be invalid.'
-                            );
-                        }
-                    }
-
-                    // now let's register the elements for later use
-                    // analyze data and store config
-                    foreach ( $ref as $name => $def ) {
-                        self::$_forms[ $name ] = $this->__registerForm( $name, $def );
-                    }
-
-                    // let's see if the form is already sent
-                    if (
-                           $this->val->param( $formname.'_submit', 'PCRE_INT' )
-                         &&
-                         ! $this->val->param( $this->_config['cancel_key'].'_'.$formname )
-                    ) {
-                        $this->log()->LogDebug( 'auto-checking form '.$formname );
-                        $this->checkForm( $formname );
-                    }
-
-                }
+                $this->_buttons[$formname][0] = array(
+                    'field' => $this->input(
+                                   array(
+                                       'type'  => 'submit',
+                                       'label' => $this->translate( 'Submit' ),
+                                       'value' => $this->translate( 'Submit' ),
+                                       'name'  => $this->_config['save_key'].'_'.$formname,
+                                       'class' => $this->_config['button_class']
+                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
+                                   )
+                               )
+                );
+                $this->_buttons[$formname][1] = array(
+                    'field' => $this->input(
+                                   array(
+                                       'type'  => 'submit',
+                                       'label' => $this->translate( 'Cancel' ),
+                                       'value' => $this->translate( 'Cancel' ),
+                                       'name'  => $this->_config['cancel_key'].'_'.$formname,
+                                       'class' => $this->_config['button_class']
+                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
+                                   )
+                               )
+                );
 
             }
-            else {
-                $this->log()->LogDebug( "Form $formname already registered" );
+
+            foreach( $buttons as $button ) {
+                $this->_buttons[$formname][] = array(
+                    'field' => $this->input(
+                                   array(
+                                       'type'  => 'submit',
+                                       'label' => $this->translate( $button['label'] ),
+                                       'value' => $this->translate( $button['label'] ),
+                                       'name'  => $button['name'],
+                                       'class' => $this->_config['button_class']
+                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
+                                   )
+                               )
+                );
             }
 
-        }   // end function setForm()
+        }   // end function addButtons()
+
+      	/**
+      	 * create an element and store it in internal element array(s)
+      	 * (_elements or _hidden)
+      	 *
+      	 * @access public
+      	 * @return void
+      	 *
+      	 **/
+      	public function addElement( $formname = '', $element ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+      	    $this->log()->LogDebug(
+                'adding element to form ['.$formname.']',
+                $element
+            );
+
+            self::$_forms[ $formname ]['elements'][] = $this->__registerElement( $formname, $element );
+
+            return NULL;
+
+        }   // end function addElement()
 
         /**
          * merge the contents of another form to the current one
@@ -316,219 +316,169 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         }   // end function addForm()
 
-      	/**
-      	 * create an element and store it in internal element array(s)
-      	 * (_elements or _hidden)
-      	 *
-      	 * @access public
-      	 * @return void
-      	 *
-      	 **/
-      	public function addElement( $formname = '', $element ) {
-
-            $formname = $this->__validateFormName( $formname );
-
-      	    $this->log()->LogDebug(
-                'adding element to form ['.$formname.']',
-                $element
-            );
-
-            self::$_forms[ $formname ]['elements'][] = $this->__registerElement( $formname, $element );
-
-            return NULL;
-
-        }   // end function addElement()
-        
         /**
+         * check form data sent by user
          *
-         *
-         *
+         * @access public
+         * @param  string   $formname - name of the form to check
+         * @return array    $errors   - all errors found in form data
          *
          **/
-        public function addButtons( $formname = NULL, $buttons, $preserve_default = true ) {
-        
-            // ----- check if we have a submit button -----
-            if (
-                    $preserve_default
-                 && (
-                         ! isset ( $this->_buttons[$formname] )
-                      || count( $this->_buttons[$formname] ) == 0
-                    )
-            ) {
-
-                $this->_buttons[$formname][0] = array(
-                    'field' => $this->input(
-                                   array(
-                                       'type'  => 'submit',
-                                       'label' => $this->translate( 'Submit' ),
-                                       'value' => $this->translate( 'Submit' ),
-                                       'name'  => $this->_config['save_key'].'_'.$formname,
-                                       'class' => $this->_config['button_class']
-                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
-                                   )
-                               )
-                );
-                $this->_buttons[$formname][1] = array(
-                    'field' => $this->input(
-                                   array(
-                                       'type'  => 'submit',
-                                       'label' => $this->translate( 'Cancel' ),
-                                       'value' => $this->translate( 'Cancel' ),
-                                       'name'  => $this->_config['cancel_key'].'_'.$formname,
-                                       'class' => $this->_config['button_class']
-                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
-                                   )
-                               )
-                );
-
-            }
-            
-            foreach( $buttons as $button ) {
-                $this->_buttons[$formname][] = array(
-                    'field' => $this->input(
-                                   array(
-                                       'type'  => 'submit',
-                                       'label' => $this->translate( $button['label'] ),
-                                       'value' => $this->translate( $button['label'] ),
-                                       'name'  => $button['name'],
-                                       'class' => $this->_config['button_class']
-                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
-                                   )
-                               )
-                );
-            }
-
-        }   // end function addButtons()
-
-        /**
-      	 * Insert an element at a given position
-      	 *
-      	 * Can be used to insert a new element before an already
-      	 * existing element. If the element is not found, the new element
-      	 * is added to the top of the form.
-      	 *
-      	 * @access public
-      	 * @param  string   $name    - name of the element to add before
-      	 * @param  array    $element - complete element definition
-      	 * @return void
-      	 *
-      	 **/
-      	public function insertBefore( $formname = NULL, $name, $element ) {
+        public function checkForm( $formname = '' ) {
 
             $formname = $this->__validateFormName( $formname );
+            $errors   = array();
 
-      	    $this->log()->LogDebug(
-                'adding new element into form ['.$formname.'], before ['.$name.']',
-                $element
-            );
+            SEQ_CHECK_TOKEN($formname);
 
-            // find given element
-            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
-
-            // element found
-            if ( is_array( $path ) ) {
-                array_splice( self::$_forms[ $formname ]['elements'], $path[0], 0, array( $element ) );
+            if ( isset( $this->_checked[ $formname ] ) && $this->_checked[ $formname ] === true ) {
+                $this->log()->LogDebug(
+                    'form '.$formname.' already checked, returning registered errors',
+                    $this->_errors[ $formname ]
+                );
+                return $this->_errors[ $formname ];
             }
-            // element not found; add to top
-            else {
-                array_unshift( self::$_forms[ $formname ]['elements'], $element );
-            }
-
-            return true;
-
-        }   // end function insertBefore()
-
-        /**
-         *
-         *
-         *
-         *
-         **/
-        public function removeElement( $formname = '', $name ) {
-
-            $formname = $this->__validateFormName( $formname );
 
             $this->log()->LogDebug(
-                "removing element [$name] from form [$formname]"
+                'checking form: '.$formname
             );
 
-            // find given element
-            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
+            // ----- for all registered elements of this form... -----
+            foreach ( self::$_forms[$formname]['elements'] as $element ) {
 
-            // element found
-            if ( is_array( $path ) ) {
-                array_splice( self::$_forms[ $formname ]['elements'], $path[0], 1 );
-            }
-            else {
-                $this->log()->LogDebug( "element not found!" );
+                $this->log()->LogDebug(
+                    'checking field ['.$element['name'].']'
+                );
+
+                $allow = 'string';
+                if ( isset( $element['allow'] ) ) {
+                    $allow = $element['allow'];
+                }
+
+                // check validity
+                $value = NULL;
+                if ( ! is_array( $allow ) ) {
+                    $value = $this->val->param(
+                                 $element['name'],
+                                 $this->_config['_allowed'][ $allow ],
+                                 array(
+                                     'default' => ( isset( $element['default'] ) ? $element['default'] : NULL )
+                                 )
+                             );
+                    $val_errors = $this->val->getErrors($element['name']);
+                    if ( $val_errors ) {
+                        if ( $val_errors == 'invalid' ) {
+                            $this->_invalid[$formname][$element['name']]
+                                = isset( $element['invalid'] )
+                                ? $this->translate( $element['invalid'] )
+                                : $this->translate( 'Please insert a valid value' );
+                        }
+                        else {
+                            $errors[$element['name']] = $val_errors;
+                        }
+                    }
+                }
+                // allow can be a list of allowed values
+                else {
+                    foreach ( $allow as $allowed_value ) {
+                        if ( ! strcasecmp( $allowed_value, $this->val->param( $element['name'] ) ) ) {
+                            $value = $allowed_value;
+                            break;
+                        }
+                    }
+                }
+
+                $this->log()->LogDebug(
+                    'got value: '
+                  . (
+                        ( isset( $value ) )
+                      ? ( is_array( $value ) ? print_r( $value, 1 ) : '['.$value.']' )
+                      : '---none---'
+                    )
+                );
+
+                // check required fields
+                if (
+                     ( isset( $element['required'] )
+                       &&
+                       $element['required'] === true
+                     )
+                ) {
+                    if ( isset( $this->_invalid[$formname][$element['name']] ) ) {
+                        $errors[ $element['name'] ] = $this->_invalid[$formname][$element['name']];
+                        continue;
+                    }
+                    // field empty?
+                    elseif ( ! isset( $value ) || strlen( $value ) == 0 ) {
+                        $errors[ $element['name'] ]
+                            = isset( $element['missing'] )
+                            ? $this->translate( $element['missing'] )
+                            : $this->translate( 'Please insert a value' );
+                        continue;
+                    }
+
+                }
+
+                $this->_valid[ $formname ][ $element['name'] ] = $value;
+
             }
 
-        }   // end function removeElement()
+            $this->_errors[ $formname ]  = $errors;
+            $this->_checked[ $formname ] = true;
+
+            $this->log()->LogDebug( 'valid data:', $this->_valid  );
+            $this->log()->LogDebug( 'errors: '   , $this->_errors );
+
+            return $errors;
+
+        }   // end function checkForm()
+
+
 
         /**
-         * set action-attribute
+         * set config values
+         *
+         * Have to override this function here to allow to set
+         * 'onerror_redirect_to' ($_SEQ_ONERROR_REDIRECT_TO) at runtime
          *
          * @access public
-         * @param  string  $action - URL
+         * @param  string   $option
+         * @param  string   $value
          * @return void
          *
          **/
-        public function setAction( $action ) {
-            $action = $this->getURI( $action );
-            if ( ! $this->val->isValidURI( $action ) ) {
-                $this->printError( 'Invalid form action: ['.$action.']' );
+        public function config( $option, $value = NULL ) {
+            parent::config( $option, $value );
+            if ( $option == 'onerror_redirect_to' ) {
+                $_SEQ_ONERROR_REDIRECT_TO = $value;
             }
-            else {
-                $this->_config['action'] = $action;
+        } // end function config
+
+        /**
+         * retrieve validated form data
+         *
+         * @access public
+         * @param  string   $formname
+         * @return array    ( 'fieldname' => 'value', ... )
+         *
+         **/
+        public function getData( $formname = '' ) {
+            $formname = $this->__validateFormName( $formname );
+            if (
+                    ! isset( $this->_valid[ $formname ] )
+                 || ! is_array( $this->_valid[ $formname ] )
+                 || ! count( $this->_valid[ $formname ] )
+            ) {
+                if ( ! isset( $this->_checked[ $formname ] ) || $this->_checked[ $formname ] === false ) {
+                    $this->checkForm($formname);
+                }
             }
-            return NULL;
-        }   // end function setAction()
+            return
+                  isset( $this->_valid[ $formname ] )
+                ? $this->_valid[ $formname ]
+                : array();
+        }   // end function getData()
         
-        /**
-         *
-         *
-         *
-         *
-         **/
-        public function setURI( $uri ) {
-            $this->_config['wblib_base_url'] = $uri;
-        }   // end function setURI()
-
-        /**
-         * add info text
-         *
-         * @access public
-         * @param  string  $formname
-         * @param  string  $msg
-         * @return void
-         *
-         **/
-        public function setInfo( $formname, $msg ) {
-            $formname = $this->__validateFormName( $formname );
-            $this->log()->LogDebug( 'adding info to form ['.$formname.']:', $msg );
-            $this->_info[$formname][] = $this->translate( $msg );
-            return NULL;
-        }   // end function setInfo()
-
-        /**
-         * add error message
-         *
-         * @access public
-         * @param  string  $formname
-         * @param  string  $msg
-         * @return void
-         *
-         **/
-        public function setError( $formname, $msg, $on_top = false ) {
-            $formname = $this->__validateFormName( $formname );
-            if ( $on_top ) {
-                array_unshift( $this->_errors[$formname], $this->translate( $msg ) );
-            }
-            else {
-                $this->_errors[$formname][] = $this->translate( $msg );
-            }
-        }   // end function setError()
-
         /**
          *
          *
@@ -537,251 +487,10 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
         public function getErrors( $formname ) {
             $formname = $this->__validateFormName( $formname );
-            return $this->_errors[$formname];
-        }
-
-        /**
-         * make a field readonly
-         *
-         * @access public
-         * @param  string  $formname
-         * @param  string  $name
-         * @return void
-         *
-         **/
-        public function setReadonly( $formname, $name ) {
-            $formname = $this->__validateFormName( $formname );
-            // find given element
-            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
-            // element found
-            if ( is_array( $path ) ) {
-                $this->log()->LogDebug( 'found element ['.$name.']' );
-                self::$_forms[ $formname ]['elements'][ $path[0] ]['readonly'] = 'readonly';
-                if ( ! isset ( self::$_forms[ $formname ]['elements'][ $path[0] ]['class'] ) ) {
-                    self::$_forms[ $formname ]['elements'][ $path[0] ]['class'] = 'fbdisabled';
-                }
-                else {
-                    self::$_forms[ $formname ]['elements'][ $path[0] ]['class'] .= ' fbdisabled';
-                }
-            }
-        }   // end function setReadonly
-        
-        /**
-         * convenience function
-         **/
-        public function setValue( $formname = '', $name, $value = NULL ) {
-            return $this->setVal( $formname, $name, $value );
-        }   // end function setValue()
-
-        /**
-         * set value of an already existing element
-         *
-         * @access public
-         * @param  string   $name  - element name
-         * @param  string   $value - new value
-         *
-         **/
-        public function setVal( $formname = '', $name, $value = NULL ) {
-
-            $formname = $this->__validateFormName( $formname );
-
-            $this->log()->LogDebug(
-                'setting new value for form ['.$formname.'], element ['.$name.']',
-                $value
-            );
-
-            // find given element
-            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
-
-            // element found
-            if ( is_array( $path ) ) {
-
-                $this->log()->LogDebug(
-                    'found element ['.$name.']',
-                    $value
-                );
-
-                $key = 'value';
-                if (
-                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'select'
-                     ||
-                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'multiselect'
-                     ||
-                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'checkbox'
-                     ||
-                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'radio'
-                ) {
-
-                    $this->log()->LogDebug(
-                        'element ['.$name.'] is a select field'
-                    );
-
-                    if ( is_array( $value ) ) {
-                        $key = 'options';
-                    }
-                    else {
-                        $key = 'content';
-                    }
-
-                    $this->log()->LogDebug(
-                        'key to overwrite: '.$key
-                    );
-
-                }
-                self::$_forms[ $formname ]['elements'][ $path[0] ][$key] = $value;
-                return true;
-            }
-            else {
-                $this->log()->LogDebug(
-                    'element not found!',
-                    self::$_forms[ $formname ]['elements']
-                );
-            }
-
-            return false;
-
-        }  // end function setVal()
-        
-        /**
-         * set option of an already existing element
-         *
-         * @access public
-         * @param  string   $name   - element name
-         * @param  string   $option - option to set
-         * @param  string   $value  - new value
-         *
-         **/
-        public function setOption( $formname = '', $name, $option, $value = NULL ) {
-
-            $formname = $this->__validateFormName( $formname );
-
-            $this->log()->LogDebug(
-                'setting option ['.$option.'] for form ['.$formname.'], element ['.$name.']',
-                $value
-            );
-
-            // find given element
-            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
-
-            // element found
-            if ( is_array( $path ) ) {
-                $this->log()->LogDebug(
-                    'found element ['.$name.']; old option value: ['.self::$_forms[ $formname ]['elements'][ $path[0] ][$option].']'
-                );
-                self::$_forms[ $formname ]['elements'][ $path[0] ][$option] = $value;
-                return true;
-            }
-            else {
-                $this->log()->LogDebug(
-                    'element not found!',
-                    self::$_forms[ $formname ]['elements']
-                );
-            }
-
-            return false;
-
-        }  // end function setOption()
-
-        /**
-         *
-         *
-         *
-         *
-         **/
-        public function setSelected( $formname = '', $name, $value = NULL ) {
-
-            $formname = $this->__validateFormName( $formname );
-
-            $this->log()->LogDebug(
-                'Searching for form element ['.$name.'] in form ['.$formname.']'
-            );
-
-            // find given element
-            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
-
-            // element found
-            if ( is_array( $path ) ) {
-                if (
-                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] != 'select'
-                     &&
-                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] != 'multiselect'
-                ) {
-                    $this->log()->LogDebug(
-                        'element ['.$name.'] found, but not of type "select"!'
-                    );
-                    return false;
-                }
-                $this->log()->LogDebug( 'setting key [value] for select field ['.$name.']' );
-                self::$_forms[ $formname ]['elements'][ $path[0] ]['value'] = $value;
-                $this->log()->LogDebug( 'result:', self::$_forms[ $formname ]['elements'][ $path[0] ] );
-                return true;
-            }
-            else {
-                $this->log()->LogDebug(
-                    'element not found!',
-                    self::$_forms[ $formname ]['elements']
-                );
-                return false;
-            }
-
-        }   // end function setSelected()
-        
-        /**
-         * set infotext of an already existing element
-         *
-         * @access public
-         * @param  string   $name  - element name
-         * @param  string   $value - new value
-         *
-         **/
-        public function setInfotext( $formname = '', $name, $value = NULL ) {
-
-            $formname = $this->__validateFormName( $formname );
-
-            $this->log()->LogDebug(
-                'setting new value for form ['.$formname.'], element ['.$name.']',
-                $value
-            );
-
-            // find given element
-            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
-
-            // element found
-            if ( is_array( $path ) ) {
-
-                $this->log()->LogDebug(
-                    'found element ['.$name.']'
-                );
-                
-                self::$_forms[ $formname ]['elements'][ $path[0] ]['infotext'] = $value;
-
-            }
-            
-        }   // end function setInfotext()
-
-
-        /**
-         *
-         *
-         *
-         *
-         **/
-        public function setHeader( $formname = '', $header ) {
-            $formname = $this->__validateFormName( $formname );
-            self::$_forms[ $formname ]['config']['formheader'] = $header;
-        }   // end function setHeader()
-
-
-    /*******************************************************************************
-     *
-     ******************************************************************************/
-
-        /**
-         * shortcut
-         **/
-        public function printForm( $formname = '', $formdata = array() ) {
-            echo $this->getForm( $formname, $formdata );
-        }
+            return is_array( $this->_errors[$formname] )
+                 ? $this->_errors[$formname]
+                 : array();
+        }   // end function getErrors()
 
         /**
          * generate the form from config data
@@ -951,22 +660,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $output;
 
         }   //end function getForm()
-
-        /**
-         * retrieve validated form data
-         *
-         * @access public
-         * @param  string   $formname
-         * @return array    ( 'fieldname' => 'value', ... )
-         *
-         **/
-        public function getData( $formname = '' ) {
-            $formname = $this->__validateFormName( $formname );
-            return
-                  isset( $this->_valid[ $formname ] )
-                ? $this->_valid[ $formname ]
-                : array();
-        }   // end function getData()
         
         /**
          * returns the registered element for a block
@@ -996,155 +689,56 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end function getOptionsForArea()
 
         /**
-         * check form data sent by user
-         *
-         * @access public
-         * @param  string   $formname - name of the form to check
-         * @return array    $errors   - all errors found in form data
-         *
-         **/
-        public function checkForm( $formname = '' ) {
-
-            $formname = $this->__validateFormName( $formname );
-            $errors   = array();
-
-            SEQ_CHECK_TOKEN($formname);
-
-            if ( isset( $this->_checked[ $formname ] ) && $this->_checked[ $formname ] === true ) {
-                $this->log()->LogDebug(
-                    'form '.$formname.' already checked, returning registered errors',
-                    $this->_errors[ $formname ]
-                );
-                return $this->_errors[ $formname ];
-            }
-
-            $this->log()->LogDebug(
-                'checking form: '.$formname
-            );
-
-            // ----- for all registered elements of this form... -----
-            foreach ( self::$_forms[$formname]['elements'] as $element ) {
-
-                $this->log()->LogDebug(
-                    'checking field ['.$element['name'].']'
-                );
-
-                $allow = 'string';
-                if ( isset( $element['allow'] ) ) {
-                    $allow = $element['allow'];
-                }
-
-                // check validity
-                $value = NULL;
-                if ( ! is_array( $allow ) ) {
-                    $value = $this->val->param(
-                                 $element['name'],
-                                 $this->_config['_allowed'][ $allow ],
-                                 array(
-                                     'default' => ( isset( $element['default'] ) ? $element['default'] : NULL )
-                                 )
-                             );
-                    $val_errors = $this->val->getErrors($element['name']);
-                    if ( $val_errors ) {
-                        if ( $val_errors == 'invalid' ) {
-                            $this->_invalid[$formname][$element['name']]
-                                = isset( $element['invalid'] )
-                                ? $this->translate( $element['invalid'] )
-                                : $this->translate( 'Please insert a valid value' );
-                        }
-                        else {
-                            $errors[$element['name']] = $val_errors;
-                        }
-                    }
-                }
-                // allow can be a list of allowed values
-                else {
-                    foreach ( $allow as $allowed_value ) {
-                        if ( ! strcasecmp( $allowed_value, $this->val->param( $element['name'] ) ) ) {
-                            $value = $allowed_value;
-                            break;
-                        }
-                    }
-                }
-
-                $this->log()->LogDebug(
-                    'got value: '
-                  . (
-                        ( isset( $value ) )
-                      ? ( is_array( $value ) ? print_r( $value, 1 ) : '['.$value.']' )
-                      : '---none---'
-                    )
-                );
-
-                // check required fields
-                if (
-                     ( isset( $element['required'] )
-                       &&
-                       $element['required'] === true
-                     )
-                ) {
-                    if ( isset( $this->_invalid[$formname][$element['name']] ) ) {
-                        $errors[ $element['name'] ] = $this->_invalid[$formname][$element['name']];
-                        continue;
-                    }
-                    // field empty?
-                    elseif ( ! isset( $value ) || strlen( $value ) == 0 ) {
-                        $errors[ $element['name'] ]
-                            = isset( $element['missing'] )
-                            ? $this->translate( $element['missing'] )
-                            : $this->translate( 'Please insert a value' );
-                        continue;
-                    }
-                    
-                }
-
-                $this->_valid[ $formname ][ $element['name'] ] = $value;
-
-            }
-
-            $this->_errors[ $formname ]  = $errors;
-            $this->_checked[ $formname ] = true;
-
-            $this->log()->LogDebug( 'valid data:', $this->_valid  );
-            $this->log()->LogDebug( 'errors: '   , $this->_errors );
-
-            return $errors;
-
-        }   // end function checkForm()
-
-        /**
-         * convenience method; check if form is valid
-         *
-         * @access public
-         * @param  string   $formname
-         * @return boolean
-         *
-         **/
-        public function isValid ( $formname = '' ) {
+      	 * Insert an element at a given position
+      	 *
+      	 * Can be used to insert a new element before an already
+      	 * existing element. If the element is not found, the new element
+      	 * is added to the top of the form.
+      	 *
+      	 * @access public
+      	 * @param  string   $name    - name of the element to add before
+      	 * @param  array    $element - complete element definition
+      	 * @return void
+      	 *
+      	 **/
+      	public function insertBefore( $formname = NULL, $name, $element ) {
 
             $formname = $this->__validateFormName( $formname );
 
-            $this->log()->LogDebug(
-                'form valid?',
-                $this->_errors[$formname]
+      	    $this->log()->LogDebug(
+                'adding new element into form ['.$formname.'], before ['.$name.']',
+                $element
             );
-            
-            if (
-                 isset( $this->_errors[$formname] )
-                 &&
-                 is_array( $this->_errors[$formname] )
-                 &&
-                 count ( $this->_errors[$formname] ) > 0
-            ) {
-                $this->log()->LogDebug( 'form invalid (errors found)' );
-                return false;
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
+
+            // element found
+            if ( is_array( $path ) ) {
+                array_splice( self::$_forms[ $formname ]['elements'], $path[0], 0, array( $element ) );
+            }
+            // element not found; add to top
+            else {
+                array_unshift( self::$_forms[ $formname ]['elements'], $element );
             }
 
-            $this->log()->LogDebug( 'form is valid' );
             return true;
 
-        }   // end function isValid()
+        }   // end function insertBefore()
 
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public function isCanceled ( $formname = '' ) {
+            if ( $this->val->param( $this->_config['cancel_key'].'_'.$formname ) ) {
+                return true;
+            }
+            return false;
+        }   // end function isCanceled ()
+        
         /**
          * convenience method; check if form is already checked
          *
@@ -1168,24 +762,450 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end function isChecked()
 
         /**
+         * convenience method; check if form is valid
+         *
+         * @access public
+         * @param  string   $formname
+         * @return boolean
+         *
+         **/
+        public function isValid ( $formname = '' ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+            $this->log()->LogDebug(
+                'form valid?',
+                $this->_errors[$formname]
+            );
+
+            if (
+                 isset( $this->_errors[$formname] )
+                 &&
+                 is_array( $this->_errors[$formname] )
+                 &&
+                 count ( $this->_errors[$formname] ) > 0
+            ) {
+                $this->log()->LogDebug( 'form invalid (errors found)' );
+                return false;
+            }
+
+            $this->log()->LogDebug( 'form is valid' );
+            return true;
+
+        }   // end function isValid()
+
+        /**
+         * shortcut
+         **/
+        public function printForm( $formname = '', $formdata = array() ) {
+            echo $this->getForm( $formname, $formdata );
+        }   // end function printForm()
+
+        /**
          *
          *
          *
          *
          **/
-        public function isCanceled ( $formname = '' ) {
-            if ( $this->val->param( $this->_config['cancel_key'].'_'.$formname ) ) {
+        public function removeElement( $formname = '', $name ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+            $this->log()->LogDebug(
+                "removing element [$name] from form [$formname]"
+            );
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
+
+            // element found
+            if ( is_array( $path ) ) {
+                array_splice( self::$_forms[ $formname ]['elements'], $path[0], 1 );
                 return true;
             }
+            else {
+                $this->log()->LogDebug( "element not found!" );
+                return false;
+            }
+
+        }   // end function removeElement()
+
+        /**
+         * set action-attribute
+         *
+         * @access public
+         * @param  string  $action - URL
+         * @return void
+         *
+         **/
+        public function setAction( $formname = NULL, $action ) {
+            $formname = $this->__validateFormName( $formname );
+            $action = $this->getURI( $action );
+            if ( ! $this->val->isValidURI( $action ) ) {
+                $this->printError( 'Invalid form action: ['.$action.']' );
+            }
+            else {
+                $this->_config['action'] = $action;
+            }
+            return NULL;
+        }   // end function setAction()
+        
+        /**
+         * add error message
+         *
+         * @access public
+         * @param  string  $formname
+         * @param  string  $msg
+         * @return void
+         *
+         **/
+        public function setError( $formname = NULL, $msg, $on_top = false ) {
+            $formname = $this->__validateFormName( $formname );
+            if ( $on_top ) {
+                array_unshift( $this->_errors[$formname], $this->translate( $msg ) );
+            }
+            else {
+                $this->_errors[$formname][] = $this->translate( $msg );
+            }
+        }   // end function setError()
+        
+        /**
+         * set current form to use
+         *
+         * @access public
+         * @param  string   $formname
+         * @return void
+         *
+         **/
+        public function setForm( $formname ) {
+
+            $this->log()->LogDebug( 'setting current form: '.$formname );
+            $this->_current_form = $this->__validateFormName($formname);
+
+            // let's see if the form is already registered
+            if ( ! isset( self::$_forms[$formname] ) ) {
+
+                // do we have a config file?
+                if ( ! isset( $this->_config['current_file'] ) ) {
+                    $this->printError(
+                        'Unable to register form ['.$formname.']; '
+                      . 'there seems to be no config file. Use setFile() to add one.'
+                    );
+                }
+                // config file found, let's see if we find the form there
+                else {
+
+                    $ref = NULL;
+                    @eval( "\$ref = & \$".$this->_config['var'].";" );
+
+                    if ( ! isset( $ref ) || ! is_array( $ref ) ) {
+                        include_once $this->_config['current_file'];
+                        eval( "\$ref = & \$".$this->_config['var'].";" );
+                        if ( ! isset( $ref[$formname] ) || ! is_array( $ref[$formname] ) ) {
+                            $this->printError(
+                                'Unable to register form ['.$formname.']; '
+                              . 'the config file seems to be invalid.'
+                            );
+                        }
+                    }
+
+                    // now let's register the elements for later use
+                    // analyze data and store config
+                    foreach ( $ref as $name => $def ) {
+                        self::$_forms[ $name ] = $this->__registerForm( $name, $def );
+                    }
+
+                    // let's see if the form is already sent
+                    if (
+                           $this->val->param( $formname.'_submit', 'PCRE_INT' )
+                         &&
+                         ! $this->val->param( $this->_config['cancel_key'].'_'.$formname )
+                    ) {
+                        $this->log()->LogDebug( 'auto-checking form '.$formname );
+                        $this->checkForm( $formname );
+                    }
+
+                }
+
+            }
+            else {
+                $this->log()->LogDebug( "Form $formname already registered" );
+            }
+
+        }   // end function setForm()
+
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public function setHeader( $formname = '', $header ) {
+            $formname = $this->__validateFormName( $formname );
+            self::$_forms[ $formname ]['config']['formheader'] = $header;
+        }   // end function setHeader()
+        
+        /**
+         * add info text
+         *
+         * @access public
+         * @param  string  $formname
+         * @param  string  $msg
+         * @return void
+         *
+         **/
+        public function setInfo( $formname, $msg ) {
+            $formname = $this->__validateFormName( $formname );
+            $this->log()->LogDebug( 'adding info to form ['.$formname.']:', $msg );
+            $this->_info[$formname][] = $this->translate( $msg );
+            return NULL;
+        }   // end function setInfo()
+
+        /**
+         * set infotext of an already existing element
+         *
+         * @access public
+         * @param  string   $name  - element name
+         * @param  string   $value - new value
+         *
+         **/
+        public function setInfotext( $formname = '', $name, $value = NULL ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+            $this->log()->LogDebug(
+                'setting new value for form ['.$formname.'], element ['.$name.']',
+                $value
+            );
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+
+            // element found
+            if ( is_array( $path ) ) {
+
+                $this->log()->LogDebug(
+                    'found element ['.$name.']'
+                );
+
+                self::$_forms[ $formname ]['elements'][ $path[0] ]['infotext'] = $value;
+
+            }
+
+        }   // end function setInfotext()
+        
+        /**
+         * set option of an already existing element
+         *
+         * @access public
+         * @param  string   $name   - element name
+         * @param  string   $option - option to set
+         * @param  string   $value  - new value
+         *
+         **/
+        public function setOption( $formname = '', $name, $option, $value = NULL ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+            $this->log()->LogDebug(
+                'setting option ['.$option.'] for form ['.$formname.'], element ['.$name.']',
+                $value
+            );
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+
+            // element found
+            if ( is_array( $path ) ) {
+                $this->log()->LogDebug(
+                    'found element ['.$name.']; old option value: ['.self::$_forms[ $formname ]['elements'][ $path[0] ][$option].']'
+                );
+                self::$_forms[ $formname ]['elements'][ $path[0] ][$option] = $value;
+                return true;
+            }
+            else {
+                $this->log()->LogDebug(
+                    'element not found!',
+                    self::$_forms[ $formname ]['elements']
+                );
+            }
+
             return false;
-        }   // end function isCanceled ()
+
+        }  // end function setOption()
+
+        /**
+         * make a field readonly
+         *
+         * @access public
+         * @param  string  $formname
+         * @param  string  $name
+         * @return void
+         *
+         **/
+        public function setReadonly( $formname, $name ) {
+            $formname = $this->__validateFormName( $formname );
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+            // element found
+            if ( is_array( $path ) ) {
+                $this->log()->LogDebug( 'found element ['.$name.']' );
+                self::$_forms[ $formname ]['elements'][ $path[0] ]['readonly'] = 'readonly';
+                if ( ! isset ( self::$_forms[ $formname ]['elements'][ $path[0] ]['class'] ) ) {
+                    self::$_forms[ $formname ]['elements'][ $path[0] ]['class'] = 'fbdisabled';
+                }
+                else {
+                    self::$_forms[ $formname ]['elements'][ $path[0] ]['class'] .= ' fbdisabled';
+                }
+            }
+        }   // end function setReadonly
+
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public function setSelected( $formname = '', $name, $value = NULL ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+            $this->log()->LogDebug(
+                'Searching for form element ['.$name.'] in form ['.$formname.']'
+            );
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
+
+            // element found
+            if ( is_array( $path ) ) {
+                if (
+                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] != 'select'
+                     &&
+                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] != 'multiselect'
+                ) {
+                    $this->log()->LogDebug(
+                        'element ['.$name.'] found, but not of type "select"!'
+                    );
+                    return false;
+                }
+                $this->log()->LogDebug( 'setting key [value] for select field ['.$name.']' );
+                self::$_forms[ $formname ]['elements'][ $path[0] ]['value'] = $value;
+                $this->log()->LogDebug( 'result:', self::$_forms[ $formname ]['elements'][ $path[0] ] );
+                return true;
+            }
+            else {
+                $this->log()->LogDebug(
+                    'element not found!',
+                    self::$_forms[ $formname ]['elements']
+                );
+                return false;
+            }
+
+        }   // end function setSelected()
+
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public function setURI( $uri ) {
+            $this->_config['wblib_base_url'] = $uri;
+        }   // end function setURI()
+
+        /**
+         * convenience function
+         **/
+        public function setValue( $formname = '', $name, $value = NULL ) {
+            return $this->setVal( $formname, $name, $value );
+        }   // end function setValue()
+
+        /**
+         * set value of an already existing element
+         *
+         * @access public
+         * @param  string   $name  - element name
+         * @param  string   $value - new value
+         *
+         **/
+        public function setVal( $formname = '', $name, $value = NULL ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+            $this->log()->LogDebug(
+                'setting new value for form ['.$formname.'], element ['.$name.']',
+                $value
+            );
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+
+            // element found
+            if ( is_array( $path ) ) {
+
+                $this->log()->LogDebug(
+                    'found element ['.$name.']',
+                    $value
+                );
+
+                $key = 'value';
+                if (
+                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'select'
+                     ||
+                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'multiselect'
+                     ||
+                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'checkbox'
+                     ||
+                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'radio'
+                ) {
+
+                    $this->log()->LogDebug(
+                        'element ['.$name.'] is a select field'
+                    );
+
+                    if ( is_array( $value ) ) {
+                        $key = 'options';
+                    }
+                    else {
+                        $key = 'content';
+                    }
+
+                    $this->log()->LogDebug(
+                        'key to overwrite: '.$key
+                    );
+
+                }
+                self::$_forms[ $formname ]['elements'][ $path[0] ][$key] = $value;
+                return true;
+            }
+            else {
+                $this->log()->LogDebug(
+                    'element not found!',
+                    self::$_forms[ $formname ]['elements']
+                );
+            }
+
+            return false;
+
+        }  // end function setVal()
+        
 
 
+/*******************************************************************************
+ * create (render) fields
+ ******************************************************************************/
+ 
+        /**
+         * create a file upload field
+         **/
+        public function file( $element ) {
+            return $this->input( array_merge( $element, array( 'type' => 'file' ) ) );
+        }   // end function file
 
-    /*******************************************************************************
-     * create (render) fields
-     ******************************************************************************/
-
+        /**
+         * some simple text
+         **/
         public function infotext ( $element ) {
 
             $this->log()->LogDebug( 'creating infotext field:', $element );
@@ -1207,40 +1227,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $output;
 
         }   // end function infotext
-
-        /**
-         *
-         *
-         *
-         *
-         **/
-        public function legend ( $element ) {
-
-            $this->log()->LogDebug( 'creating legend field:', $element );
-
-            $text   = $element['text'];
-            $output =
-                $this->tpl->getTemplate(
-                    'legend.'.$this->_config['output_as'].'.tpl',
-                    array(
-                        'attributes' => $this->__validateAttributes( $element ),
-                        'value'      => SEQ_OUTPUT( $this->lang->translate( $text ) ),
-                    )
-                );
-
-            $this->log()->LogDebug( 'returning rendered legend: ', $output );
-
-            return $output;
-
-        }   // end function legend()
         
-        /**
-         * create a file upload field
-         **/
-        public function file( $element ) {
-            return $this->input( array_merge( $element, array( 'type' => 'file' ) ) );
-        }   // end function file
-
         /**
          * create <input /> field
          *
@@ -1304,7 +1291,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             // get attributes
             $attributes = $this->__validateAttributes( $element );
-            
+
             $output =
                 $this->tpl->getTemplate(
                     $template,
@@ -1326,7 +1313,34 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          *
          **/
+        public function legend ( $element ) {
+
+            $this->log()->LogDebug( 'creating legend field:', $element );
+
+            $text   = $element['text'];
+            $output =
+                $this->tpl->getTemplate(
+                    'legend.'.$this->_config['output_as'].'.tpl',
+                    array(
+                        'attributes' => $this->__validateAttributes( $element ),
+                        'value'      => SEQ_OUTPUT( $this->lang->translate( $text ) ),
+                    )
+                );
+
+            $this->log()->LogDebug( 'returning rendered legend: ', $output );
+
+            return $output;
+
+        }   // end function legend()
+        
+        /**
+         *
+         *
+         *
+         *
+         **/
         public function multiselect( $element ) {
+             $element['type']     = 'multiselect';
              $element['multiple'] = 'multiple';
              if ( substr_compare( $element['name'], '[]', -2, 2 ) ) {
                  $element['name'] .= '[]';
@@ -1345,6 +1359,13 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         public function select ( $element ) {
 
             $this->log()->LogDebug( 'creating select field:', $element );
+            
+            if ( isset( $element['multiple'] ) ) {
+                $element['type'] = 'multiselect';
+                if ( substr_compare( $element['name'], '[]', -2, 2 ) ) {
+                    $element['name'] .= '[]';
+                }
+            }
 
             if (
                  isset( $element['options'] )
@@ -1422,6 +1443,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          **/
         public function checkbox( $element ) {
+            $element['type'] = 'checkbox';
             return $this->radio( $element );
         }   // end function checkbox()
 
@@ -1550,6 +1572,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			                       . "msgText: '" . $this->lang->translate("Characters") . ": '"
 			                       . " });\n";
             }
+            if ( isset( $element['editor'] ) && $element['editor'] === true ) {
+                $this->_js[] = "jQuery('#" . $element['name'] . "').cleditor();\n";
+            }
 
             return $this->tpl->getTemplate(
                        'textarea.tpl',
@@ -1558,7 +1583,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                            'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
                            'style'      => $style,
                            'value'      => ( isset ( $element['value'] ) ? SEQ_OUTPUT($element['value']) : '' ),
-                           'js'         => $js,
                        )
                    );
 
@@ -1713,136 +1737,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end function __init()
 
         /**
-         * evaluate form name
-         *
-         * @access private
-         * @param  string   $formname (optional)
-         * @return string   evaluated form name; returns $this->_current_form if
-         *                  $formname is empty
-         *
-         **/
-        private function __validateFormName( $formname = '' ) {
-
-            if ( strlen( $formname ) == 0 ) {
-                $formname = $this->_current_form;
-            }
-            return $formname;
-
-        }   // end function __validateFormName
-
-        /**
-         *
-         *
-         *
-         *
-         **/
-        private function __validateAttributes( $element ) {
-
-            if ( is_array( $element ) ) {
-
-                $this->log()->LogDebug(
-                    'getting attributes for element of type: '.$element['type']
-                );
-
-                $known_attrs_for = '_'.$element['type'].'_attrs';
-                if ( ! isset( $this->_config[ $known_attrs_for ] ) ) {
-                    $known_attrs_for = '_common_input_attrs';
-                }
-
-                $known_attributes = array_merge(
-                                        $this->_config[$known_attrs_for],
-                                        $this->_config['_common_attrs']
-                                    );
-
-                $attrs       = array();
-                $css_classes = array();
-                $id_seen     = false;
-
-                $this->log()->LogDebug( 'known attributes:', $known_attributes );
-
-                foreach ( $element as $attr => $value ) {
-
-                    if (
-                         ! array_key_exists( $attr, $known_attributes )
-                    ) {
-                        $this->log()->LogDebug( 'Unknown attribute: '.$attr );
-                        continue;
-                    }
-
-                    // validate attribute
-                    if ( is_array( $known_attributes[$attr] ) ) {
-                        $this->log()->LogDebug(
-                            'validating attr ['.$attr.'] value ['.$value.'] against $known_attributes[$attr]',
-                            $known_attributes[$attr]
-                        );
-                        $valid = in_array( $value, $known_attributes[$attr] )
-                               ? $value
-                               : NULL;
-
-                    }
-                    else {
-                        $this->log()->LogDebug(
-                            'validating with constant ['.$known_attributes[$attr].']',
-                            $value
-                        );
-                        $valid = $this->val->getValid(
-                                     $known_attributes[$attr], #constant
-                                     $value                    # value
-                                 );
-                        $this->log()->LogDebug(
-                            'value: '.$valid
-                        );
-                    }
-
-                    if ( empty( $valid ) && strlen( $valid ) == 0 ) {
-                        $this->log()->LogDebug( 'Invalid value for attribute: '.$attr, $value );
-                        continue;
-                    }
-
-                    // css class?
-                    if ( ! strcasecmp( $attr, 'class' ) ) {
-                        $css_classes = explode( ' ', $valid );
-                    }
-                    else {
-                        $attrs[] = $attr.'="'.$valid.'"';
-                    }
-
-                    if ( ! strcasecmp( $attr, 'id' ) ) {
-                        $id_seen = true;
-                    }
-                }
-
-                if ( ! $id_seen ) {
-                    $attrs[] = 'id="'.$element['name'].'"';
-                }
-
-                // add type specific css class to the element
-                if ( ! array_key_exists( 'fb'.$element['type'], $css_classes ) ) {
-                    $css_classes[] = 'fb'.$element['type'];
-                }
-
-                $attrs[] = 'class="'.implode( ' ', $css_classes ).'"';
-                $attributes = implode( ' ', $attrs );
-                $this->log()->LogDebug(
-                    'returning validated attributes as string: '.$attributes
-                );
-                return $attributes;
-
-            }
-            else {
-                echo "invalid call to __validateAttributes(): element is not an array!<br />";
-                echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
-                print_r( $element );
-                echo "</textarea>";
-                echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
-                var_export( debug_backtrace() );
-                echo "</textarea>";
-                exit;
-            }
-
-        }   // end function __validateAttributes()
-
-        /**
          *
          *
          *
@@ -1862,6 +1756,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                              ? $element['type']
                              : 'text';
 
+// ----- TODO: readonly ist normalerweise auch für weitere Elemente gültig! -----
             // set valid value for 'readonly'
             if (
                  isset( $element['readonly'] ) && $element['readonly']
@@ -2025,6 +1920,136 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return array( 'fields' => $fields, 'hidden' => $hidden, 'req_count' => $required, 'blocks' => $blocks );
 
         }   // end function __renderFormElements()
+
+        /**
+         *
+         *
+         *
+         *
+         **/
+        private function __validateAttributes( $element ) {
+
+            if ( is_array( $element ) ) {
+
+                $this->log()->LogDebug(
+                    'getting attributes for element of type: '.$element['type']
+                );
+
+                $known_attrs_for = '_'.$element['type'].'_attrs';
+                if ( ! isset( $this->_config[ $known_attrs_for ] ) ) {
+                    $known_attrs_for = '_common_input_attrs';
+                }
+
+                $known_attributes = array_merge(
+                                        $this->_config[$known_attrs_for],
+                                        $this->_config['_common_attrs']
+                                    );
+
+                $attrs       = array();
+                $css_classes = array();
+                $id_seen     = false;
+
+                $this->log()->LogDebug( 'known attributes:', $known_attributes );
+
+                foreach ( $element as $attr => $value ) {
+
+                    if (
+                         ! array_key_exists( $attr, $known_attributes )
+                    ) {
+                        $this->log()->LogDebug( 'Unknown attribute: '.$attr );
+                        continue;
+                    }
+
+                    // validate attribute
+                    if ( is_array( $known_attributes[$attr] ) ) {
+                        $this->log()->LogDebug(
+                            'validating attr ['.$attr.'] value ['.$value.'] against $known_attributes[$attr]',
+                            $known_attributes[$attr]
+                        );
+                        $valid = in_array( $value, $known_attributes[$attr] )
+                               ? $value
+                               : NULL;
+
+                    }
+                    else {
+                        $this->log()->LogDebug(
+                            'validating with constant ['.$known_attributes[$attr].']',
+                            $value
+                        );
+                        $valid = $this->val->getValid(
+                                     $known_attributes[$attr], #constant
+                                     $value                    # value
+                                 );
+                        $this->log()->LogDebug(
+                            'value: '.$valid
+                        );
+                    }
+
+                    if ( empty( $valid ) && strlen( $valid ) == 0 ) {
+                        $this->log()->LogDebug( 'Invalid value for attribute: '.$attr, $value );
+                        continue;
+                    }
+
+                    // css class?
+                    if ( ! strcasecmp( $attr, 'class' ) ) {
+                        $css_classes = explode( ' ', $valid );
+                    }
+                    else {
+                        $attrs[] = $attr.'="'.$valid.'"';
+                    }
+
+                    if ( ! strcasecmp( $attr, 'id' ) ) {
+                        $id_seen = true;
+                    }
+                }
+
+                if ( ! $id_seen ) {
+                    $attrs[] = 'id="'.$element['name'].'"';
+                }
+
+                // add type specific css class to the element
+                if ( ! array_key_exists( 'fb'.$element['type'], $css_classes ) ) {
+                    $css_classes[] = 'fb'.$element['type'];
+                }
+
+                $attrs[] = 'class="'.implode( ' ', $css_classes ).'"';
+                $attributes = implode( ' ', $attrs );
+                $this->log()->LogDebug(
+                    'returning validated attributes as string: '.$attributes
+                );
+                return $attributes;
+
+            }
+            else {
+                echo "invalid call to __validateAttributes(): element is not an array!<br />";
+                echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+                print_r( $element );
+                echo "</textarea>";
+                echo "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+                var_export( debug_backtrace() );
+                echo "</textarea>";
+                exit;
+            }
+
+        }   // end function __validateAttributes()
+
+        /**
+         * evaluate form name
+         *
+         * @access private
+         * @param  string   $formname (optional)
+         * @return string   evaluated form name; returns $this->_current_form if
+         *                  $formname is empty
+         *
+         **/
+        private function __validateFormName( $formname = '' ) {
+
+            if ( strlen( $formname ) == 0 ) {
+                $formname = $this->_current_form;
+            }
+            return $formname;
+
+        }   // end function __validateFormName
 
     }
 
