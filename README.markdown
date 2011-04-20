@@ -9,6 +9,10 @@ wblib is a bunch of library classes you may find useful:
 + Form Builder / Validator (wbFormBuilder)
 + Data validation (wbValidate)
 + Calendar (wbCalendar)
+
+For more information, please visit
+
+http://wblib.webbird.de/de (German; work in progress)
     
 ## License
 
