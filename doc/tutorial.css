@@ -1,0 +1,17 @@
+body, html { padding: 0; margin: 0; }
+.header { background-color: #37322a; color: white; padding: 10px; border-bottom: 5px solid #ccba9d; }
+.header a { color: white; }
+.header div { width: 800px; margin: auto auto; }
+.content { width: 800px; margin: auto auto; }
+/*
+    Styles fuer mail.php
+*/
+form.fbform .fbouter { width: 800px; margin: 15px auto; }
+fieldset.fbfieldset label.fblabel { width: 250px; }
+fieldset.fbfieldset input.fbtext, fieldset.fbfieldset textarea.fbtextarea { width: 400px; }
+/*
+    Styles fuer template.php
+*/
+table { width: 800px; }
+th { background-color: #37322a; color: white; }
+td { text-align: center; }
