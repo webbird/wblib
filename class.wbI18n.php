@@ -30,12 +30,15 @@ class wbI18n extends wbBase {
     protected      $debugLevel    = KLOGGER::OFF;
     #protected      $debugLevel    = KLOGGER::DEBUG;
 
-    // default language file path; override with setPath()
-    private        $_langPath     = '/languages';
-    
+    // default language
+    protected      $_config       = array(
+        'defaultlang'  => 'EN',
+        'langPath'     => '/languages',
+    );
+
     // array to store language strings
     private static $_lang         = array();
-    
+
     // default language
     private static $_current_lang = NULL;
 
@@ -43,13 +46,15 @@ class wbI18n extends wbBase {
      * constructor
      **/
     public function __construct( $lang = NULL ) {
-        parent::__construct();
+        $options = array();
+        if ( is_array( $lang ) ) {
+            $options = $lang;
+            $lang    = NULL;
+        }
+        parent::__construct($options);
         if ( ! isset( $lang ) ) {
             if ( defined( 'LANGUAGE' ) ) {
                 $lang = LANGUAGE;
-            }
-            else {
-                $lang = 'EN';
             }
         }
         self::$_current_lang = $lang;
@@ -57,7 +62,7 @@ class wbI18n extends wbBase {
     }   // end function __construct()
 
 		public function __destruct () {} // end function __destruct()
-		
+
 		/**
 		 *
 		 *
@@ -65,32 +70,39 @@ class wbI18n extends wbBase {
 		 *
 		 **/
 		public function init( $var = NULL ) {
-		
+
         $this->log()->LogDebug( 'init()' );
 
         $caller = debug_backtrace();
+
+        if ( self::$_current_lang == '' ) {
+            $lang_files = $this->__lang_getfrombrowser();
+        }
+        else {
+            $lang_files = array( self::$_current_lang );
+        }
         
         if ( file_exists( dirname($caller[1]['file']).'/languages' ) ) {
-            $this->_langPath = dirname($caller[1]['file']).'/languages';
+            #$this->_langPath = dirname($caller[1]['file']).'/languages';
+            $this->_config['langPath'] = dirname($caller[1]['file']).'/languages';
         }
         elseif ( file_exists( dirname($caller[1]['file']).'/../languages' ) ) {
-            $this->_langPath = dirname($caller[1]['file']).'/../languages';
+            #$this->_langPath = dirname($caller[1]['file']).'/../languages';
+            $this->_config['langPath'] = dirname($caller[1]['file']).'/../languages';
         }
 
-        $lang_files
-            = array(
-                  self::$_current_lang => self::$_current_lang.'.php',
-                  'EN'                 => 'EN.php'
-              );
+        // add default lang
+        $lang_files[] = 'EN';
 
         $this->log()->LogDebug( 'language files to search for: ', $lang_files );
 
-        foreach ( $lang_files as $l => $file ) {
+        foreach ( $lang_files as $l ) {
+            $file = $l . '.php';
             if ( $this->addFile( $file, $var ) ) { break; }
         }
 
 		}   // end function init()
-		
+
 		/**
 		 *
 		 *
@@ -98,18 +110,18 @@ class wbI18n extends wbBase {
 		 *
 		 **/
     public function addFile ( $file, $path = NULL, $var = NULL ) {
-    
+
         global $LANG;
-        
+
         $lang_var = & $LANG;
-        
+
         if ( isset( $var ) ) {
             eval ( 'global $'.$var.';' );
             eval ( "\$lang_var = & \$$var;" );
         }
-        
+
         if ( empty( $path ) ) {
-            $path = $this->_langPath;
+            $path = $this->_config['langPath'];
         }
 
         $file = $path.'/'.$file;
@@ -133,11 +145,11 @@ class wbI18n extends wbBase {
             }
 
         }
-        
+
         $this->log()->LogDebug( 'language file does not exist: ', $file );
 
     }   // end function addFile ()
-		
+
   	/**
   	 * set language file path
   	 *
@@ -147,12 +159,12 @@ class wbI18n extends wbBase {
   	 *
   	 **/
     public function setPath ( $path, $var = NULL ) {
-    
+
         if ( file_exists( $path ) ) {
 
             $this->log()->LogDebug( 'setting language path to: ', $path );
 
-            $this->_langPath = $path;
+            $this->_config['langPath'] = $path;
             $this->init( $var );
 
         }
@@ -161,7 +173,7 @@ class wbI18n extends wbBase {
         }
 
     }   // end function setPath ()
-    
+
 		/**
 		 * get current language shortcut
 		 *
@@ -194,15 +206,15 @@ class wbI18n extends wbBase {
         if ( array_key_exists( $msg, self::$_lang ) ) {
             $msg = self::$_lang[$msg];
         }
-        
+
         foreach( $attr as $key => $value ) {
             $msg = str_replace( "{{ ".$key." }}", $value, $msg );
         }
-        
+
         return $msg;
-        
+
     }   // end function translate()
-    
+
     /**
      * dump language array (strings beginning with $prefix)
      *
@@ -225,6 +237,72 @@ class wbI18n extends wbBase {
             return self::$_lang;
         }
     }   // end function dump()
+
+    /**
+     * This method is based on code you may find here:
+     * http://aktuell.de.selfhtml.org/artikel/php/httpsprache/
+     *
+     *
+     **/
+    private function __lang_getfrombrowser ( $strict_mode = true ) {
+
+        $browser_langs = array();
+        $lang_variable = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+
+        if ( empty($lang_variable) ) {
+            return $this->_config['defaultlang'];
+        }
+
+        $accepted_languages = preg_split('/,\s*/', $lang_variable);
+        $current_q          = 0;
+
+        foreach ( $accepted_languages as $accepted_language ) {
+
+            // match valid language entries
+            $res = preg_match (
+                       '/^([a-z]{1,8}(?:-[a-z]{1,8})*)(?:;\s*q=(0(?:\.[0-9]{1,3})?|1(?:\.0{1,3})?))?$/i',
+                       $accepted_language,
+                       $matches
+                   );
+
+            // invalid syntax
+            if (!$res) {
+                continue;
+            }
+
+            // get language code
+            $lang_code = explode ('-', $matches[1]);
+
+            if (isset($matches[2])) {
+                $lang_quality = (float)$matches[2];
+            } else {
+                $lang_quality = 1.0;
+            }
+
+            while (count ($lang_code)) {
+                $browser_langs[] = array(
+                    'lang' => strtoupper(join ('-', $lang_code)),
+                    'qual' => $lang_quality
+                );
+                // don't use abbreviations in strict mode
+                if ($strict_mode) {
+                    break;
+                }
+                array_pop ($lang_code);
+            }
+        }
+
+        // order array by quality
+        $langs = $this->ArraySort ( $browser_langs, 'qual', 'desc', true );
+        $ret   = array();
+        foreach( $langs as $lang ) {
+            $ret[] = $lang['lang'];
+        }
+
+        return $ret;
+
+    }   // end __lang_getfrombrowser()
+
 
 }
 
