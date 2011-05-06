@@ -24,7 +24,7 @@
 
 require_once dirname( __FILE__ ).'/class.wbBase.php';
 
-if ( ! class_exists( 'wbListBuilder' ) ) {
+if ( ! class_exists( 'wbListBuilder', false ) ) {
 
     class wbListBuilder extends wbBase {
 
@@ -94,109 +94,36 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                 );
             }
         }   // end function __construct()
-
+        
         /**
          *
          *
          *
          *
          **/
-        public function buildRecursion ( &$items, $min = -1 ) {
+        public function buildBreadcrumb ( $tree, $current, $as_array = NULL ) {
 
-            if ( ! empty( $items ) && ! is_array( $items ) ) {
-                $this->log()->LogDebug( 'no items to build recursion' );
+            $this->log()->LogDebug(
+                'building breadcrumb from tree:',
+                $tree
+            );
+
+            if ( ! empty($tree) && ! is_array( $tree ) ) {
+                $this->log()->LogDebug( 'no breadcrumb items to show' );
                 return;
             }
 
-            $this->log()->LogDebug( 'building recursion from items:', $items );
-            $this->log()->LogDebug( 'config: ', $this->_config );
+            $trailpages = $this->__getTrail( $tree, $current );
 
-            // if there's only one item, no recursion to do
-            if ( ! ( count( $items ) > 1 ) ) {
-                return $items;
-            }
-
-            $tree    = array();
-            $root_id = -1;
-
-            // spare some typing...
-            $ik      = $this->_config['__id_key'];
-            $pk      = $this->_config['__parent_key'];
-            $ck      = $this->_config['__children_key'];
-            $lk      = $this->_config['__level_key'];
-
-            // make sure that the $items array is indexed by the __id_key
-            $arr     = array();
-
-            foreach ( $items as $index => $item ){
-                $arr[ $item[$ik] ] = $item;
-            }
-
-            $items = $arr;
-
-            //
-            // this creates an array of parents with their associated children
-            //
-            // -----------------------------------------------
-            // REQUIRES that the array index is the parent ID!
-            // -----------------------------------------------
-            //
-            // http://www.tommylacroix.com/2008/09/10/php-design-pattern-building-a-tree/
-            //
-            foreach ( $items as $id => &$node ) {
-
-                // skip nodes with depth < min level
-                if (
-                     isset( $node[ $lk ] )
-                     &&
-                     $node[ $lk ] <= $min
-                ) {
-                    $this->log()->LogDebug( 'skipping node (level <= min level ['.$min.']', $node );
-                    continue;
-                }
-
-                // avoid error messages on missing parent key
-                if ( ! isset( $node[$pk] ) )
-                {
-                    $this->log()->LogDebug( 'adding missing parent key to node', $node );
-                    $node[$pk] = null;
-                }
-
-                // root node
-                if ( $node[$pk] === null && $root_id < 0 )
-                {
-                    $this->log()->LogDebug( 'found root node', $node );
-                    $tree[$id] = &$node;
-                    $root_id   = $id;
-                }
-                // sub node
-                else {
-                    // avoid warnings on missing children key
-                    if ( ! isset( $items[$node[$pk]][$ck]) )
-                    {
-                        $items[ $node[$pk] ][ $ck ] = array();
-                    }
-                    $items[ $node[$pk] ][ $ck ][] = &$node;
-                }
-
-            }
-
-    // ---- ????? -----
-            if ( ! empty($tree) && is_array($tree) && count( $tree ) > 0 )
+            if ( $as_array )
             {
-                $tree[$root_id][$ck]['__is_recursive'] = 1;
-                $tree = $tree[$root_id][$ck];
-            }
-            else {
-                $this->log()->LogDebug( '---ERROR!--- $tree is empty!' );
+                return $trailpages;
             }
 
-            $this->log()->LogDebug( 'returning tree: ', $tree );
+            return $this->buildListIter( $trailpages );
 
-            return $tree;
+        }   // end function buildBreadcrumb()
 
-        }   // end function buildRecursion ()
-        
         /**
          * This is for downward compatibility only
          **/
@@ -540,35 +467,6 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
         }   // end function buildListRecursive()
 
         /**
-         *
-         *
-         *
-         *
-         **/
-        public function buildBreadcrumb ( $tree, $current, $as_array = NULL ) {
-
-            $this->log()->LogDebug(
-                'building breadcrumb from tree:',
-                $tree
-            );
-
-            if ( ! empty($tree) && ! is_array( $tree ) ) {
-                $this->log()->LogDebug( 'no breadcrumb items to show' );
-                return;
-            }
-
-            $trailpages = $this->__getTrail( $tree, $current );
-
-            if ( $as_array )
-            {
-                return $trailpages;
-            }
-
-            return $this->buildListIter( $trailpages );
-
-        }   // end function buildBreadcrumb()
-        
-        /**
          * This is for backward compatibility only
          **/
         public function buildDropDownIter( $list, $options = array() ) {
@@ -811,6 +709,108 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
             return $select;
 
         }   // end function buildDropDownRecursive ()
+        
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public function buildRecursion ( &$items, $min = -1 ) {
+
+            if ( ! empty( $items ) && ! is_array( $items ) ) {
+                $this->log()->LogDebug( 'no items to build recursion' );
+                return;
+            }
+
+            $this->log()->LogDebug( 'building recursion from items:', $items );
+            $this->log()->LogDebug( 'config: ', $this->_config );
+
+            // if there's only one item, no recursion to do
+            if ( ! ( count( $items ) > 1 ) ) {
+                return $items;
+            }
+
+            $tree    = array();
+            $root_id = -1;
+
+            // spare some typing...
+            $ik      = $this->_config['__id_key'];
+            $pk      = $this->_config['__parent_key'];
+            $ck      = $this->_config['__children_key'];
+            $lk      = $this->_config['__level_key'];
+
+            // make sure that the $items array is indexed by the __id_key
+            $arr     = array();
+
+            foreach ( $items as $index => $item ){
+                $arr[ $item[$ik] ] = $item;
+            }
+
+            $items = $arr;
+
+            //
+            // this creates an array of parents with their associated children
+            //
+            // -----------------------------------------------
+            // REQUIRES that the array index is the parent ID!
+            // -----------------------------------------------
+            //
+            // http://www.tommylacroix.com/2008/09/10/php-design-pattern-building-a-tree/
+            //
+            foreach ( $items as $id => &$node ) {
+
+                // skip nodes with depth < min level
+                if (
+                     isset( $node[ $lk ] )
+                     &&
+                     $node[ $lk ] <= $min
+                ) {
+                    $this->log()->LogDebug( 'skipping node (level <= min level ['.$min.']', $node );
+                    continue;
+                }
+
+                // avoid error messages on missing parent key
+                if ( ! isset( $node[$pk] ) )
+                {
+                    $this->log()->LogDebug( 'adding missing parent key to node', $node );
+                    $node[$pk] = null;
+                }
+
+                // root node
+                if ( $node[$pk] === null && $root_id < 0 )
+                {
+                    $this->log()->LogDebug( 'found root node', $node );
+                    $tree[$id] = &$node;
+                    $root_id   = $id;
+                }
+                // sub node
+                else {
+                    // avoid warnings on missing children key
+                    if ( ! isset( $items[$node[$pk]][$ck]) )
+                    {
+                        $items[ $node[$pk] ][ $ck ] = array();
+                    }
+                    $items[ $node[$pk] ][ $ck ][] = &$node;
+                }
+
+            }
+
+    // ---- ????? -----
+            if ( ! empty($tree) && is_array($tree) && count( $tree ) > 0 )
+            {
+                $tree[$root_id][$ck]['__is_recursive'] = 1;
+                $tree = $tree[$root_id][$ck];
+            }
+            else {
+                $this->log()->LogDebug( '---ERROR!--- $tree is empty!' );
+            }
+
+            $this->log()->LogDebug( 'returning tree: ', $tree );
+
+            return $tree;
+
+        }   // end function buildRecursion ()
 
         /**
          *
@@ -942,8 +942,11 @@ if ( ! class_exists( 'wbListBuilder' ) ) {
                 $li_css .= ' '
                         .  $this->_config['css_prefix']
                         .  $this->_config['li_class']
-                        .  '_'
-                        .  $item[ $this->_config['__level_key'] ];
+                        .  (
+                                isset( $item[ $this->_config['__level_key'] ] )
+                              ? '_'.$item[ $this->_config['__level_key'] ]
+                              : ''
+                           );
             }
 
             // markup for current page
