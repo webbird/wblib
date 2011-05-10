@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Beautiful forms with CSS</title>
+		<link href="styles/screen.css" rel="stylesheet" type="text/css" />
+	</head>
+	<body>
+		<div id="content">
+			<h1>Make your forms beautiful with CSS</h1>
+			<form>
+				<p><strong>Note:</strong> Items marked <span class="required">*</span> are required fields</p>
+				<fieldset id="personal">
+					<legend><span>Personal Details</span></legend>
+					<ol>
+						<li><label for="forename" title="Enter your forename" class="required">Forename<span>*</span></label>
+							<input name="forename" type="text" id="forename" value="Enter your first name" />	
+						</li>
+						<li>
+							<label for="surname" title="Enter your surname" class="required">Surname<span>*</span></label>	
+							<input type="text" id="surname" name="surname" />
+						</li>
+						<li>
+							<label for="email" title="Enter your email address" class="required">Email Address<span>*</span></label>
+							<input type="text" id="email" name="email" />
+						</li>
+						<li>
+							<label for="occupation" title="Choose your occupation" class="required">Occupation<span>*</span></label>
+							<input class="radio" type="radio" id="occupation" name="occupation" value="Designer" /> Designer
+							<input class="radio" type="radio" id="occupation" name="occupation" value="Developer" /> Developer
+							<input class="radio" type="radio" id="occupation" name="occupation" value="Manager" /> Manager
+						</li>
+					</ol>
+				</fieldset>
+				<fieldset id="address">
+					<legend><span>Address Details</span></legend>
+					<ol>
+						<li>
+							<label for="address1" title="Address Line 1" class="required">House Number &amp; Street<span>*</span></label>
+							<input type="text" id="address1" name="address1" />
+						</li>
+						<li>
+							<label for="address2" title="Address Line 2">District</label>
+							<input type="text" id="address2" name="address2" />
+							
+						</li>
+						<li>
+							<label for="address3" title="Address Line 3" class="required">Town/City<span>*</span></label>
+							<input type="text" id="address3" name="address3" />
+						</li>
+						<li>
+							<label for="address4" title="Address Line 4" class="required">County<span>*</span></label>
+							<input type="text" id="address4" name="address4" />
+						</li>
+						<li>
+							<label for="postcode" title="Postcode" class="required">Post Code<span>*</span></label>
+							<input type="text" id="postcode" name="postcode" />
+						</li>
+						<li>
+							<label for="phone" title="Enter your phone number">Telephone</label>
+							<input type="text" id="phone" name="phone" />
+						</li>
+					</ol>
+				</fieldset>
+				<fieldset id="userdetails">
+					<legend><span>Account Details</span></legend>
+					<ol>
+						<li>
+							<label for="username" title="Choose a username" class="required">Username<span>*</span></label>
+							<input type="text" id="username" name="username" />
+						</li>
+						<li>
+							<label for="password" title="Choose a password" class="required">Password<span>*</span></label>
+							<input type="password" id="password" name="password" />
+						</li>
+						<li>
+							<label for="verpassword" title="Verify your password" class="required">Password confirmation<span>*</span></label>
+							<input type="password" id="verpassword" name="verpassword" />
+						</li>
+					</ol>
+				</fieldset>
+				<fieldset id="submitform">
+					<input type="submit" id="formsubmit" value="Create Account" /></label>
+				</fieldset>
+			</form>
+			<p>&nbsp;</p>
+		</div>
+		<div id="footer">
+			Make your forms beautiful with CSS...
+		</div>
+</body>
+</html>

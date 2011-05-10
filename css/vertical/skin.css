@@ -8,6 +8,10 @@ fieldset.fbfieldset {
 	background-color: #eee;
 }
 
+fieldset.fbouter {
+  border: 0;
+}
+
 input.fbsubmit {
 	background-color: #ddd;
   text-align: center;
@@ -32,6 +36,13 @@ fieldset.fbfieldset input.fbfile
 	width: 20em;
 }
 
+fieldset.fbfieldset select.fbselect,
+fieldset.fbfieldset select.fbmultiselect
+{
+  width: 20.6em;
+}
+
+
 label.fblabel {
 	display: block;
 	margin-bottom: 1em;
@@ -45,10 +56,11 @@ select.fbselect {
 }
 
 .fbtyperadio {
-	width: 15em;
+	width: 22em !important;
 	margin: 1em 0 2em 0;
 	background-color: #ddd;
 	padding: 5px;
+	border: 1px inset white;
 }
 
 .fbtyperadio input.fbinput {

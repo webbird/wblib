@@ -4,16 +4,19 @@
     http://www.webdesignermag.co.uk/tutorial-files/issue-152-tutorial-files/
 */
 
-@import url(../formbuilder_default.css); 
+@import url(../formbuilder_default.css);
 
 fieldset.fbouter {
 		background            : #ffffff url(pagebg.gif) repeat-y left top;
 		padding-left          : 160px;
 		padding-right         : 160px;
+		width                 : 705px;
 }
 fieldset.fbfieldset {
 		background            :	white url(fieldsetbg.gif) no-repeat bottom right;
 		padding               : 15px;
+		max-width             : 660px;
+		width                 : 660px;
 }
 legend.fblegend {
 		text-transform        : uppercase;
@@ -34,6 +37,9 @@ input.fbinput {
 		border                :	1px solid #493F0B;
 		color                 :	#1E1903;
 		background            :	#F5F6D4;
+}
+textarea.fbtextarea {
+    width: 150px;
 }
 div.fberror, div.fbinfo {
     background           : transparent url(error.png) left no-repeat;

@@ -2,6 +2,15 @@
     wbFormBuilder basic CSS
 *******************************************************************************/
 
+@import url(../js/tooltip/tooltip.css);
+@import url(../js/cleditor/jquery.cleditor.css);
+
+fieldset.fbfieldset {
+    margin               : 15px auto;
+}
+fieldset.fbfieldset legend.fblegend {
+    font-weight          : bold;
+}
 fieldset.fbfieldset ol {
     padding              : 1em 1em 0 1em;
     list-style           : none;
@@ -52,7 +61,7 @@ label.fblabel {
     margin-right         : 1em;
     text-align           : right;
 }
-input.fbtext, input.fbfile, input.fbsubmit,
+input.fbtext, input.fbfile, input.fbsubmit, input.fbpassword,
 span.fbinfotext,
 select.fbselect, select.fbmultiselect,
 textarea.fbtextarea
@@ -81,4 +90,30 @@ textarea.fbdisabled
 		background            :	transparent url(required.png) no-repeat center left;
 		padding-left          : 30px;
 		font-weight           : bold;
+}
+
+/*******************************************************************************
+    Tooltip
+*******************************************************************************/
+#DHTMLgoodies_formTooltipDiv {
+    background-color     : #fff !important;
+    border               : 1px solid #000;
+}
+.DHTMLgoodies_formTooltipDiv {
+    padding              : 5px;
+}
+#DHTMLgoodies_formTooltipContent {
+    margin-bottom        : 10px;
+}
+.DHTMLgoodies_formTooltip_closeMessage {
+	  font-size            : 0.8em;
+}
+
+div.cleditorMain, div.cleditorToolbar, div.cleditorGroup, div.cleditorButton, div.cleditorDivider { margin-top: auto !important; }
+div.cleditorMain {
+    float: right !important;
+}
+
+div.cleditorMain textarea.fbtextarea {
+    width: ;
 }
