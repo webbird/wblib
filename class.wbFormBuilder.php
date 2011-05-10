@@ -104,6 +104,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
                   # output as table or fieldset
                   'output_as'        => 'fieldset',
+                  
+                  # secret for token creation; should be overloaded by the app!
+                  'secret'           => '!p"/.m4fk{ay{£1R0W0O',
               );
 
         /**
@@ -329,7 +332,25 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $formname = $this->__validateFormName( $formname );
             $errors   = array();
 
-            SEQ_CHECK_TOKEN($formname);
+            // SEQ_CHECK_TOKEN($formname);
+            
+            // Check a token was signed by us
+            $key   = $this->val->param( 'fbformkey' );
+            $this->log()->LogDebug( 'checking token: '.$key );
+            $parts = explode( '-', $key );
+            if ( count($parts) == 3 ) {
+                list( $token, $hash, $time ) = $parts;
+                // check if token is expired
+                if ( $time < ( time() - 30 * 60 ) ) {
+                    $this->log()->LogDebug( 'token is expired (token time -'.$time.'- checked against -'.( time() - 30*60 ).'-' );
+                    SEQ_TERMINATE_SESSION_();
+                }
+                if ( $hash != sha1( $this->_config['secret'].'-'.$formname.'-'.$token ) ) {
+                    $this->log()->LogDebug( 'invalid token!' );
+                    SEQ_TERMINATE_SESSION_();
+                }
+            }
+
 
             if ( isset( $this->_checked[ $formname ] ) && $this->_checked[ $formname ] === true ) {
                 $this->log()->LogDebug(
@@ -511,6 +532,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             // use correct template
             $template = 'block.'.$this->_config['output_as'].'.tpl';
+            
+            // create a signed token
+            $token  = dechex(mt_rand());
+            $hash   = sha1($this->_config['secret'].'-'.$formname.'-'.$token);
+            $signed = $token.'-'.$hash.'-'.time();
 
             // set some defaults
             $this->tpl->setGlobal(
@@ -523,6 +549,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                            . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
                     'WBLIB_BASE_URL'
                         => $this->_config['wblib_base_url'],
+                    'token' => $signed,
                 )
             );
 
@@ -1450,12 +1477,16 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         /**
          * create a radio
          *
-         * @access private
+         * @access public
          * @param  array    $element - element definition
          * @return HTML
          *
          **/
         public function radio ( $element ) {
+        
+            if ( ! isset( $element['type'] ) ) {
+                $element['type'] = 'radio';
+            }
 
             $this->log()->LogDebug( 'creating radio field:', $element );
 
