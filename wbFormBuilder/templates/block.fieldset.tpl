@@ -2,7 +2,7 @@
       {{ :if header }}{{ header }}{{ :ifend }}
       <ol>
 {{ :loop elements }}{{ :if ! header }}
-        <li>
+        <li class="fbtype{{ type }}">
           {{ :if label }}{{ label }}{{ :ifend }}
           <span{{ :if req }} class="fbrequired"{{ :ifend }}>&nbsp;</span>
           {{ field }}

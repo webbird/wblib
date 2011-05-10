@@ -36,10 +36,24 @@ $LANG = array(
     'Please insert a value'
         => 'Bitte f&uuml;llen Sie das Feld aus',
         
+    'Please insert a valid value'
+        => 'Bitte geben Sie einen g&uuml;ltigen Wert an',
+        
     'Submit' => 'Absenden',
     'Reset'  => 'Zur&uuml;cksetzen',
+    'Cancel' => 'Abbrechen',
+    
     'Y'      => 'Ja',
+    'y'      => 'ja',
+    'Yes'    => 'Ja',
+    'yes'    => 'ja',
     'N'      => 'Nein',
+    'n'      => 'nein',
+    'No'     => 'Nein',
+    'no'     => 'nein',
+    
+    'Characters' => 'Zeichen',
+    
 );
 
 ?>
