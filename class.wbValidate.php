@@ -201,14 +201,17 @@ class wbValidate extends wbBase {
         }
         
         // value available?
-        if ( ! isset( self::$_tainted[ $varname ] ) ) {
+        if (
+                ! isset( self::$_tainted[ $varname ] )
+             || ( is_string(self::$_tainted[ $varname ]) && strlen(self::$_tainted[ $varname ]) == 0 )
+        ) {
             $this->log()->LogDebug( 'no data found for var '.$varname );
             return isset( $options['default'] ) ? $options['default'] : NULL;
         }
 
         // so we have a tainted value; let's check it
         $this->log()->LogDebug( 'checking var '.$varname.' with constant '.$constant );
-        
+
         if ( $this->validate( $constant, self::$_tainted[ $varname ], $options ) ) {
         
             $value = self::$_tainted[ $varname ];
