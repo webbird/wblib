@@ -22,11 +22,11 @@
 
 **/
 
-if ( ! class_exists( 'KLogger' ) ) {
+if ( ! class_exists( 'KLogger', false ) ) {
     include_once dirname(__FILE__).'/./debug/KLogger.php';
 }
 
-if ( ! class_exists( 'wbBase' ) ) {
+if ( ! class_exists( 'wbBase', false ) ) {
 
     class wbBase {
 
@@ -418,7 +418,12 @@ if ( ! class_exists( 'wbBase' ) ) {
                 $path = preg_replace( "#^/+#", '', $path );
             }
 
-            $URI = $path . '?' . implode( '&', $carr );
+            $URI = $path
+                 . (
+                       count($carr)
+                     ? '?' . implode( '&', $carr )
+                     : NULL
+                   );
     #echo "getURI() URI before match servername: -$URI-<br />";
 
             // make sure that we have a server name
