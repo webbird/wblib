@@ -33,7 +33,7 @@ class wbSQLite extends wbDBBase implements wbDBDriver {
 
     public function defaults () {
         $this->port       = NULL;
-        $this->dbname     = '/tmp/blafasel.db';
+        $this->dbname     = '/default.db';
         $this->pdo_driver = 'sqlite';
     }   // end function defaults ()
     
@@ -48,9 +48,8 @@ class wbSQLite extends wbDBBase implements wbDBDriver {
         if ( empty( $this->dsn ) ) {
             $this->dsn = $this->pdo_driver.':'.$this->dbname;
         }
-    }
+    }   // end function getDSN()
 
-    
 }
 
 ?>
