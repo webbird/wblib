@@ -22,6 +22,8 @@
         var tooltipObj = new DHTMLgoodies_formTooltip();
         tooltipObj.setTooltipPosition('right');
         tooltipObj.setImagePath('{{ WBLIB_BASE_URL }}/wblib/js/tooltip/images/');
+        tooltipObj.setCloseMessage('{{ :lang Close }}');
+        tooltipObj.setDisableTooltipMessage("{{ :lang Don't show this message again }}");
         tooltipObj.initFormFieldTooltip();
       }
       {{ js }}

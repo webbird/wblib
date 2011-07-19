@@ -54,6 +54,10 @@ $LANG = array(
     
     'Characters' => 'Zeichen',
     
+    // Tooltip
+    "Don't show this message again" => 'Diese Meldung nicht mehr zeigen',
+    'Close' => 'Schlie&szlig;en',
+    
 );
 
 ?>
