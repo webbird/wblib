@@ -37,4 +37,8 @@ foreach (
     }
 }
 
+if ( ! class_exists( 'upload', false ) ) {
+    include_once dirname( __FILE__ ).'/class.upload/class.upload.php';
+}
+
 ?>

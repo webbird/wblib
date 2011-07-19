@@ -48,7 +48,7 @@ class wbMySQL extends wbDBBase implements wbDBDriver {
      *
      **/
     public function getDriverOptions() {
-        return array( PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8" );
+        #return array( PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8" );
     }
     
 }
