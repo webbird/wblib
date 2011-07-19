@@ -70,7 +70,7 @@ class wbDBBase extends PDO {
         ),
         array(
             'name' => 'user',
-            'type' => 'PCRE_ALPHANUM',
+            'type' => 'PCRE_STRING',
         ),
         array(
             'name' => 'pass',
@@ -78,7 +78,7 @@ class wbDBBase extends PDO {
         ),
         array(
             'name' => 'dbname',
-            'type' => 'PCRE_ALPHANUM',
+            'type' => 'PCRE_STRING',
         ),
         array(
             'name' => 'timeout',
@@ -109,7 +109,8 @@ class wbDBBase extends PDO {
         'OR'  => 'OR',
         'or'  => 'OR',
         '&&'  => 'AND',
-        '\|\|'  => 'OR'
+        '\|\|'  => 'OR',
+        '||'  => 'OR',
     );
 
     /**
@@ -413,11 +414,19 @@ class wbDBBase extends PDO {
         $values = array();
         $fields = NULL;
 
-        foreach ( $options['values'] as $v ) {
-            $values[] = '?';
+        if ( isset( $options['values'] ) ) {
+            if ( ! is_array( $options['values'] ) ) {
+                $options['values'] = array( $options['values'] );
+            }
+            foreach ( $options['values'] as $v ) {
+                $values[] = '?';
+            }
         }
 
-        if ( isset( $options['fields'] ) && is_array( $options['fields'] ) ) {
+        if ( isset( $options['fields'] ) ) {
+            if ( ! is_array( $options['fields'] ) ) {
+                $options['fields'] = array( $options['fields'] );
+            }
             $fields = '( `'
                     . implode( '`, `', $options['fields'] )
                     . '` )';
@@ -430,14 +439,16 @@ class wbDBBase extends PDO {
                    . " )";
                        
         $stmt      = $this->prepare( $statement );
-        $this->log->LogDebug( wbDatabase::interpolateQuery($statement,$options['values']) );
+        $params    = $this->__get_params($options['values']);
+
+        $this->log->LogDebug( wbDatabase::interpolateQuery($statement,$params) );
 
         if ( ! is_object( $stmt ) ) {
             $error_info = '['.implode( "] [", $this->errorInfo() ).']';
             $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
         }
-
-        if ( $stmt->execute( $options['values'] ) ) {
+        
+        if ( $stmt->execute( $params ) ) {
             $this->log->LogDebug( 'statement successful:', $statement );
             // if it's an insert, save the id
             if ( $do == 'INSERT' ) {
@@ -667,6 +678,8 @@ class wbDBBase extends PDO {
      **/
     protected function __parse_where( $where ) {
     
+        $this->log->LogDebug( '', $where );
+    
         if ( is_array( $where ) ) {
             $where = implode( ' AND ', $where );
         }
@@ -678,6 +691,7 @@ class wbDBBase extends PDO {
         $string = $this->__replaceOps( $string );
         
         if ( ! empty( $string ) ) {
+            $this->log->LogDebug( $string );
             return ' WHERE '.$string;
         }
         
@@ -695,6 +709,7 @@ class wbDBBase extends PDO {
         foreach ( $params as $i => $param ) {
             $params[$i] = SEQ_MYSQL($param);
         }
+        $this->log->LogDebug( 'PARAMS:', $params );
         return $params;
     }   // end function __get_params()
     
