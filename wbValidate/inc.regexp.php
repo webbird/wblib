@@ -65,4 +65,12 @@ define( 'PCRE_PLAIN'       , '/^.*?$/esx' );
 // MIME types
 define( 'PCRE_MIME'        , "/^(application|audio|example|image|message|model|multipart|text|video)\/(\*|[a-zA-Z0-9]+([+.-][a-zA-z0-9]+)*)$/" );
 
+// International telephone number (ITU-T  Recommendation  E.123)
+// Example: +22 607 123 456
+// This is a very basic implementation!
+define( 'PCRE_TEL_INTL'    , "/^\+\d{1,2}\s*?[\s\d]+)$/" );
+
+// Telephone number (german format) => (01234) 567 890
+define( 'PCRE_TEL_GERMAN'  , "/^(\(?\d{2,6}\)?\s*?[\s\d]+)$/" );
+
 ?>
