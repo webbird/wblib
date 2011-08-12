@@ -7,14 +7,14 @@
   Copyright (C) 2009, 2011, Bianka Martinovic
   Contact me: blackbird(at)webbird(dot)de, http://www.webbird.de/
   
-  This info file is created for use with Websitebaker / Lepton CMS
+  This info file is created for use with Websitebaker / LEPTON CMS
 
 **/
 
 $module_directory 	= 'wblib';
-$module_name 				= "WebBird's Base Libraries";
-$module_function 		= 'snippet';
-$module_version 		= '0.51';
+$module_name 				= 'wblib';
+$module_function 		= 'library';
+$module_version 		= '0.54';
 $module_platform 		= '2.8';
 
 $module_author 			= 'Bianka Martinovic (http://www.webbird.de/)';
