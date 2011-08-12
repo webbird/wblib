@@ -2,7 +2,7 @@
     wbFormBuilder basic CSS
 *******************************************************************************/
 
-@import url(../js/tooltip/tooltip.css);
+@import url(../js/tooltip/form-field-tooltip.css);
 @import url(../js/cleditor/jquery.cleditor.css);
 
 fieldset.fbfieldset {
@@ -97,6 +97,7 @@ textarea.fbdisabled
 *******************************************************************************/
 #DHTMLgoodies_formTooltipDiv {
     background-color     : #fff !important;
+    color                : #000 !important;
     border               : 1px solid #000;
 }
 .DHTMLgoodies_formTooltipDiv {
