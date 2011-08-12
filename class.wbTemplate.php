@@ -437,7 +437,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
             $fh = fopen( $this->_config['workdir'].'/'.$this->_config['cachedir'].'/'.$cache_file, 'w' );
             fwrite( $fh, '<'.'?php'."\n" );
             fwrite( $fh, '    $fillings = $this->data;'."\n" );
-            fwrite( $fh, '    $globals  = $this->globals'."\n".'?'.'>'."\n" );
+            fwrite( $fh, '    $globals  = $this->globals;'."\n".'?'.'>'."\n" );
             fwrite( $fh, $string );
             fwrite( $fh, "\n" );
             fclose( $fh );
@@ -580,7 +580,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
     			      $key        = trim($tokens[$i++]); # variable name
     			      $_cData		  = $tokens[$i++]; # text until next token
 
-    #echo "current match:<br />Full -$fullTag-<br />Type -$type-<br />isClosing -$isClosing-<br />Var -$key-<br />",( isset( $_cdata ) ? "Content -$_cdata-<br />" : '' ),"<br />";
+#echo "current match:<br />Full -$fullTag-<br />Type -$type-<br />isClosing -$isClosing-<br />Var -$key-<br />",( isset( $_cdata ) ? "Content -$_cdata-<br />" : '' ),"<br />";
 
     			      if ( ! $isClosing ) {
                     // begin recording a loop
@@ -641,10 +641,15 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
     		    $this->_data[ $this->_depth ] = '';
 
     		    $not = false;
+    		    $isloop = false;
 
     		    if ( preg_match( "#(\!|not)\s*(.*)#", $key, $match ) ) {
                 $key = $match[2];
                 $not = true;
+    		    }
+    		    if ( preg_match( "#isloop\s*(.*)#", $key, $match ) ) {
+                $key    = $match[1];
+                $isloop = true;
     		    }
 
             $el = array(
@@ -653,10 +658,10 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
         			  'type'        => $type,
         			  'path'        => array(),
         			  'is_negative' => $not,
+        			  'is_loop'     => $isloop,
         		);
 
-            if ( $type == 'loop' )
-            {
+            if ( $type == 'loop' ) {
                 // push the current loop key to the path
                 array_push( $this->_loops_path, $key );
 
@@ -740,8 +745,9 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                     $var .= '["'.$el['key'].'"]';
                     $i    = '$'.$this->_loop_vars[ $this->_var_index ];
 
-                    $code = '<?php if ( '
-                          . 'isset( '.$var.' ) && is_array( '.$var.' ) && count ( '.$var.' ) > 0 ): '."\n"
+                    $code = '<?php '."\n"
+                          . 'if ( isset( '.$var.' ) ):'."\n"
+                          . '    if ( is_array( '.$var.' ) && count ( '.$var.' ) > 0 ): '."\n"
                           . '    for ( '.$i.'=0; '.$i.'<count('.$var.'); '.$i.'++ ): ?>'."\n";
 
                     // replace vars in cdata
@@ -764,7 +770,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
 
                     return array(
                                $el['fulltag'].$el['cdata'].$fullTag,
-                               $code.$data.'<?php endfor; endif; ?>'
+                               $code.$data.'<?php endfor; else: echo '.$var.'; endif; endif; ?>'
                            );
                     break;
 
@@ -772,12 +778,18 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                 case 'if':
 
                     $var  = '$fillings';
+                    $check_value = NULL;
+                    $check_with  = NULL;
+                    
+                    if ( preg_match( '#(.*)(==|!=|<>|>|<)(.*)#', $el['key'], $match ) ) {
+                        $el['key']   = trim( $match[1] );
+                        $check_value = trim( $match[3] );
+                        $check_with  = trim( $match[2] );
+                    }
 
-                    if ( count( $el['path'] ) > 0 )
-                    {
+                    if ( count( $el['path'] ) > 0 ) {
                         $i = 1;
-                        foreach ( $el['path'] as $index => $item )
-                        {
+                        foreach ( $el['path'] as $index => $item ) {
                             $var .= '["'.$item.'"][$'.$this->_loop_vars[ $i ].']';
                             $i++;
                         }
@@ -788,10 +800,16 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                     // handle else
                     $data = preg_replace( "/$O\s*:else\s*$C/im", '<?php else: ?>', $data );
                     $neg  = ( isset( $el['is_negative'] ) && $el['is_negative'] ) ? ' ! ' : '';
+                    $loop = ( isset( $el['is_loop'] )     && $el['is_loop']     ) ? ' && is_array('.$var.') ' : NULL;
                     $code = '<?php if ( '
                           . ( ( $neg ) ? ' ! ' : NULL )
-                          . 'isset( '.$var.' ) ): ?>'
-                          . "\n"
+                          . 'isset( '.$var.' ) '
+                          . (
+                              ( $check_value && $check_with )
+                              ? ' && ( '.$var.' '.$check_with.' '.$check_value.' ) '."\n"
+                              : ''
+                            )
+                          . $loop.' ): ?>'."\n"
                           . $data
                           . '<?php endif; ?>';
 
