@@ -231,13 +231,20 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         /**
          * merge the contents of another form to the current one
          *
-         *
+         * @access public
+         * @param  string  $formname - name of the current form
+         * @param  string  $name     - name of the added form
+         * @return void
          *
          **/
         public function addForm( $formname = '', $name ) {
 
             $formname = $this->__validateFormName( $formname );
 
+            // check if the form exists
+            if ( ! isset( self::$_forms[$name] ) || ! is_array( self::$_forms[$name] ) ) {
+                $this->printError( 'Unable to add form ['.$name.'] to form ['.$formname.'] - the form doesn\'t exist!' );
+            }
             $this->log()->LogDebug(
                 "adding elements of form [$name] to form [$formname]<br />"
             );
@@ -308,10 +315,16 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             self::$_forms[ $formname ]['elements']
                 = array_merge(
                       self::$_forms[ $formname ]['elements'],
-                      self::$_forms[ $name ]['elements'],
+                      self::$_forms[ $name ]['elements']
+                  );
                       // push buttons to form again
+            if ( count($buttons) ) {
+                self::$_forms[ $formname ]['elements']
+                    = array_merge(
+                          self::$_forms[ $formname ]['elements'],
                       $buttons
                   );
+            }
 
         }   // end function addForm()
 
@@ -922,16 +935,23 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          * @access public
          * @param  string  $formname
          * @param  string  $msg
+         * @param  string  $element   - (optional) name of the element the message is attached to
+         * @param  boolean $on_top    - (optional) add message on top (instead of bottom)
          * @return void
          *
          **/
-        public function setError( $formname = NULL, $msg, $on_top = false ) {
+        public function setError( $formname = NULL, $msg, $element = NULL, $on_top = false ) {
             $formname = $this->__validateFormName( $formname );
             if ( $on_top ) {
                 array_unshift( $this->_errors[$formname], $this->translate( $msg ) );
             }
             else {
+                if ( $element ) {
+                    $this->_errors[$formname][$element] = $this->translate( $msg );
+                }
+                else {
                 $this->_errors[$formname][] = $this->translate( $msg );
+                }
             }
         }   // end function setError()
         
@@ -1677,7 +1697,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			                       . " });\n";
             }
             if ( isset( $element['editor'] ) && $element['editor'] === true ) {
-                $this->_js[] = "jQuery('#" . $element['name'] . "').cleditor();\n";
+                $this->_js[] = "if ( typeof cleditor != 'undefined' ) { jQuery('#" . $element['name'] . "').cleditor(); }\n";
             }
 
             return $this->tpl->getTemplate(
