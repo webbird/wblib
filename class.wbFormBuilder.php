@@ -750,6 +750,39 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end function getOptionsForArea()
 
         /**
+         * check if an element is already there
+         *
+         * @access public
+         * @param  string   $formname - name of the form
+      	 * @param  array    $name     - name of the element
+      	 * @return boolean
+         *
+         **/
+      	public function hasElement( $formname = NULL, $name ) {
+
+            $formname = $this->__validateFormName( $formname );
+
+      	    $this->log()->LogDebug(
+                'looking for element ['.$name.'] in form ['.$formname.']'
+            );
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
+
+            // element found
+            if ( is_array( $path ) ) {
+                return true;
+            }
+            // element not found; add to top
+            else {
+                return false;
+            }
+
+            return true;
+
+        }   // end function hasElement()
+
+        /**
       	 * Insert an element at a given position
       	 *
       	 * Can be used to insert a new element before an already
