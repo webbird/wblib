@@ -233,16 +233,21 @@ if ( ! class_exists( 'wbBase', false ) ) {
 
             // array of locations to search for $file
             $try = array(
-                       $this->_config['path'].'/'.$file,
-                       $this->_config['fallback_path'].'/'.$file,
-                       $this->_config['workdir'].'/'.$file,
+                       realpath( $this->_config['path']         .'/'.$file ),
+                       realpath( $this->_config['fallback_path'].'/'.$file ),
+                       realpath( $this->_config['workdir']      .'/'.$file ),
                        $file,
                    );
 
             // add $path to search array if set
             if ( isset ( $path ) && file_exists( $path ) ) {
-                array_unshift( $try, $path.'/'.$file );
+                array_unshift( $try, realpath( $path.'/'.$file ) );
             }
+
+            // remove doubles
+            $try = array_unique($try);
+
+            $this->log()->LogDebug( 'scanning paths:', $try );
 
             foreach ( $try as $filename ) {
 
@@ -270,11 +275,39 @@ if ( ! class_exists( 'wbBase', false ) ) {
                 }
             }
 
-            #if ( ! isset( $this->_loaded[ $file ] ) ) {
-            #    $this->printError( 'file not found: '.$file, $try );
-            #}
-
         }   // end function setFile ()
+
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public function scanDirectory( $dir, $remove_prefix = NULL, $with_files = false, $files_only = false ) {
+            $dirs = array();
+            if ( $dh = opendir( $dir ) ) {
+                while( $file = readdir($dh) ) {
+                    if ( ! preg_match( '#^\.#', $file ) ) {
+                        if ( is_dir( $dir.'/'.$file ) ) {
+                            if ( ! $files_only ) {
+                                $dirs[]  = str_ireplace( $remove_prefix, '', $dir.'/'.$file );
+                            }
+                            // recurse
+                            $subdirs = $this->getDirectories( $dir.'/'.$file, $with_files, $files_only );
+                            $dirs    = array_merge( $dirs, $subdirs );
+                        }
+                        elseif ( $with_files ) {
+                            $dirs[]  = str_ireplace( $remove_prefix, '', str_ireplace( $dir, '', $dir.'/'.$file ) );
+                        }
+                    }
+                }
+            }
+            else {
+                $this->printError( 'Unable to open base directory ['.$dir.']' );
+                exit;
+            }
+            return $dirs;
+        }   // end function scanDirectory()
 
         /**
          * find files by a given suffix
