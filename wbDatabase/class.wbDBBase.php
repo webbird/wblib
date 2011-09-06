@@ -62,7 +62,7 @@ class wbDBBase extends PDO {
         ),
         array(
             'name' => 'host',
-            'type' => 'PCRE_ALPHANUM',
+            'type' => 'PCRE_STRING',
         ),
         array(
             'name' => 'port',
