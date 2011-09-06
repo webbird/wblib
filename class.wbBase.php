@@ -469,6 +469,45 @@ if ( ! class_exists( 'wbBase', false ) ) {
             return $URI;
 
         }   // end function getURI ()
+        
+        /**
+         * sanitize URL (remove '/./', '/../', '//')
+         *
+         *
+         *
+         **/
+        function sanitizeURI( $href )
+        {
+            // href="http://..." ==> href isn't relative
+            $rel_parsed = parse_url($href);
+            $path       = $rel_parsed['path'];
+
+            // bla/./bloo ==> bla/bloo
+            $path       = preg_replace('~/\./~', '/', $path);
+
+            // resolve /../
+            // loop through all the parts, popping whenever there's a .., pushing otherwise.
+            $parts      = array();
+            foreach ( explode('/', preg_replace('~/+~', '/', $path)) as $part )
+            {
+                if ($part === ".." || $part == '')
+                {
+                    array_pop($parts);
+                }
+                elseif ($part!="")
+                {
+                    $parts[] = $part;
+                }
+            }
+
+            return
+            (
+                  array_key_exists( 'scheme', $rel_parsed )
+                ? $rel_parsed['scheme'] . '://' . $rel_parsed['host']
+                : ""
+            ) . "/" . implode("/", $parts);
+
+        }   // end function sanitizeURI()
 
       	/**
          *
