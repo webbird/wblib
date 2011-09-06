@@ -642,6 +642,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
 
     		    $not = false;
     		    $isloop = false;
+			$keys   = false;
 
     		    if ( preg_match( "#(\!|not)\s*(.*)#", $key, $match ) ) {
                 $key = $match[2];
@@ -651,6 +652,10 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                 $key    = $match[1];
                 $isloop = true;
     		    }
+    		if ( $type == 'loop' && preg_match( "#keys\s*(.*)#", $key, $match ) ) {
+                $key    = $match[1];
+                $keys   = true;
+    		}
 
             $el = array(
         			  'fulltag'     => $fullTag,
@@ -659,6 +664,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
         			  'path'        => array(),
         			  'is_negative' => $not,
         			  'is_loop'     => $isloop,
+        			  'by_keys'     => $keys,
         		);
 
             if ( $type == 'loop' ) {
@@ -747,8 +753,15 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
 
                     $code = '<?php '."\n"
                           . 'if ( isset( '.$var.' ) ):'."\n"
-                          . '    if ( is_array( '.$var.' ) && count ( '.$var.' ) > 0 ): '."\n"
-                          . '    for ( '.$i.'=0; '.$i.'<count('.$var.'); '.$i.'++ ): ?>'."\n";
+                          . '    if ( is_array( '.$var.' ) ):'."\n"
+						  . '        if ( count ( '.$var.' ) > 0 ): '."\n";
+
+					if( $el['by_keys'] == true ) {
+						$code .= '        foreach( '.$var.' as $key => $item ): ?>'."\n";
+					}
+					else {
+                        $code .= '        for ( '.$i.'=0; '.$i.'<count('.$var.'); '.$i.'++ ): ?>'."\n";
+					}
 
                     // replace vars in cdata
                     while(
@@ -759,7 +772,11 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                         $this_var    = $var.'['.$i.']["'.$vars[1].'"]';
                         $data        = str_replace(
                                            $vars[0],
-                                           '<?php if ( isset( '.$this_var.' ) ): echo '.$this_var.'; elseif ( isset( $globals["'.$vars[1].'"] ) ): echo $globals["'.$vars[1].'"]; else: echo "' . $this->handleMissing( $vars[1], "no data for var -".$vars[1]."-" ) . '"; endif; ?>',
+                                           (
+										   	   ( $el['by_keys'] == true )
+											 ? '<?php if ( "'.$vars[1].'" == "key" ): echo $this->translate( "$key" ); else: echo $item; endif; ?>'
+                                             : '<?php if ( isset( '.$this_var.' ) ): echo '.$this_var.'; elseif ( isset( $globals["'.$vars[1].'"] ) ): echo $globals["'.$vars[1].'"]; else: echo "' . $this->handleMissing( $vars[1], "no data for var -".$vars[1]."-" ) . '"; endif; ?>'
+										   ),
                                            $data
                                        );
                     }
@@ -770,7 +787,11 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
 
                     return array(
                                $el['fulltag'].$el['cdata'].$fullTag,
-                               $code.$data.'<?php endfor; else: echo '.$var.'; endif; endif; ?>'
+                               $code.$data.
+							   '<?php ' .
+							     ( ( $el['by_keys'] == true ) ? 'endforeach' : 'endfor' ) .
+							     '; endif; else: echo '.$var.'; endif; endif; ' .
+							   '?>'
                            );
                     break;
 
@@ -804,6 +825,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                     $code = '<?php if ( '
                           . ( ( $neg ) ? ' ! ' : NULL )
                           . 'isset( '.$var.' ) '
+                          . ( ( ! $neg ) ? '&& '.$var.' != "" ' : NULL )
                           . (
                               ( $check_value && $check_with )
                               ? ' && ( '.$var.' '.$check_with.' '.$check_value.' ) '."\n"
