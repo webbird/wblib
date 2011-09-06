@@ -217,12 +217,14 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             $formname = $this->__validateFormName( $formname );
 
+            if ( ! $this->hasElement( $formname, $element['name'] ) ) {
       	    $this->log()->LogDebug(
                 'adding element to form ['.$formname.']',
                 $element
             );
 
             self::$_forms[ $formname ]['elements'][] = $this->__registerElement( $formname, $element );
+            }
 
             return NULL;
 
@@ -515,7 +517,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          *
          **/
-        public function getErrors( $formname ) {
+        public function getErrors( $formname = '' ) {
             $formname = $this->__validateFormName( $formname );
             return is_array( $this->_errors[$formname] )
                  ? $this->_errors[$formname]
@@ -1268,8 +1270,12 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     $value
                 );
 
+                // find out which key contains the value
                 $key = 'value';
-                if (
+                if ( self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'legend' ) {
+                    $key = 'text';
+                }
+                elseif (
                      self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'select'
                      ||
                      self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] == 'multiselect'
@@ -1445,7 +1451,18 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             $this->log()->LogDebug( 'creating legend field:', $element );
 
-            $text   = $element['text'];
+            $text   = isset( $element['value'] )
+                    ? $element['value']
+                    : (
+                          isset( $element['text'] )
+                        ? $element['text']
+                        : NULL
+                      );
+
+            if ( ! $text ) {
+                $this->log()->LogError( 'no text given for legend element!' );
+            }
+                    
             $output =
                 $this->tpl->getTemplate(
                     'legend.'.$this->_config['output_as'].'.tpl',
@@ -1641,7 +1658,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     #    $checked   = 'checked';
                     #    $found_val = true;
                     #}
-                    if ( in_array( $value, $marked ) ) {
+                    #if ( in_array( $value, $marked ) ) {
+                    if ( in_array( $key, $marked ) ) {
                         $checked   = 'checked';
                         $found_val = true;
                     }
