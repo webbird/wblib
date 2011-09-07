@@ -508,6 +508,38 @@ if ( ! class_exists( 'wbBase', false ) ) {
             ) . "/" . implode("/", $parts);
 
         }   // end function sanitizeURI()
+        
+        /**
+         * sanitize path (remove '/./', '/../', '//')
+         *
+         *
+         *
+         **/
+        function sanitizePath( $path )
+        {
+			$path       = str_replace( '\\', '/', $path );
+			
+            // bla/./bloo ==> bla/bloo
+            $path       = preg_replace('~/\./~', '/', $path);
+
+            // resolve /../
+            // loop through all the parts, popping whenever there's a .., pushing otherwise.
+            $parts      = array();
+            foreach ( explode('/', preg_replace('~/+~', '/', $path)) as $part )
+            {
+                if ($part === ".." || $part == '')
+                {
+                    array_pop($parts);
+                }
+                elseif ($part!="")
+                {
+                    $parts[] = $part;
+                }
+            }
+
+            return implode("/", $parts);
+
+        }   // end function sanitizePath()
 
       	/**
          *
