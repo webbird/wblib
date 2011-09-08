@@ -536,8 +536,14 @@ if ( ! class_exists( 'wbBase', false ) ) {
                     $parts[] = $part;
                 }
             }
+            
+            $new_path = implode("/", $parts);
+            // windows
+            if ( ! preg_match( '/^[a-z]\:/i', $new_path ) ) {
+				$new_path = '/' . $new_path;
+			}
 
-            return implode("/", $parts);
+            return $new_path;
 
         }   // end function sanitizePath()
 
