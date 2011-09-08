@@ -26,12 +26,15 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 require_once dirname( __FILE__ ).'/class.wbValidate.php';
 require_once dirname( __FILE__ ).'/class.wbTemplate.php';
 
+// ----- including securImage -----
+require_once dirname( __FILE__ ).'/vendors/securimage/securimage.php';
+
 // ----- including sseq-lib -----
 $_SEQ_ONERROR_REDIRECT_TO        = $_SERVER['SCRIPT_NAME'];
 $_SEQ_ONERROR_REDIRECT_TO_PRESET = true;
-$_SEQ_BASEDIR                    = dirname( __FILE__ ).'/sseq-lib/';
+define('_SEQ_BASEDIR', dirname( __FILE__ ).'/sseq-lib/' );
 $_SEQ_BASEDIR_PRESET             = true;
-include_once $_SEQ_BASEDIR.'seq_lib.php';
+#include_once dirname( __FILE__ ).'/sseq-lib/'.'seq_lib.php';
 // ----- including sseq-lib -----
 
 if ( ! class_exists( 'wbFormBuilder', false ) ) {
@@ -40,7 +43,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         // ----- Debugging -----
         protected      $debugLevel      = KLOGGER::OFF;
-        #protected      $debugLevel      = KLOGGER::DEBUG;
 
         // name of the current form
         private        $_current_form   = NULL;
@@ -107,6 +109,22 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                   
                   # secret for token creation; should be overloaded by the app!
                   'secret'           => '!p"/.m4fk{ay{£1R0W0O',
+                  
+                  # known mime types
+				  'mimetypes'        => array(
+					  'application/octet-stream' => 'bin|dms|lha|lzh|exe|class|ani|pgp|so|dll|dmg',
+					  'image/gif'				 => 'gif',
+					  'image/*'                  => 'gif|ief|jpeg|jpg|jpe|png|tga|tif|tiff',
+					  'application/gzip'		 => 'gzip',
+					  'image/ief'				 => 'ief',
+					  'image/jpeg'				 => 'jpeg|jpg|jpe',
+					  'application/pdf'	 		 => 'pdf',
+					  'image/png'				 => 'png',
+					  'image/targa'				 => 'tga',
+					  'image/tiff'			     => 'tiff|tif',
+					  'application/zip'			 => 'zip',
+				  ),
+
               );
 
         /**
@@ -386,6 +404,17 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 if ( isset( $element['allow'] ) ) {
                     $allow = $element['allow'];
                 }
+                
+                // check captcha
+                if ( $element['type'] == 'captcha' ) {
+                    $securimage = new Securimage();
+                    if ($securimage->check($this->val->param($element['name'])) == false) {
+                        $errors[ $element['name'] ]
+                            = isset( $element['invalid'] )
+                            ? $this->translate( $element['invalid'] )
+                            : $this->translate( 'The security code entered was incorrect' );
+                    }
+                }
 
                 // check validity
                 $value = NULL;
@@ -559,7 +588,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                         => $this->_config['buttonpane_class']
                            . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
                     'WBLIB_BASE_URL'
-                        => $this->_config['wblib_base_url'],
+                        => $this->sanitizeURI( $this->_config['wblib_base_url'] ),
                     'token' => $signed,
                 )
             );
@@ -1116,6 +1145,59 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end function setInfotext()
         
         /**
+         * set allowed MIME types for file upload field
+         *
+         *
+         *
+         **/
+		public function setAllowedMimeTypes( $formname = '', $name, $types ) {
+		
+            $formname = $this->__validateFormName( $formname );
+            
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+
+            // element found
+            if ( is_array( $path ) ) {
+                $this->log()->LogDebug(
+                    'found element ['.$name.']; setting mime types to:', $types
+                );
+                if ( self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] != 'file' ) {
+                    $this->log()->LogError( 'element of type ['.self::$_forms[ $formname ]['elements'][ $path[0] ]['type'].'] cannot have a MIME type!' );
+                }
+                $mimetypes = array();
+                if ( ! is_array( $types ) ) {
+					$unserialized = @unserialize( stripslashes( $types ) );
+					if ( $unserialized === false ) {
+						$types = array( $types );
+					}
+					else {
+					    $types =& $unserialized;
+					}
+                }
+                if ( is_array( $types ) ) {
+                    // validate
+                    foreach( $types as $item ) {
+						if ( preg_match( "/^\w+\//", $item ) ) {
+							$mimetypes[] = $item;
+						}
+                    }
+                }
+				self::$_forms[ $formname ][ $name ][ 'mimetypes' ] = $mimetypes;
+                return true;
+            }
+            else {
+                $this->log()->LogDebug(
+                    'element not found!',
+                    self::$_forms[ $formname ]['elements']
+                );
+            }
+
+            return false;
+            
+		}   // end function setAllowedMimeTypes()
+        
+        /**
          * set option of an already existing element
          *
          * @access public
@@ -1322,11 +1404,22 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
  ******************************************************************************/
  
         /**
+         *
+         **/
+		public function captcha( $element ) {
+			$uri = $this->sanitizeURI( $this->_config['wblib_base_url'] . '/wblib/vendors/securimage/securimage_show.php' );
+			return
+				'<img id="captcha" src="'.$uri.'" alt="CAPTCHA Image" />' .
+				$this->input( array( 'name' => $element['name'], 'maxlength' => 6 ) ).
+				'<a href="#" onclick="document.getElementById(\'captcha\').src = \'/securimage/securimage_show.php?\' + Math.random(); return false">[ Different Image ]</a>';
+		}   // end function captcha()
+ 
+        /**
          * create a file upload field
          **/
         public function file( $element ) {
             return $this->input( array_merge( $element, array( 'type' => 'file' ) ) );
-        }   // end function file
+        }   // end function file()
 
         /**
          * some simple text
@@ -1415,8 +1508,27 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 }
             }
 
+			$formname = $this->__validateFormName();
+          
+            // is it a file upload field?
+            if ( ! strcasecmp( $element['type'], 'file' ) ) {
+                if ( isset( self::$_forms[ $formname ][ $element['name'] ][ 'mimetypes' ]) && is_array(self::$_forms[ $formname ][ $element['name'] ][ 'mimetypes' ]) ) {
+					$mimetypes = array();
+                    foreach( self::$_forms[$formname][$element['name']]['mimetypes'] as $item ) {
+						if ( isset( $this->_config['mimetypes'][$item] ) ) {
+							$suffixes = explode( '|', $this->_config['mimetypes'][$item] );
+							$mimetypes = array_merge( $mimetypes, $suffixes );
+						}
+						else {
+						    $this->log()->LogDebug( 'unknown MIME Type '.$item.'; please set the suffixes for this type!' );
+						}
+                    }
+					$element['onchange'] = 'TestFileType( this.form.'.$element['name'].'.value, [ \''.implode("', '", $mimetypes).'\' ] );';
+                }
+            }
+
             // quote value
-            if ( strlen( $element['value'] ) > 0 ) {
+            if ( isset($element['value']) && strlen( $element['value'] ) > 0 ) {
                 $element['value'] = //SEQ_OUTPUT(
                                     $element['value']
                                     //)
@@ -2053,7 +2165,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 $add_to_array[] = array(
                     'label'    => $label,
                     'type'     => $element['type'],
-                    'infotext' => $infotext,
+                    'infotext' => ( isset($infotext) ? $infotext : NULL ),
                     'name'     => $element['name'],
                     'info'     => ( isset ( $element['info'] ) && ( ! empty( $element['info'] ) ) )
                                ?  $this->lang->translate( $element['info'] )
