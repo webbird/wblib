@@ -49,6 +49,7 @@ label.fblabel {
 	font-weight: bold;
 	text-align: left;
 	float: none;
+	width: 100% !important;
 }
 
 select.fbselect {
