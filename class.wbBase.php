@@ -484,6 +484,9 @@ if ( ! class_exists( 'wbBase', false ) ) {
 
             // bla/./bloo ==> bla/bloo
             $path       = preg_replace('~/\./~', '/', $path);
+            
+            // remove trailing
+            $path       = preg_replace('~/$~', '', $path );
 
             // resolve /../
             // loop through all the parts, popping whenever there's a .., pushing otherwise.
