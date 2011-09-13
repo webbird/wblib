@@ -26,9 +26,6 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 require_once dirname( __FILE__ ).'/class.wbValidate.php';
 require_once dirname( __FILE__ ).'/class.wbTemplate.php';
 
-// ----- including securImage -----
-require_once dirname( __FILE__ ).'/vendors/securimage/securimage.php';
-
 // ----- including sseq-lib -----
 $_SEQ_ONERROR_REDIRECT_TO        = $_SERVER['SCRIPT_NAME'];
 $_SEQ_ONERROR_REDIRECT_TO_PRESET = true;
@@ -131,6 +128,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          * constructor
          **/
         function __construct ( $options = array() ) {
+        
+        	session_start();
 
             // wbBase adds given $options to $this->_config
             parent::__construct( $options );
@@ -408,6 +407,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 // check captcha
                 if ( $element['type'] == 'captcha' ) {
                     $securimage = new Securimage();
+					$securimage->use_sqlite_db = true;
+					$securimage->sqlite_database = dirname(__FILE__).'/vendors/securimage/database/securimage.sqlite';
                     if ($securimage->check($this->val->param($element['name'])) == false) {
                         $errors[ $element['name'] ]
                             = isset( $element['invalid'] )
@@ -959,7 +960,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             );
 
             // find given element
-            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
 
             // element found
             if ( is_array( $path ) ) {
@@ -1407,6 +1408,10 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          **/
 		public function captcha( $element ) {
+		    if ( ! class_exists( 'securimage' ) ) {
+		        // ----- including securImage -----
+				require_once dirname( __FILE__ ).'/vendors/securimage/securimage.php';
+		    }
 			$uri = $this->sanitizeURI( $this->_config['wblib_base_url'] . '/wblib/vendors/securimage/securimage_show.php' );
 			return
 				'<img id="captcha" src="'.$uri.'" alt="CAPTCHA Image" />' .
