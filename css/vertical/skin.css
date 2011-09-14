@@ -1,75 +1,16 @@
+/**
+ * wbFormBuilder Vertical Skin
+ **/
 @import url(../formbuilder_default.css);
-
-fieldset.fbfieldset {
-	display: block;
-	width: 30em;
-	margin: 0 0 3em 0;
-	padding: 1em;
-	background-color: #eee;
-}
-
-fieldset.fbouter {
-  border: 0;
-}
-
-input.fbsubmit {
-	background-color: #ddd;
-  text-align: center;
-  width: 10em;
-}
-
-legend.fblegend {
-	display: block;
-	padding: 0.5em 1em;
-	background-color: #ddd;
-	border: 1px solid #000;
-}
-
-fieldset.fbfieldset input.fbtext,
-fieldset.fbfieldset input.fbpassword,
-fieldset.fbfieldset textarea.fbtextarea,
-fieldset.fbfieldset select.fbselect,
-fieldset.fbfieldset select.fbmultiselect,
-fieldset.fbfieldset input.fbfile
-{
-	display: block;
-	width: 20em;
-}
-
-fieldset.fbfieldset select.fbselect,
-fieldset.fbfieldset select.fbmultiselect
-{
-  width: 20.6em;
-}
-
-
-label.fblabel {
-	display: block;
-	margin-bottom: 1em;
-	font-weight: bold;
-	text-align: left;
-	float: none;
-	width: 100% !important;
-}
-
-select.fbselect {
-	display: block;
-}
-
-.fbtyperadio {
-	width: 22em !important;
-	margin: 1em 0 2em 0;
-	background-color: #ddd;
-	padding: 5px;
-	border: 1px inset white;
-}
-
-.fbtyperadio input.fbinput {
-	clear: both;
-	float: left;
-	width: auto;
-}
-
-fieldset.fbfieldset li span {
-  float: right;
-}
+fieldset.fbfieldset{display:block;width:30em;background-color:#eee;margin:0 0 3em;padding:1em;}
+fieldset.fbouter{border:0;}
+input.fbsubmit{background-color:#ddd;text-align:center;width:10em;}
+legend.fblegend{display:block;background-color:#ddd;border:1px solid #000;padding:0.5em 1em;}
+fieldset.fbfieldset input.fbtext,fieldset.fbfieldset input.fbpassword,fieldset.fbfieldset textarea.fbtextarea,fieldset.fbfieldset select.fbselect,fieldset.fbfieldset select.fbmultiselect,fieldset.fbfieldset input.fbfile{display:block;width:20em;}
+fieldset.fbfieldset input.datepicker{display:inline-block;margin-right:5px;}
+fieldset.fbfieldset select.fbselect,fieldset.fbfieldset select.fbmultiselect{width:20.6em;}
+label.fblabel{display:block;margin-bottom:1em;font-weight:700;text-align:left;float:none;width:100% !important;}
+select.fbselect{display:block;}
+.fbtyperadio{width:22em !important;background-color:#ddd;border:1px inset #FFF;margin:1em 0 2em;padding:5px;}
+.fbtyperadio input.fbinput{clear:both;float:left;width:auto;}
+fieldset.fbfieldset li span{float:right;}

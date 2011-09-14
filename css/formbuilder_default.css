@@ -5,116 +5,31 @@
 @import url(../js/tooltip/form-field-tooltip.css);
 @import url(../js/cleditor/jquery.cleditor.css);
 
-fieldset.fbfieldset {
-    margin               : 15px auto;
-}
-fieldset.fbfieldset legend.fblegend {
-    font-weight          : bold;
-}
-fieldset.fbfieldset ol {
-    padding              : 1em 1em 0 1em;
-    list-style           : none;
-}
-fieldset.fbfieldset li {
-    float                : left;
-    clear                : left;
-    width                : 100%;
-    padding-bottom       : 1em;
-    text-align           : left;
-    list-style           : none;
-}
-fieldset.fbfieldset li span
-{
-    padding-left         : 20px;
-    width                : 20px;
-    height               : 20px;
-    min-height           : 20px;
-    padding              : 2px;
-    display              : block;
-    float                : left;
-}
-fieldset.fbfieldset li span.fberror,
-fieldset.fbfieldset li span.fbinfotext
-{
-    padding-left         : 5px;
-    width                : auto;
-    border               : 0;
-}
-.fberror {
-    color                : #C00;
-    border               : 1px solid #c00;
-    padding              : 5px;
-}
-div.fberror, div.fbinfo {
-    padding              : 10px;
-    text-align           : center;
-    margin-bottom        : 15px;
-}
-div.fbinfo {
-    border               : 1px solid #006600;
-}
-label.fblabel {
-    font-weight          : bold;
-    display              : block;
-    float                : left;
-    width                : 20em;
-    margin-right         : 1em;
-    text-align           : right;
-}
-input.fbtext, input.fbfile, input.fbsubmit, input.fbpassword,
-span.fbinfotext,
-select.fbselect, select.fbmultiselect,
-textarea.fbtextarea
-{
-    border               : 1px solid #ccc;
-    padding              : 3px;
-}
-select.fbmultiselect {
-    max-height           : 100px;
-}
-span.fbinfotext {
-    border               : none;
-}
-input.fbdisabled,
-textarea.fbdisabled
-{
-    border               : 0 !important;
-    background-color     : transparent;
-}
-.fbicon {
-    min-height           : 20px;
-    vertical-align       : middle;
-    margin               : 20px auto;
-}
-.fbrequired {
-		background            :	transparent url(required.png) no-repeat center left;
-		padding-left          : 30px;
-		font-weight           : bold;
-}
-
+fieldset.fbfieldset{margin:15px auto;}
+fieldset.fbfieldset legend.fblegend{font-weight:700;}
+fieldset.fbfieldset ol{list-style:none;padding:1em 1em 0;}
+fieldset.fbfieldset li{float:left;clear:left;width:100%;padding-bottom:1em;text-align:left;list-style:none;}
+fieldset.fbfieldset li span{width:20px;height:20px;min-height:20px;display:block;float:left;padding:2px;}
+fieldset.fbfieldset li span.fberror,fieldset.fbfieldset li span.fbinfotext{padding-left:5px;width:auto;border:0;}
+.fberror{color:#C00;border:1px solid #c00;padding:5px;}
+div.fberror,div.fbinfo{text-align:center;margin-bottom:15px;padding:10px;}
+div.fbinfo{border:1px solid #060;}
+label.fblabel{font-weight:700;display:block;float:left;width:20em;margin-right:1em;text-align:right;}
+input.fbtext,input.fbfile,input.fbsubmit,input.fbpassword,span.fbinfotext,select.fbselect,select.fbmultiselect,textarea.fbtextarea{border:1px solid #ccc;padding:3px;}
+select.fbmultiselect{max-height:100px;}
+span.fbinfotext{border:none;}
+input.fbdisabled,textarea.fbdisabled{border:0 !important;background-color:transparent;}
+.fbicon{min-height:20px;vertical-align:middle;margin:20px auto;}
+.fbrequired{background:transparent url(required.png) no-repeat center left;padding-left:30px;font-weight:700;}
 /*******************************************************************************
     Tooltip
 *******************************************************************************/
-#DHTMLgoodies_formTooltipDiv {
-    background-color     : #fff !important;
-    color                : #000 !important;
-    border               : 1px solid #000;
-}
-.DHTMLgoodies_formTooltipDiv {
-    padding              : 5px;
-}
-#DHTMLgoodies_formTooltipContent {
-    margin-bottom        : 10px;
-}
-.DHTMLgoodies_formTooltip_closeMessage {
-	  font-size            : 0.8em;
-}
-
-div.cleditorMain, div.cleditorToolbar, div.cleditorGroup, div.cleditorButton, div.cleditorDivider { margin-top: auto !important; }
-div.cleditorMain {
-    float: right !important;
-}
-
-div.cleditorMain textarea.fbtextarea {
-    width: ;
-}
+#DHTMLgoodies_formTooltipDiv{background-color:#fff !important;color:#000 !important;border:1px solid #000;}
+.DHTMLgoodies_formTooltipDiv{padding:5px;}
+#DHTMLgoodies_formTooltipContent{margin-bottom:10px;}
+.DHTMLgoodies_formTooltip_closeMessage{font-size:0.8em;}
+/*******************************************************************************
+    CLEditor
+*******************************************************************************/
+div.cleditorMain, div.cleditorToolbar, div.cleditorGroup, div.cleditorButton, div.cleditorDivider{margin-top:auto !important;}
+div.cleditorMain{float:right !important;}
