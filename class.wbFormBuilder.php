@@ -810,9 +810,12 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
         public function isCanceled ( $formname = '' ) {
             $formname = $this->__validateFormName( $formname );
+            $this->log()->LogDebug( 'checking if form ['.$formname.'] was canceled' );
             if ( $this->val->param( $this->_config['cancel_key'].'_'.$formname ) ) {
+                $this->log()->LogDebug( '---> yes' );
                 return true;
             }
+            $this->log()->LogDebug( '---> no' );
             return false;
         }   // end function isCanceled ()
         
@@ -824,12 +827,17 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
         public function isSent( $formname = '' ) {
             $formname = $this->__validateFormName( $formname );
+            $this->log()->LogDebug( 'checking if form ['.$formname.'] was sent' );
+            $this->log()->LogDebug( 'submit field ['.$formname.'_submit] value ['.$this->val->param( $formname.'_submit' ).']' );
+            $this->log()->LogDebug( 'cancel field ['.$this->_config['cancel_key'].'_'.$formname.'] value ['.$this->val->param( $this->_config['cancel_key'].'_'.$formname ).']' );
             if (
                       $this->val->param( $formname.'_submit', 'PCRE_INT' )
                  && ! $this->val->param( $this->_config['cancel_key'].'_'.$formname )
             ) {
+                $this->log()->LogDebug( '---> yes' );
                 return true;
             }
+            $this->log()->LogDebug( '---> no' );
             return false;
         }   // end function isSent()
         
@@ -844,6 +852,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         public function isChecked ( $formname = '' ) {
 
             $formname = $this->__validateFormName( $formname );
+            
+            $this->log()->LogDebug( 'checking if form ['.$formname.'] is checked' );
 
             $return = isset( $this->_checked[ $formname ] )
                     ? $this->_checked[ $formname ]
