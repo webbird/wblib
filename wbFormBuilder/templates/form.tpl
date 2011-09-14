@@ -1,4 +1,5 @@
 <!-- wblib/wbFormBuilder/form.tpl -->
+<script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/filetypes.js"></script>
 <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/tooltip/rounded-corners.js"></script>
 <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/tooltip/form-field-tooltip.js"></script>
 <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/jquery.jqEasyCharCounter.js"></script>
