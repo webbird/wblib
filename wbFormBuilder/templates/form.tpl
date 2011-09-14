@@ -1,13 +1,5 @@
 <!-- wblib/wbFormBuilder/form.tpl -->
-<script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/filetypes.js"></script>
-<script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/tooltip/rounded-corners.js"></script>
-<script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/tooltip/form-field-tooltip.js"></script>
-<script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/jquery.jqEasyCharCounter.js"></script>
-<script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.min.js"></script>
-<script type="text/javascript">
-  $.cleditor.defaultOptions.width = 486;
-  $.cleditor.defaultOptions.height = 300;
-</script>
+{{ :include form_js.tpl }}
 <form {{ attributes }} {{ :if style }}style="{{ style }}"{{ :ifend }}>
   <input type="hidden" name="fbformkey" value="{{ token }}" />
   {{ :if toplink }}<a name="fbtop">&nbsp;</a>{{ :ifend }}
