@@ -27,7 +27,7 @@ require_once dirname( __FILE__ ).'/class.wbBase.php';
 class wbValidate extends wbBase {
 
     // ----- Debugging -----
-    protected      $debugLevel      = KLOGGER::OFF;
+    protected      $debugLevel      = KLOGGER::WARN;
     #protected      $debugLevel      = KLOGGER::DEBUG;
 
     private static $_tainted  = array();
