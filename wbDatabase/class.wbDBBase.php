@@ -24,15 +24,8 @@
 
 include_once dirname(__FILE__).'/../class.wbBase.php';
 include_once dirname(__FILE__).'/../class.wbValidate.php';
+include_once dirname(__FILE__).'/../class.wbSeq.php';
 include_once dirname(__FILE__).'/../debug/KLogger.php';
-
-// ----- including sseq-lib -----
-$_SEQ_ONERROR_REDIRECT_TO        = '';
-$_SEQ_ONERROR_REDIRECT_TO_PRESET = true;
-$_SEQ_BASEDIR                    = dirname( __FILE__ ).'/../sseq-lib/';
-$_SEQ_BASEDIR_PRESET             = true;
-include_once $_SEQ_BASEDIR.'seq_lib.php';
-// ----- including sseq-lib -----
 
 class wbDBBase extends PDO {
 
@@ -53,6 +46,7 @@ class wbDBBase extends PDO {
     protected $lasterror            = NULL;
     protected $lastInsertID         = NULL;
     private   $val;
+    private   $seq;
     
 // ----- Known options for constructor -----
     protected $_options = array(
@@ -104,13 +98,13 @@ class wbDBBase extends PDO {
 
 // ----- Conjunctions used in WHERE-clauses -----
     protected $conjunctions = array(
-        'and' => 'AND',
-        'AND' => 'AND',
-        'OR'  => 'OR',
-        'or'  => 'OR',
-        '&&'  => 'AND',
-        '\|\|'  => 'OR',
-        '||'  => 'OR',
+        'and'  => 'AND',
+        'AND'  => 'AND',
+        'OR'   => 'OR',
+        'or'   => 'OR',
+        '&&'   => 'AND',
+        '\|\|' => 'OR',
+        '||'   => 'OR',
     );
 
     /**
@@ -158,6 +152,9 @@ class wbDBBase extends PDO {
               );
         $this->val
             = new wbValidate();
+            
+		$this->seq
+		    = new wbSeq();
 
         $this->__initialize($options);
         
@@ -707,7 +704,13 @@ class wbDBBase extends PDO {
      **/
     protected function __get_params( $params ) {
         foreach ( $params as $i => $param ) {
-            $params[$i] = SEQ_MYSQL($param);
+			if ( ! $this->seq->detectIntrusion($param) ) {
+				// no escaping here; we're using PDO, remember?
+			    $params[$i] = $param;
+			}
+			else {
+				$this->printError( 'INTRUSION DETECTED!' );
+			}
         }
         $this->log->LogDebug( 'PARAMS:', $params );
         return $params;
@@ -794,7 +797,7 @@ class wbDBBase extends PDO {
     protected function __replaceConj( $string ) {
          $reg_exp = implode( '|', array_keys( $this->conjunctions ) );
          $this->log->LogDebug( 'replacing ('.$reg_exp.') from: ', $string );
-         return preg_replace(
+         return @preg_replace(
                       "/(\s{1,})($reg_exp)(\s{1,})/eisx",
                       '"\\1".$this->conjunctions["\\2"]."\\3"',
                       $string
