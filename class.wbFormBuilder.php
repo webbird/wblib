@@ -114,17 +114,61 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                   
                   # known mime types
 				  'mimetypes'        => array(
-					  'application/octet-stream' => 'bin|dms|lha|lzh|exe|class|ani|pgp|so|dll|dmg',
-					  'image/gif'				 => 'gif',
-					  'image/*'                  => 'gif|ief|jpeg|jpg|jpe|png|tga|tif|tiff',
-					  'application/gzip'		 => 'gzip',
-					  'image/ief'				 => 'ief',
-					  'image/jpeg'				 => 'jpeg|jpg|jpe',
-					  'application/pdf'	 		 => 'pdf',
-					  'image/png'				 => 'png',
-					  'image/targa'				 => 'tga',
-					  'image/tiff'			     => 'tiff|tif',
-					  'application/zip'			 => 'zip',
+					  'application/octet-stream' =>
+							array(
+								'suffixes' => 'bin|dms|lha|lzh|exe|class|ani|pgp|so|dll|dmg',
+								'label'    => 'Binary'
+							),
+					  'image/gif'                =>
+					  		array(
+							  	'suffixes' => 'gif',
+							  	'label'    => 'GIF Images',
+							),
+					  'image/*'                  =>
+					  		array(
+							  	'suffixes' => 'gif|ief|jpeg|jpg|jpe|png|tga|tif|tiff',
+							  	'label'    => 'All kinds of images'
+							),
+					  'application/gzip'		 =>
+					  		array(
+							  	'suffixes' => 'gzip',
+							  	'label'    => 'GZIP compressed files',
+							),
+					  'image/ief'				 =>
+					  		array(
+							  	'suffixes' => 'ief',
+							  	'label'    => 'IEF images'
+							),
+					  'image/jpeg'				 =>
+					  		array(
+							  	'suffixes' => 'jpeg|jpg|jpe',
+							  	'label'    => 'JP(e)G images'
+							),
+					  'application/pdf'	 		 =>
+					  		array(
+							  	'suffixes' => 'pdf',
+							  	'label'    => 'PDF files'
+							),
+					  'image/png'				 =>
+					  		array(
+							  	'suffixes' => 'png',
+							  	'label'    => 'PNG images'
+							),
+					  'image/targa'				 =>
+					  		array(
+							  	'suffixes' => 'tga',
+							  	'label'    => 'TGA (Targa) images'
+							),
+					  'image/tiff'			     =>
+					  		array(
+							  	'suffixes' => 'tiff|tif',
+							  	'label'    => 'TIFF images'
+							),
+					  'application/zip'			 =>
+					  		array(
+							  	'suffixes' => 'zip',
+							  	'label'    => 'ZIP compressed files'
+							),
 				  ),
 
               );
@@ -726,6 +770,24 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          *
          **/
+		public function getMimeTypes( $by = 'keys' ) {
+		    if ( isset($by) && $by == 'keys' ) {
+		        $ret = array();
+		        foreach ( $this->_config['mimetypes'] as $type => $item ) {
+		            $ret[$type] = $this->_config['mimetypes'][$type]['label']
+								. ' ( .'. str_replace( '|', ', .', $this->_config['mimetypes'][$type]['suffixes'] ) . ')';
+		        }
+		        return $ret;
+			}
+			return $this->_config['mimetypes'];
+		}   // end function getMimeTypes()
+        
+        /**
+         *
+         *
+         *
+         *
+         **/
         public function getOptionsByRegex( $formname, $regex ) {
             $formname = $this->__validateFormName( $formname );
             $elements = array();
@@ -1182,9 +1244,17 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 }
                 $mimetypes = array();
                 if ( ! is_array( $types ) ) {
+                    // is it a serialized array? (format see $_config)
 					$unserialized = @unserialize( stripslashes( $types ) );
 					if ( $unserialized === false ) {
-						$types = array( $types );
+					    if ( substr_count( $types, '|' ) ) {
+					        // application/pdf|image/*|...
+					        $types = explode( '|', $types );
+						}
+						else {
+						    // give up, use given value as is
+							$types = array( $types );
+						}
 					}
 					else {
 					    $types =& $unserialized;
@@ -1400,6 +1470,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
                 }
                 self::$_forms[ $formname ]['elements'][ $path[0] ][$key] = $value;
+                $this->log()->LogDebug( 'new item content', self::$_forms[ $formname ]['elements'][ $path[0] ][$key] );
                 return true;
             }
             else {
@@ -1536,7 +1607,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 					$mimetypes = array();
                     foreach( self::$_forms[$formname][$element['name']]['mimetypes'] as $item ) {
 						if ( isset( $this->_config['mimetypes'][$item] ) ) {
-							$suffixes = explode( '|', $this->_config['mimetypes'][$item] );
+							$suffixes = explode( '|', $this->_config['mimetypes'][$item]['suffixes'] );
 							$mimetypes = array_merge( $mimetypes, $suffixes );
 						}
 						else {
@@ -1849,6 +1920,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                      'tooltip'
                                          //=> ( isset ( $element['infotext'] ) ? SEQ_OUTPUT( $this->translate( $element['infotext'] ) ) : NULL ),
                                          => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
+                           			 'break'
+										 => ( isset ( $element['break'] )    ? true                						: NULL ),
                                  );
 
                 }
