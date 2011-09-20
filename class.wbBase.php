@@ -154,9 +154,10 @@ if ( ! class_exists( 'wbBase', false ) ) {
                 if ( ! is_object( $this->logObj ) ) {
                     $this->logObj
                         = new KLogger(
-                              $this->debugDir.'/'.get_class($this).'.log' ,
+                              $this->debugDir.'/'.get_class($this).'.log',
                               $this->debugLevel,
                               true
+#						      false
                           );
                 }
                 return $this->logObj;
@@ -250,6 +251,11 @@ if ( ! class_exists( 'wbBase', false ) ) {
             $this->log()->LogDebug( 'scanning paths:', $try );
 
             foreach ( $try as $filename ) {
+            
+				if ( $filename == '' )
+				{
+					continue;
+				}
 
                 $this->log()->LogDebug(
                     'trying to find: -'.$filename.'-'
