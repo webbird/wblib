@@ -31,7 +31,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
     class wbFormBuilder extends wbBase {
 
         // ----- Debugging -----
-        protected      $debugLevel      = KLOGGER::DEBUG;
+        protected      $debugLevel      = KLOGGER::WARN;
+        #protected      $debugLevel      = KLOGGER::DEBUG;
 
         // name of the current form
         private        $_current_form   = NULL;
@@ -44,6 +45,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         // wbValidate object handler
         private        $val;
+        
+        private static $__FORMS__   = array();
 
         // variable to store forms
         // 'formname' => array of elements
@@ -54,6 +57,14 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         
         //
         private        $_js         = array();
+        
+        //
+        private        $_flags      = array(
+            'use_filetype_check' => false,
+            'use_calendar'       => false,
+            'use_editor'         => false,
+			'__cal_lang_set'     => false,
+        );
 
         protected      $_config
             = array(
@@ -123,8 +134,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
         function __construct ( $options = array() ) {
         
-        	session_start();
-
             // wbBase adds given $options to $this->_config
             parent::__construct( $options );
 
@@ -150,6 +159,37 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $this->tpl->setPath( realpath( dirname(__FILE__) ).'/wbFormBuilder/templates' );
 
         }   // end __construct()
+        
+        /**
+	     *
+	     *
+	     *
+	     *
+	     **/
+	    public function setFile ( $file, $path = NULL, $var = NULL )
+	    {
+	    
+			if ( $var == '' )
+			{
+				$var = 'FORMS';
+			}
+
+	        $this->log()->LogDebug( 'adding file ['.$file.'], path ['.$path.'], var ['.$var.']' );
+
+            // load file
+ 			parent::setFile( $file, $path, $var );
+			include_once $this->_config['current_file'];
+			
+			$ref = NULL;
+            @eval( "\$ref = & \$".$this->_config['var'].";" );
+            
+            if ( isset($ref) && is_array($ref) )
+            {
+				// add contents of current file to internal array
+				self::$__FORMS__ = array_merge( self::$__FORMS__, $FORMS );
+			}
+
+	    }   // end function addFile()
 
         /**
          *
@@ -643,6 +683,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                    array_merge(
                        self::$_forms[ $formname ]['config'],
                        $this->_config,
+                       $this->_flags,
                        array(
                            // FormBuilder CSS
                            'cssfile'    => $this->_config['css_file'],
@@ -1009,7 +1050,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     $ref = NULL;
                     @eval( "\$ref = & \$".$this->_config['var'].";" );
 
-                    if ( ! isset( $ref ) || ! is_array( $ref ) ) {
+/*
+                    if ( ! isset( $ref ) | ! is_array( $ref ) ) {
+                        $this->log()->LogDebug( 'trying to load config file ['.$this->_config['current_file'].']' );
                         include_once $this->_config['current_file'];
                         eval( "\$ref = & \$".$this->_config['var'].";" );
                         if ( ! isset( $ref[$formname] ) || ! is_array( $ref[$formname] ) ) {
@@ -1018,7 +1061,18 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                               . 'the config file seems to be invalid.'
                             );
                         }
-                    }
+                    }|
+*/
+					if ( ! isset( self::$__FORMS__[$formname] ) || ! is_array( self::$__FORMS__[$formname] ) ) {
+					    $this->printError(
+                                'Unable to register form ['.$formname.']; '
+                              . 'the config file seems to be invalid.'
+                            );
+					}
+					else
+					{
+					    $ref = &self::$__FORMS__;
+					}
 
                     // now let's register the elements for later use
                     // analyze data and store config
@@ -1145,6 +1199,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     }
                 }
 				self::$_forms[ $formname ][ $name ][ 'mimetypes' ] = $mimetypes;
+				$this->_flags['use_filetype_check'] = true;
                 return true;
             }
             else {
@@ -1491,6 +1546,27 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 					$element['onchange'] = 'TestFileType( this.form.'.$element['name'].'.value, [ \''.implode("', '", $mimetypes).'\' ] );';
                 }
             }
+            
+            // is it a calendar field?
+            if ( ! strcasecmp( $element['type'], 'text' ) && isset( $element['calendar'] ) && $element['calendar'] === true ) {
+                if ( isset( $element['class'] ) ) {
+					$element['class'] .= ' datepicker';
+				}
+				else {
+				    $element['class'] = 'datepicker';
+				}
+				$this->_flags['use_calendar'] = true;
+				if ( isset($element['isstart']) && $element['isstart'] === true ) {
+					$this->_js[] = '  setStartID( "'.$element['name'].'" );';
+				}
+				if ( isset($element['isend']) && $element['isend'] === true ) {
+					$this->_js[] = '  setEndID( "'.$element['name'].'" );';
+				}
+				if ( $this->_flags['__cal_lang_set'] === false ) {
+				    $this->_js[] = '  setLang( "'.strtolower( $this->lang->getLang() ).'" );';
+				    $this->_flags['__cal_lang_set'] = true;
+				}
+            }
 
             // quote value
             if ( isset($element['value']) && strlen( $element['value'] ) > 0 ) {
@@ -1826,6 +1902,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
             if ( isset( $element['editor'] ) && $element['editor'] === true ) {
                 $this->_js[] = "if ( typeof cleditor != 'undefined' ) { jQuery('#" . $element['name'] . "').cleditor(); }\n";
+                $this->_flags['use_editor'] = true;
             }
 
             return $this->tpl->getTemplate(
