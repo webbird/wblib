@@ -50,27 +50,33 @@ if ( ! class_exists( 'wbSeq', false ) ) {
          *
          *
          **/
-		public function detectIntrusion( $value ) {
-			// check for SQL injection
-			foreach(
-				array( 'PCRE_SQL_QUOTES', 'PCRE_SQL_TYPICAL', 'PCRE_SQL_UNION', 'PCRE_SQL_STORED' )
-				as $constant
-			) {
-				if ( preg_match( constant( $constant ), $value ) ) {
-	                $this->log()->LogWarn( 'found injection code!', $value );
-	                return true;
-	            }
+		public function detectIntrusion( $values ) {
+			if ( is_scalar( $values ) ) {
+			    $values = array( $values );
 			}
-			// check for XSS
-			foreach(
-			    array( 'XSS_IMG_JS', 'XSS_ANGLED' )
-			    as $constant
-			) {
-			    if ( preg_match( constant( $constant ), $value ) ) {
-	                $this->log()->LogWarn( 'found XSS code!', $value );
-	                return true;
-	            }
+			foreach( $values as $value ) {
+				// check for SQL injection
+				foreach(
+					array( 'PCRE_SQL_QUOTES', 'PCRE_SQL_TYPICAL', 'PCRE_SQL_UNION', 'PCRE_SQL_STORED' )
+					as $constant
+				) {
+					if ( preg_match( constant( $constant ), $value ) ) {
+		                $this->log()->LogWarn( 'found injection code!', $value );
+		                return true;
+		            }
+				}
+				// check for XSS
+				foreach(
+				    array( 'XSS_IMG_JS', 'XSS_ANGLED' )
+				    as $constant
+				) {
+				    if ( preg_match( constant( $constant ), $value ) ) {
+		                $this->log()->LogWarn( 'found XSS code!', $value );
+		                return true;
+		            }
+				}
 			}
+			// all checks passed
 			return false;
 		}   // end function detectIntrusion()
 		
