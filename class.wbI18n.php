@@ -2,42 +2,39 @@
 
 /**
 
-  Internationalization class
+Internationalization class
 
-  Copyright (C) 2009, Bianka Martinovic
-  Contact me: blackbird(at)webbird.de, http://www.webbird.de/
+Copyright (C) 2009, Bianka Martinovic
+Contact me: blackbird(at)webbird.de, http://www.webbird.de/
 
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 3 of the License, or (at
-  your option) any later version.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or (at
+your option) any later version.
 
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  General Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
 
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 **/
 
-require_once dirname( __FILE__ ).'/class.wbBase.php';
+require_once dirname( __FILE__ ) . '/class.wbBase.php';
 
-class wbI18n extends wbBase {
-
+class wbI18n extends wbBase
+{
     // ----- Debugging -----
-    protected      $debugLevel    = KLOGGER::OFF;
-    #protected      $debugLevel    = KLOGGER::DEBUG;
+    protected $debugLevel = KLOGGER::OFF;
+    //protected      $debugLevel    = KLOGGER::DEBUG;
 
     // default language
-    protected      $_config       = array(
-        'defaultlang'  => 'EN',
-        'langPath'     => '/languages',
-    );
+    protected $_config = array( 'defaultlang' => 'EN', 'langPath' => '/languages' );
 
     // array to store language strings
-    private static $_lang         = array();
+    private static $_lang = array();
 
     // default language
     private static $_current_lang = NULL;
@@ -45,50 +42,62 @@ class wbI18n extends wbBase {
     /**
      * constructor
      **/
-    public function __construct( $lang = NULL ) {
+    public function __construct( $lang = NULL )
+    {
         $options = array();
-        if ( is_array( $lang ) ) {
+        if ( is_array( $lang ) )
+        {
             $options = $lang;
             $lang    = NULL;
         }
-        parent::__construct($options);
-        if ( ! isset( $lang ) ) {
-            if ( defined( 'LANGUAGE' ) ) {
+        parent::__construct( $options );
+        if ( !isset( $lang ) )
+        {
+            if ( defined( 'LANGUAGE' ) )
+            {
                 $lang = LANGUAGE;
             }
         }
         self::$_current_lang = $lang;
         $this->init();
-    }   // end function __construct()
+    } // end function __construct()
 
-		public function __destruct () {} // end function __destruct()
+    public function __destruct()
+    {
+    } // end function __destruct()
 
-		/**
-		 *
-		 *
-		 *
-		 *
-		 **/
-		public function init( $var = NULL ) {
-
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function init( $var = NULL )
+    {
         $this->log()->LogDebug( 'init()' );
 
         $caller = debug_backtrace();
 
-        if ( self::$_current_lang == '' ) {
+        if ( self::$_current_lang == '' )
+        {
             $lang_files = $this->__lang_getfrombrowser();
         }
-        else {
-            $lang_files = array( self::$_current_lang );
+        else
+        {
+            $lang_files = array(
+                 self::$_current_lang
+            );
         }
-        
-        if ( file_exists( dirname($caller[1]['file']).'/languages' ) ) {
-            #$this->_langPath = dirname($caller[1]['file']).'/languages';
-            $this->_config['langPath'] = dirname($caller[1]['file']).'/languages';
+
+        if ( file_exists( dirname( $caller[ 1 ][ 'file' ] ) . '/languages' ) )
+        {
+            //$this->_langPath = dirname($caller[1]['file']).'/languages';
+            $this->_config[ 'langPath' ] = dirname( $caller[ 1 ][ 'file' ] ) . '/languages';
         }
-        elseif ( file_exists( dirname($caller[1]['file']).'/../languages' ) ) {
-            #$this->_langPath = dirname($caller[1]['file']).'/../languages';
-            $this->_config['langPath'] = dirname($caller[1]['file']).'/../languages';
+        elseif ( file_exists( dirname( $caller[ 1 ][ 'file' ] ) . '/../languages' ) )
+        {
+            //$this->_langPath = dirname($caller[1]['file']).'/../languages';
+            $this->_config[ 'langPath' ] = dirname( $caller[ 1 ][ 'file' ] ) . '/../languages';
         }
 
         // add default lang
@@ -96,51 +105,60 @@ class wbI18n extends wbBase {
 
         $this->log()->LogDebug( 'language files to search for: ', $lang_files );
 
-        foreach ( $lang_files as $l ) {
+        foreach ( $lang_files as $l )
+        {
             $file = $l . '.php';
-            if ( $this->addFile( $file, $var ) ) { break; }
+            if ( $this->addFile( $file, $var ) )
+            {
+                break;
+            }
         }
 
-		}   // end function init()
+    } // end function init()
 
-		/**
-		 *
-		 *
-		 *
-		 *
-		 **/
-    public function addFile ( $file, $path = NULL, $var = NULL ) {
-
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function addFile( $file, $path = NULL, $var = NULL )
+    {
         global $LANG;
 
-        $lang_var = & $LANG;
+        $lang_var =& $LANG;
 
-        if ( isset( $var ) ) {
-            eval ( 'global $'.$var.';' );
-            eval ( "\$lang_var = & \$$var;" );
+        if ( isset( $var ) )
+        {
+            eval( 'global $' . $var . ';' );
+            eval( "\$lang_var = & \$$var;" );
         }
 
-        if ( empty( $path ) ) {
-            $path = $this->_config['langPath'];
+        if ( empty( $path ) )
+        {
+            $path = $this->_config[ 'langPath' ];
         }
 
-        $file = $path.'/'.$file;
+        $file = $path . '/' . $file;
 
-        if( file_exists( $file ) ) {
-
+        if ( file_exists( $file ) )
+        {
             $this->log()->LogDebug( 'found language file: ', $file );
 
-        	  require_once( $file );
+            require_once( $file );
 
-        	  if ( isset( $LANG ) ) {
-            	  self::$_lang = array_merge( self::$_lang, $lang_var );
-                if ( preg_match( "/(\w+)\.php/", $file, $matches ) ) {
-            	      self::$_current_lang = $matches[1];
+            if ( isset( $LANG ) )
+            {
+                self::$_lang = array_merge( self::$_lang, $lang_var );
+                if ( preg_match( "/(\w+)\.php/", $file, $matches ) )
+                {
+                    self::$_current_lang = $matches[ 1 ];
                 }
-            	  $this->log()->LogDebug( 'loaded language file: ', $file );
+                $this->log()->LogDebug( 'loaded language file: ', $file );
                 return true;
             }
-            else {
+            else
+            {
                 $this->printError( 'invalid lang file: ', $file );
             }
 
@@ -148,42 +166,44 @@ class wbI18n extends wbBase {
 
         $this->log()->LogDebug( 'language file does not exist: ', $file );
 
-    }   // end function addFile ()
+    } // end function addFile ()
 
-  	/**
-  	 * set language file path
-  	 *
-  	 * @access public
-  	 * @param  string   $path  - language file path (must exist!)
-  	 * @return void
-  	 *
-  	 **/
-    public function setPath ( $path, $var = NULL ) {
-
-        if ( file_exists( $path ) ) {
-
+    /**
+     * set language file path
+     *
+     * @access public
+     * @param  string   $path  - language file path (must exist!)
+     * @return void
+     *
+     **/
+    public function setPath( $path, $var = NULL )
+    {
+        if ( file_exists( $path ) )
+        {
             $this->log()->LogDebug( 'setting language path to: ', $path );
 
-            $this->_config['langPath'] = $path;
+            $this->_config[ 'langPath' ] = $path;
             $this->init( $var );
 
         }
-        else {
-            $this->printError( 'language file path does not exist: '.$path );
+        else
+        {
+            $this->printError( 'language file path does not exist: ' . $path );
         }
 
-    }   // end function setPath ()
+    } // end function setPath ()
 
-		/**
-		 * get current language shortcut
-		 *
-		 * @access public
-		 * @return string
-		 *
-		 **/
-		public function getLang() {
+    /**
+     * get current language shortcut
+     *
+     * @access public
+     * @return string
+     *
+     **/
+    public function getLang()
+    {
         return self::$_current_lang;
-    }   // end function getLang()
+    } // end function getLang()
 
     /**
      * try to find the given message in the language array
@@ -197,23 +217,26 @@ class wbI18n extends wbBase {
      * @return string
      *
      **/
-    public function translate( $msg, $attr = array() ) {
-
-        if ( empty( $msg ) || is_bool( $msg ) ) {
+    public function translate( $msg, $attr = array() )
+    {
+        if ( empty( $msg ) || is_bool( $msg ) )
+        {
             return $msg;
         }
 
-        if ( array_key_exists( $msg, self::$_lang ) ) {
-            $msg = self::$_lang[$msg];
+        if ( array_key_exists( $msg, self::$_lang ) )
+        {
+            $msg = self::$_lang[ $msg ];
         }
 
-        foreach( $attr as $key => $value ) {
-            $msg = str_replace( "{{ ".$key." }}", $value, $msg );
+        foreach ( $attr as $key => $value )
+        {
+            $msg = str_replace( "{{ " . $key . " }}", $value, $msg );
         }
 
         return $msg;
 
-    }   // end function translate()
+    } // end function translate()
 
     /**
      * dump language array (strings beginning with $prefix)
@@ -223,20 +246,25 @@ class wbI18n extends wbBase {
      * @return array
      *
      **/
-    public function dump ( $prefix = NULL ) {
-        if ( $prefix ) {
+    public function dump( $prefix = NULL )
+    {
+        if ( $prefix )
+        {
             $dump = array();
-            foreach ( self::$_lang as $k => $v ) {
-                if ( preg_match( "/^$prefix/", $k ) ) {
-                    $dump[$k] = $v;
+            foreach ( self::$_lang as $k => $v )
+            {
+                if ( preg_match( "/^$prefix/", $k ) )
+                {
+                    $dump[ $k ] = $v;
                 }
             }
             return $dump;
         }
-        else {
+        else
+        {
             return self::$_lang;
         }
-    }   // end function dump()
+    } // end function dump()
 
     /**
      * This method is based on code you may find here:
@@ -244,64 +272,68 @@ class wbI18n extends wbBase {
      *
      *
      **/
-    private function __lang_getfrombrowser ( $strict_mode = true ) {
-
+    private function __lang_getfrombrowser( $strict_mode = true )
+    {
         $browser_langs = array();
-        $lang_variable = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+        $lang_variable = $_SERVER[ 'HTTP_ACCEPT_LANGUAGE' ];
 
-        if ( empty($lang_variable) ) {
-            return $this->_config['defaultlang'];
+        if ( empty( $lang_variable ) )
+        {
+            return $this->_config[ 'defaultlang' ];
         }
 
-        $accepted_languages = preg_split('/,\s*/', $lang_variable);
+        $accepted_languages = preg_split( '/,\s*/', $lang_variable );
         $current_q          = 0;
 
-        foreach ( $accepted_languages as $accepted_language ) {
-
+        foreach ( $accepted_languages as $accepted_language )
+        {
             // match valid language entries
-            $res = preg_match (
-                       '/^([a-z]{1,8}(?:-[a-z]{1,8})*)(?:;\s*q=(0(?:\.[0-9]{1,3})?|1(?:\.0{1,3})?))?$/i',
-                       $accepted_language,
-                       $matches
-                   );
+            $res = preg_match( '/^([a-z]{1,8}(?:-[a-z]{1,8})*)(?:;\s*q=(0(?:\.[0-9]{1,3})?|1(?:\.0{1,3})?))?$/i', $accepted_language, $matches );
 
             // invalid syntax
-            if (!$res) {
+            if ( !$res )
+            {
                 continue;
             }
 
             // get language code
-            $lang_code = explode ('-', $matches[1]);
+            $lang_code = explode( '-', $matches[ 1 ] );
 
-            if (isset($matches[2])) {
-                $lang_quality = (float)$matches[2];
-            } else {
+            if ( isset( $matches[ 2 ] ) )
+            {
+                $lang_quality = (float) $matches[ 2 ];
+            }
+            else
+            {
                 $lang_quality = 1.0;
             }
 
-            while (count ($lang_code)) {
+            while ( count( $lang_code ) )
+            {
                 $browser_langs[] = array(
-                    'lang' => strtoupper(join ('-', $lang_code)),
+                     'lang' => strtoupper( join( '-', $lang_code ) ),
                     'qual' => $lang_quality
                 );
                 // don't use abbreviations in strict mode
-                if ($strict_mode) {
+                if ( $strict_mode )
+                {
                     break;
                 }
-                array_pop ($lang_code);
+                array_pop( $lang_code );
             }
         }
 
         // order array by quality
-        $langs = $this->ArraySort ( $browser_langs, 'qual', 'desc', true );
+        $langs = $this->ArraySort( $browser_langs, 'qual', 'desc', true );
         $ret   = array();
-        foreach( $langs as $lang ) {
-            $ret[] = $lang['lang'];
+        foreach ( $langs as $lang )
+        {
+            $ret[] = $lang[ 'lang' ];
         }
 
         return $ret;
 
-    }   // end __lang_getfrombrowser()
+    } // end __lang_getfrombrowser()
 
 
 }
