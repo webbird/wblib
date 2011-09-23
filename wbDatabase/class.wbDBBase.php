@@ -571,6 +571,56 @@ class wbDBBase extends PDO {
         return $this->__prepare_and_execute( $statement, $options );
         
     }   // end function truncate()
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+    public function printError( $msg = NULL, $args = NULL ) {
+
+        $caller       = debug_backtrace();
+
+        $caller_class = isset( $caller[1]['class'] )
+                      ? $caller[1]['class']
+                      : NULL;
+
+        echo "<div id=\"wberror\">\n",
+             "  <h1>$caller_class Fatal Error</h1><br /><br />\n",
+             "  <div style=\"color: #FF0000; font-weight: bold; font-size: 1.2em;\">\n",
+             "  $msg\n";
+
+        if ( $args ) {
+
+            $dump = print_r( $args, 1 );
+            $dump = preg_replace( "/\r?\n/", "\n          ", $dump );
+
+            echo "<br />\n";
+            echo "<pre>\n";
+            echo "          ", $dump;
+            echo "</pre>\n";
+        }
+
+        // remove path info from file
+        $file = basename( $caller[1]['file'] );
+
+        echo "<br /><br /><span style=\"font-size: smaller;\">[ ",
+             $file, ' : ',
+             $caller[1]['line'], ' : ',
+             $caller[1]['function'],
+             " ]</span><br />\n";
+
+        if ( $this->debugLevel < 6 ) {
+            echo "<h2>Debug backtrace:</h2>\n",
+                 "<textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+            print_r( debug_backtrace() );
+            echo "</textarea>";
+        }
+
+        echo "  </div>\n</div><!-- id=\"wberror\" -->\n";
+
+    }   // end function printError()
 
 
 /*******************************************************************************
