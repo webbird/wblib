@@ -48,4 +48,7 @@ define( 'XSS_ANGLED', '/((\%3C)|<)((\%2F)|\/)*[a-z0-9\%]+((\%3E)|>)/i' );
 // Signature 2 - detects javascript embedding using the <img src> tag
 define( 'XSS_IMG_JS', '/((\%3C)|<)((\%69)|i|(\%49))((\%6D)|m|(\%4D))((\%67)|g|(\%47))[^\n]+((\%3E)|>)/i' );
 
+// ----- Mail injection -----
+define( 'MAIL_INJECTION', "/(Content-Transfer-Encoding:|MIME-Version:|content-type:|Subject:|to:|cc:|bcc:|from:|reply-to:)/ims" );
+
 ?>
