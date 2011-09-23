@@ -114,6 +114,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                   
                   # known mime types
 				  'mimetypes'        => array(
+					  'audio/mpeg' =>
+						    array(
+								'suffixes' => 'mp3',
+								'label'    => 'MPEG Audio Stream, Layer III (MP3)',
+							),
 					  'application/octet-stream' =>
 							array(
 								'suffixes' => 'bin|dms|lha|lzh|exe|class|ani|pgp|so|dll|dmg',
@@ -791,9 +796,14 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         public function getOptionsByRegex( $formname, $regex ) {
             $formname = $this->__validateFormName( $formname );
             $elements = array();
+            $seen     = array();
             foreach ( self::$_forms[ $formname ]['elements'] as $element ) {
                 if( preg_match( $regex, $element['name'] ) ) {
+					if ( isset( $seen[ $element['name'] ] ) ) {
+						continue;
+					}
                     $elements[] = $element;
+                    $seen[ $element['name'] ] = 1;
                 }
             }
             return $elements;
@@ -1502,7 +1512,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			return
 				'<img id="captcha" src="'.$uri.'" alt="CAPTCHA Image" />' .
 				$this->input( array( 'name' => $element['name'], 'maxlength' => 6 ) ).
-				'<a href="#" onclick="document.getElementById(\'captcha\').src = \'/securimage/securimage_show.php?\' + Math.random(); return false">[ Different Image ]</a>';
+				'<a href="#" onclick="document.getElementById(\'captcha\').src = \'/securimage/securimage_show.php?\' + Math.random(); return false">'.
+				'[ '.$this->lang->translate('Different Image').' ]</a>';
 		}   // end function captcha()
  
         /**
