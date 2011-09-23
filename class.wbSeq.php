@@ -43,6 +43,35 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 	        parent::__construct( $options );
 	        $this->__init();
 	    }   // end function __construct()
+	    
+	    /**
+	     * check mail header injection
+	     *
+	     * @access public
+	     * @param  mixed  $values
+	     * @return boolean
+	     *
+	     **/
+	    public function detectMailInjection( $values ) {
+	        if ( empty( $values ) ) {
+		        return false;
+			}
+			if ( is_scalar( $values ) ) {
+			    $values = array( $values );
+			}
+			foreach( $values as $value ) {
+				foreach(
+					array( 'MAIL_INJECTION' )
+					as $constant
+				) {
+				    if ( preg_match( constant( $constant ), $value ) ) {
+		                $this->log()->LogWarn( 'found mail header injection code! -> ' . $value );
+		                return true;
+		            }
+				}
+			}
+			return false;
+	    }   // function detectMailInjection()
     
         /**
          *
@@ -51,6 +80,9 @@ if ( ! class_exists( 'wbSeq', false ) ) {
          *
          **/
 		public function detectIntrusion( $values ) {
+		    if ( empty( $values ) ) {
+		        return false;
+			}
 			if ( is_scalar( $values ) ) {
 			    $values = array( $values );
 			}
@@ -67,11 +99,11 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 				}
 				// check for XSS
 				foreach(
-				    array( 'XSS_IMG_JS', 'XSS_ANGLED' )
+				    array( 'XSS_IMG_JS' ) //, 'XSS_ANGLED'
 				    as $constant
 				) {
 				    if ( preg_match( constant( $constant ), $value ) ) {
-		                $this->log()->LogWarn( 'found XSS code!', $value );
+		                $this->log()->LogWarn( 'found XSS code! -> ' . $value );
 		                return true;
 		            }
 				}
