@@ -58,6 +58,9 @@ $LANG = array(
     "Don't show this message again" => 'Diese Meldung nicht mehr zeigen',
     'Close' => 'Schlie&szlig;en',
     
+    // Captcha
+    'Different Image' => 'Neues Bild',
+    
 );
 
 ?>
