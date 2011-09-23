@@ -27,26 +27,26 @@
 **/
 
 // any string that doesn't have control characters (ASCII 0 - 31) - spaces allowed
-define( 'PCRE_STRING'      , '/^[^\x-\x1F]+$/' );
+define( 'PCRE_STRING'      , '/^[^\x-\x1F]+$/D' );
 
 // alphanum (letters and numbers only), no spaces allowed
-define( 'PCRE_ALPHANUM'    , '/^[A-Za-z0-9]+$/'  );
+define( 'PCRE_ALPHANUM'    , '/^[A-Za-z0-9]+$/D'  );
 
 // alphanum + underscore
-define( 'PCRE_ALPHANUM_EXT', '/^[a-zA-Z0-9_]+$/'  );
+define( 'PCRE_ALPHANUM_EXT', '/^[a-zA-Z0-9_]+$/D'  );
 
 // integer
-define( 'PCRE_INT'         , "/^[0-9]+$/"      );
+define( 'PCRE_INT'         , "/^[0-9]+$/D"      );
 define( 'PCRE_INTEGER'     , PCRE_INT );
 
 // CSS style definition
-define( 'PCRE_STYLE'       , "/^[a-zA-Z0-9\:\;\s\#\-]*$/" );
+define( 'PCRE_STYLE'       , "/^[a-zA-Z0-9\:\;\s\#\-]*$/D" );
 
 // Email address (anchored; no consecutive dots)
 // excluding addresses with consecutive dots such as john@aol...com
 // Does not match email addresses using an IP address instead of a domain name.
 // Does not match email addresses on new-fangled top-level domains with more than 4 letters such as .museum.
-define( 'PCRE_EMAIL'       , '/^[A-Za-z0-9._%-]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,4}$/' );
+define( 'PCRE_EMAIL'       , '/^[A-Za-z0-9._%-]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,4}$/D' );
 
 // Checking password complexity
 // This regular expression will tests if the input consists of 6 or more letters, digits, underscores and hyphens.
@@ -58,19 +58,21 @@ $pattern = "#(?:http://(?:(?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?
 define( 'PCRE_URI'         , $pattern );
 
 // plain text
-define( 'PCRE_PLAIN'       , '/^.*?$/esx' );
+// this is, in fact, no validation!
+define( 'PCRE_PLAIN'       , '/^.*?$/Desx' );
 
 #'/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i' );
 
 // MIME types
-define( 'PCRE_MIME'        , "/^(application|audio|example|image|message|model|multipart|text|video)\/(\*|[a-zA-Z0-9]+([+.-][a-zA-z0-9]+)*)$/" );
+define( 'PCRE_MIME'        , "/^(application|audio|example|image|message|model|multipart|text|video)\/(\*|[a-zA-Z0-9]+([+.-][a-zA-z0-9]+)*)$/D" );
 
 // International telephone number (ITU-T  Recommendation  E.123)
 // Example: +22 607 123 456
 // This is a very basic implementation!
-define( 'PCRE_TEL_INTL'    , "/^\+\d{1,2}\s*?[\s\d]+)$/" );
+define( 'PCRE_TEL_INTL'    , "/^\+\d{1,2}\s*?[\s\d]+)$/D" );
 
 // Telephone number (german format) => (01234) 567 890
-define( 'PCRE_TEL_GERMAN'  , "/^(\(?\d{2,6}\)?\s*?[\s\d]+)$/" );
+define( 'PCRE_TEL_GERMAN'  , "/^(\(?\d{2,6}\)?\s*?[\s\d]+)$/D" );
+
 
 ?>
