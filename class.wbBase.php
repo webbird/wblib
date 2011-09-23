@@ -31,7 +31,7 @@ if ( ! class_exists( 'wbBase', false ) ) {
     class wbBase {
 
         // ----- Debugging -----
-        protected        $debugLevel      = KLogger::OFF;
+        protected        $debugLevel      = KLOGGER::OFF;
         #protected        $debugLevel      = KLogger::DEBUG;
 
         // array to store config options
@@ -65,27 +65,33 @@ if ( ! class_exists( 'wbBase', false ) ) {
                 ? realpath( dirname( $callstack[0]['file'] ) )
                 : realpath( dirname(__FILE__) );
 
-            if (
-                 isset( $this->_config['path'] )
-                 &&
-                 file_exists( $this->_config['workdir'].'/'.$this->_config['path'] )
-            ) {
-                $this->setPath( $this->_config['workdir'].'/'.$this->_config['path'] );
-            }
-
             // init log directory
             if ( property_exists( get_class($this), 'debugDir' ) ) {
                 if ( empty( $this->debugDir ) ) {
-                    $this->debugDir = realpath( dirname(__FILE__) );
+                    $this->debugDir = $this->sanitizePath( realpath( dirname(__FILE__) ) );
                 }
             }
             else {
-                $this->debugDir = realpath( dirname(__FILE__) ).self::$defaultDebugDir;
+                $this->debugDir = $this->sanitizePath( realpath( dirname(__FILE__) ).self::$defaultDebugDir );
             }
 
             // allow to enable logging on object creation
             if ( isset( $this->_config['debug'] ) && $this->_config['debug'] === true ) {
                 $this->debugLevel = KLogger::DEBUG;
+            }
+
+            if ( isset( $this->_config['path'] ) ) {
+				// check if it's a full path
+				if ( @is_dir( $this->sanitizePath( $this->_config['path'] ) ) ) {
+				    $this->setPath( $this->_config['path'] );
+				}
+				// check if it's a relative path
+				elseif ( @is_dir( $this->sanitizePath( $this->_config['workdir'].'/'.$this->_config['path'] ) ) ) {
+                	$this->setPath( $this->_config['workdir'].'/'.$this->_config['path'] );
+				}
+				else {
+				    $this->log()->LogDebug( 'Invalid "path" option - path ['.$this->_config['path'].'] does not exist!' );
+				}
             }
 
             // create language object
@@ -97,7 +103,7 @@ if ( ! class_exists( 'wbBase', false ) ) {
                 );
             }
 
-        }
+        }   // end function __construct()
 
         /**
       	 * Prevent cloning of the object (Singleton)
@@ -185,6 +191,7 @@ if ( ! class_exists( 'wbBase', false ) ) {
       	 *
       	 **/
         public function setPath ( $path ) {
+			$path = $this->sanitizePath( $path );
             if ( file_exists( $path ) ) {
                 $this->_config['path'] = $path;
             }
