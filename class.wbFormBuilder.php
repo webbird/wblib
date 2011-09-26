@@ -19,6 +19,8 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, see <http://www.gnu.org/licenses/>.
+  
+  $Id$
 
 **/
 
@@ -486,7 +488,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                  $this->_config['_allowed'][ $allow ],
                                  array(
                                      'default'  => ( isset( $element['default']  ) ? $element['default'] : NULL ),
-                                     'stripped' => ( isset( $element['stripped'] ) ? true                : NULL ),
+                                     'stripped' => (
+									 			 	 ( ! isset($element['stripped']) || $element['stripped'] !== false )
+									 				 ? true
+									 				 : NULL
+									 			   )
                                  )
                              );
                     $val_errors = $this->val->getErrors($element['name']);
@@ -512,8 +518,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     }
                 }
                 
-                // encode HTML?
-                if ( isset( $element['encode'] ) && $element['encode'] === true ) {
+                // encode HTML? - default is YES!
+                if ( ! isset( $element['encode'] ) || $element['encode'] !== false ) {
                     $value = $this->__encodeFormData($value);
                 }
 
