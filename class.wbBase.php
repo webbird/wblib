@@ -192,10 +192,12 @@ if ( ! class_exists( 'wbBase', false ) ) {
       	 **/
         public function setPath ( $path ) {
 			$path = $this->sanitizePath( $path );
+			$this->log()->LogDebug( 'setting path ['.$path.']' );
             if ( file_exists( $path ) ) {
                 $this->_config['path'] = $path;
             }
             else {
+                $this->log()->LogDebug( 'path does not exist!' );
                 $this->printError( 'path does not exist: '.$path );
             }
         }   // end function setPath ()
