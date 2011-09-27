@@ -27,6 +27,7 @@
 require_once dirname( __FILE__ ).'/class.wbBase.php';
 require_once dirname( __FILE__ ).'/class.wbValidate.php';
 require_once dirname( __FILE__ ).'/class.wbTemplate.php';
+require_once dirname( __FILE__ ).'/class.wbSeq.php';
 
 if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
@@ -47,6 +48,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         // wbValidate object handler
         private        $val;
+        
+        // wbSeq object handler
+        private        $seq;
         
         private static $__FORMS__   = array();
 
@@ -109,9 +113,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                   # output as table or fieldset
                   'output_as'        => 'fieldset',
                   
-                  # CSRF protection settings; can and SHOULD be overwritten by caller
-                  'secret'           => '!p"/.m4fk{ay{£1R0W0O',
-                  'secret_time'      => 86400,
                   'secret_field'     => 'fbformkey',
                   
                   # known mime types
@@ -190,6 +191,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             // define known attributes
             $this->__init();
+            
+            // get wbSeq object
+            $this->seq = new wbSeq();
 
             // get current working directory of calling script; this is used
             // to autoload inc.forms.php
@@ -441,7 +445,14 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $formname = $this->__validateFormName( $formname );
             $errors   = array();
 
-            $this->__validateToken( $formname );
+            $this->seq->config( 'secret_field', $this->_config['secret_field'] );
+            if ( ! $this->seq->validateToken( $formname, false ) ) {
+                $this->log()->LogDebug(
+                    'validateToken returned false!'
+				);
+				$this->_errors[$formname][] = $this->lang->translate( 'Invalid token!' );
+				return $this->_errors[ $formname ];
+            }
 
             if ( isset( $this->_checked[ $formname ] ) && $this->_checked[ $formname ] === true ) {
                 $this->log()->LogDebug(
@@ -567,7 +578,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $errors;
 
         }   // end function checkForm()
-
+        
         /**
          * retrieve validated form data
          *
@@ -629,6 +640,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 					'Please note: The "secret_field" option was left to default. You should override this to improve form protection.'
 				);
             }
+            $this->seq->config( 'secret_field', $this->_config['secret_field'] );
 
             // use correct template
             $template = 'block.'.$this->_config['output_as'].'.tpl';
@@ -645,7 +657,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     'WBLIB_BASE_URL'
                         => $this->sanitizeURI( $this->_config['wblib_base_url'] ),
                     'token'
-						=> $this->__createToken( $formname ),
+						=> $this->seq->createToken( $formname ),
                 )
             );
 
@@ -2163,75 +2175,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         }   // end function __init()
         
-        /**
-         * create a signed token
-         *
-         *
-         *
-         **/
-		private function __createToken( $formname = '' ) {
-		
-		    $formname = $this->__validateFormName( $formname );
-			$secret   = $this->__createSecret( $formname );
-			
-			// create a random token
-            $token    = dechex(mt_rand());
-            
-            // create a hash using the secret, the form name, and the random token
-            $hash     = sha1( $secret.'-'.$formname.'-'.$token );
-            
-            // now, at least, create the form token
-            return $token.'-'.$hash.'-'.time();
-            
-		}   // end function function __createToken()
-		
-		/**
-		 *
-		 *
-		 *
-		 *
-		 **/
-		private function __createSecret( $formname = '' ) {
-		
-			// add some randomness to the configured secret
-		    $secret      = $this->_config['secret'];
-			$secrettime  = $this->_config['secret_time'];
-
-			// secret time should not extend one day and not drop below 1 hour
-			if ( ! is_numeric($secrettime) || $secrettime > 86400 || $secrettime < 36000 ) {
-			    // issue a warning
-			    $this->log()->LogWarn(
-			        'Invalid secret time given; using the default (86400 = 1 day)'
-				);
-				$secrettime = 86400;
-			}
-			$TimeSeed    = floor( time() / $secrettime ) * $secrettime;
-			$DomainSeed  = $_SERVER['SERVER_NAME'];
-			$Seed        = $TimeSeed + $DomainSeed;
-
-			// use some server specific data
-			$serverdata  = ( isset( $_SERVER['SERVER_SIGNATURE'] ) )   ? $_SERVER['SERVER_SIGNATURE']     : '2';
-			$serverdata .= ( isset( $_SERVER['SERVER_SOFTWARE'] ) )    ? $_SERVER['SERVER_SOFTWARE']      : '3';
-			$serverdata .= ( isset( $_SERVER['SERVER_NAME'] ) ) 	   ? $_SERVER['SERVER_NAME'] 		  : '5';
-			$serverdata .= ( isset( $_SERVER['SERVER_ADDR'] ) ) 	   ? $_SERVER['SERVER_ADDR'] 		  : '7';
-			$serverdata .= ( isset( $_SERVER['SERVER_PORT'] ) ) 	   ? $_SERVER['SERVER_PORT'] 		  : '11';
-			$serverdata .= ( isset( $_SERVER['SERVER_ADMIN'] ) )	   ? $_SERVER['SERVER_ADMIN'] 		  : '13';
-			$serverdata .= PHP_VERSION;
-
-			// add some browser data
-			$browser     = ( isset($_SERVER['HTTP_USER_AGENT']) )      ? $_SERVER['HTTP_USER_AGENT']      : 'b';
-			$browser    .= ( isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : 'c';
-			$browser    .= ( isset($_SERVER['HTTP_ACCEPT_ENCODING']) ) ? $_SERVER['HTTP_ACCEPT_ENCODING'] : 'e';
-			$browser	.= ( isset($_SERVER['HTTP_ACCEPT_CHARSET']) )  ? $_SERVER['HTTP_ACCEPT_CHARSET']  : 'g';
-
-			// add seed to current secret
-			$secret     .= md5( $Seed ) . md5( $serverdata ) . md5( $browser );
-			
-			return $secret;
-		
-		}   // end function __createSecret()
-
-
 		/**
 		 * encode HTML in form data
 		 * found here:
@@ -2460,46 +2403,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          *
          **/
-		private function __terminateSession() {
-		
-		    // unset session variables
-		    if (isset($_SESSION)) {
-		        $_SESSION = array();
-		    }
-		    if (isset($HTTP_SESSION_VARS)) {
-		        $HTTP_SESSION_VARS = array();
-		    }
-		    
-		    // unset globals
-		    unset( $_REQUEST );
-            unset( $_POST    );
-            unset( $_GET     );
-            unset( $_SERVER  );
-            
-		    session_unset();
-
-			if ( ! empty( $this->_config['onerror_redirect_to'] ) ) {
-			    if ( ! headers_sent() ) {
-		            header("Location: " . $this->_config['onerror_redirect_to'] );
-		        }
-				else {
-		            echo "<b>Undefined action.</b>";
-		        }
-		        die;
-            }
-            else {
-	            echo "<b>Undefined action.</b>";
-	        }
-	        die;
-
-		}   // end function __terminateSession()
-
-        /**
-         *
-         *
-         *
-         *
-         **/
         private function __validateAttributes( $element ) {
 
             $this->log()->LogDebug( '', $element );
@@ -2626,52 +2529,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         }   // end function __validateFormName
         
-        /**
-         *
-         *
-         *
-         *
-         **/
-		private function __validateToken( $formname = '' ) {
-		
-            $formname = $this->__validateFormName( $formname );
-            
-            // print notice into log if the secret field name was left to default
-            if ( $this->_config['secret_field'] == 'fbformkey' ) {
-                $this->log()->LogWarn(
-					'Please note: The "secret_field" option was left to default. You should override this to improve form protection.'
-				);
-            }
-
-            $key   = $this->val->param( $this->_config['secret_field'] );
-            $parts = explode( '-', $key );
-            
-            $this->log()->LogDebug( 'checking token: '.$key );
-
-            if ( count($parts) == 3 ) {
-                list( $token, $hash, $time ) = $parts;
-                // check if token is expired
-                if ( $time < ( time() - 30 * 60 ) ) {
-                    $this->log()->LogWarn( 'token is expired (token time -'.$time.'- checked against -'.( time() - 30*60 ).'-' );
-                    $this->__terminateSession();
-                }
-                // check the secret
-                $secret = $this->__createSecret( $formname );
-                if ( $hash != sha1( $secret.'-'.$formname.'-'.$token ) ) {
-                    $this->log()->LogWarn( 'invalid token!' );
-                    $this->__terminateSession();
-                }
-                else {
-					return true;
-				}
-            }
-
-			// token should have 3 parts; if not, it's invalid
-            $this->__terminateSession();
-            return false;
-            
-		}   // function __validateToken()
-
     }
 
 }

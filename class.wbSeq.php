@@ -26,6 +26,8 @@ if ( ! class_exists( 'KLogger', false ) ) {
     include_once dirname(__FILE__).'/./debug/KLogger.php';
 }
 
+require_once dirname( __FILE__ ).'/class.wbValidate.php';
+
 if ( ! class_exists( 'wbSeq', false ) ) {
 
     class wbSeq extends wbBase {
@@ -34,7 +36,22 @@ if ( ! class_exists( 'wbSeq', false ) ) {
         protected        $debugLevel      = KLogger::WARN;
 
         // array to store config options
-        protected        $_config         = array( 'debug' => false );
+        protected        $_config         = array(
+			'debug' => false,
+            # CSRF protection settings; can and SHOULD be overwritten by caller
+			'secret'           => '!p"/.m4fk{ay{£1R0W0O',
+			'secret_time'      => 86400,
+			'secret_field'     => 'fbseqkey',
+		);
+        
+        // stores last detected issue
+        // NOTE! THIS IS A SECURITY ISSUE!!! DON'T USE THIS IN PRODUCTION!!!
+        // ONLY USE FOR DEBUGGING!!!
+        private          $_lastIssue      = NULL;
+        private          $_lastMatch      = NULL;
+        
+        //
+        private          $val;
         
         /**
 	     * constructor
@@ -42,7 +59,37 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 	    function __construct ( $options = array() ) {
 	        parent::__construct( $options );
 	        $this->__init();
+	        $this->val = new wbValidate();
 	    }   // end function __construct()
+	    
+        /**
+         * create a signed token
+         *
+         *
+         *
+         **/
+		public function createToken( $dynamic = 'wbSeq' ) {
+		
+		    if ( empty($dynamic) ) {
+		        $this->log->LogWarn( 'No dynamic token part given! Please use always a dynamic part!' );
+		        $dynamic = 'wbSeq';
+			}
+			elseif ( $dynamic == 'wbSeq' ) {
+		        $this->log->LogWarn( 'No dynamic token part given! Please use always a dynamic part!' );
+			}
+
+			$secret   = $this->__createSecret( $dynamic );
+
+			// create a random token
+            $token    = dechex(mt_rand());
+
+            // create a hash using the secret, the dynamic part, and the random token
+            $hash     = sha1( $secret.'-'.$dynamic.'-'.$token );
+
+            // now, at least, create the token
+            return $token.'-'.$hash.'-'.time();
+
+		}   // end function function createToken()
 	    
 	    /**
 	     * check mail header injection
@@ -65,7 +112,9 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 					as $constant
 				) {
 				    if ( preg_match( constant( $constant ), $value ) ) {
-		                $this->log()->LogWarn( 'found mail header injection code! -> ' . $value );
+		                $this->__log_( 'ISSUE', 'found mail header injection code! -> ' . $value );
+		                $this->_lastMatch = $constant;
+		                $this->_lastIssue = 'found mail header injection code! -> ' . $value;
 		                return true;
 		            }
 				}
@@ -89,11 +138,13 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 			foreach( $values as $value ) {
 				// check for SQL injection
 				foreach(
-					array( 'PCRE_SQL_QUOTES', 'PCRE_SQL_TYPICAL', 'PCRE_SQL_UNION', 'PCRE_SQL_STORED' )
+					array( 'PCRE_SQL_TYPICAL', 'PCRE_SQL_UNION', 'PCRE_SQL_STORED' ) //'PCRE_SQL_QUOTES',
 					as $constant
 				) {
 					if ( preg_match( constant( $constant ), $value ) ) {
-		                $this->log()->LogWarn( 'found injection code!', $value );
+		                $this->__log_( 'ISSUE', 'found injection code! -> ' . $constant, $value );
+		                $this->_lastMatch = $constant;
+                  		$this->_lastIssue = 'found injection code! ' . "\n$constant\n" . constant( $constant ). "\n\n" . $value;
 		                return true;
 		            }
 				}
@@ -103,7 +154,9 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 				    as $constant
 				) {
 				    if ( preg_match( constant( $constant ), $value ) ) {
-		                $this->log()->LogWarn( 'found XSS code! -> ' . $value );
+		                $this->__log_( 'ISSUE', 'found XSS code! -> ' . $value );
+		                $this->_lastMatch = $constant;
+		                $this->_lastIssue = 'found XSS code! -> ' . $value;
 		                return true;
 		            }
 				}
@@ -112,7 +165,89 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 			return false;
 		}   // end function detectIntrusion()
 		
-		
+		/**
+		 * returns last detected issue
+		 *
+		 * NOTE! THIS IS A SECURITY ISSUE!!! ONLY USE FOR DEBUGGING!!!
+		 *
+		 * For security reasons, this only works if debug is set to true
+		 *
+		 * @access public
+		 * @return string
+		 *
+		 **/
+		public function getLastIssue() {
+		    if ( $this->_config['debug'] !== true ) {
+				return '';
+			}
+		    return $this->_lastIssue;
+		}   // end function getLastIssue()
+
+		/**
+		 * returns last detected match (name of constant that matched)
+		 *
+		 * NOTE! THIS IS A SECURITY ISSUE!!! ONLY USE FOR DEBUGGING!!!
+		 *
+		 * For security reasons, this only works if debug is set to true
+		 *
+		 * @access public
+		 * @return string
+		 *
+		 **/
+		public function getLastMatch() {
+		    if ( $this->_config['debug'] !== true ) {
+				return '';
+			}
+		    return $this->_lastMatch;
+		}   // end function getLastMatch()
+
+        /**
+         * validate a token
+         *
+         *
+         *
+         **/
+		public function validateToken( $dynamic, $strict = true ) {
+
+            // print notice into log if the secret field name was left to default
+            if ( $this->_config['secret_field'] == 'fbseqkey' ) {
+                $this->__log_(
+                    'WARN',
+					'Please note: The "secret_field" option was left to default. You should override this to improve protection.'
+				);
+            }
+
+            $key   = $this->val->param( $this->_config['secret_field'] );
+            $parts = explode( '-', $key );
+
+            $this->log()->LogDebug( 'checking token: '.$key );
+
+            if ( count($parts) == 3 ) {
+                list( $token, $hash, $time ) = $parts;
+                // check if token is expired
+                if ( $time < ( time() - 30 * 60 ) ) {
+                    $this->log()->LogWarn( 'token is expired (token time -'.$time.'- checked against -'.( time() - 30*60 ).'-' );
+                    $this->__terminateSession( $strict, 'token expired' );
+                    return false;
+                }
+                // check the secret
+                $secret = $this->__createSecret( $dynamic );
+                if ( $hash != sha1( $secret.'-'.$dynamic.'-'.$token ) ) {
+                    $this->__log_( 'WARN', 'invalid token!' );
+                    $this->__terminateSession( $strict, 'invalid token' );
+                    return false;
+                }
+                else {
+					return true;
+				}
+            }
+
+			// token should have 3 parts; if not, it's invalid
+            $this->__terminateSession( $strict, 'invalid token ['.$key.'] - parts count != 3');
+            return false;
+
+		}   // function validateToken()
+
 	    /**
 	     * define regexp
 	     *
@@ -127,6 +262,125 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 	        include dirname(__FILE__).'/wbSeq/inc.regexp.php';
 	        define( '__WBSEQ_INIT__', true );
 	    }   // end sub __init()
+
+		/**
+		 *
+		 *
+		 *
+		 *
+		 **/
+		private function __createSecret( $dynamic ) {
+
+			// add some randomness to the configured secret
+		    $secret      = $this->_config['secret'];
+			$secrettime  = $this->_config['secret_time'];
+
+			// secret time should not extend one day and not drop below 1 hour
+			if ( ! is_numeric($secrettime) || $secrettime > 86400 || $secrettime < 36000 ) {
+			    // issue a warning
+			    $this->log()->LogWarn(
+			        'Invalid secret time given; using the default (86400 = 1 day)'
+				);
+				$secrettime = 86400;
+			}
+			$TimeSeed    = floor( time() / $secrettime ) * $secrettime;
+			$DomainSeed  = $_SERVER['SERVER_NAME'];
+			$Seed        = $TimeSeed + $DomainSeed;
+
+			// use some server specific data
+			$serverdata  = ( isset( $_SERVER['SERVER_SIGNATURE'] ) )   ? $_SERVER['SERVER_SIGNATURE']     : '2';
+			$serverdata .= ( isset( $_SERVER['SERVER_SOFTWARE'] ) )    ? $_SERVER['SERVER_SOFTWARE']      : '3';
+			$serverdata .= ( isset( $_SERVER['SERVER_NAME'] ) ) 	   ? $_SERVER['SERVER_NAME'] 		  : '5';
+			$serverdata .= ( isset( $_SERVER['SERVER_ADDR'] ) ) 	   ? $_SERVER['SERVER_ADDR'] 		  : '7';
+			$serverdata .= ( isset( $_SERVER['SERVER_PORT'] ) ) 	   ? $_SERVER['SERVER_PORT'] 		  : '11';
+			$serverdata .= ( isset( $_SERVER['SERVER_ADMIN'] ) )	   ? $_SERVER['SERVER_ADMIN'] 		  : '13';
+			$serverdata .= PHP_VERSION;
+
+			// add some browser data
+			$browser     = ( isset($_SERVER['HTTP_USER_AGENT']) )      ? $_SERVER['HTTP_USER_AGENT']      : 'b';
+			$browser    .= ( isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : 'c';
+			$browser    .= ( isset($_SERVER['HTTP_ACCEPT_ENCODING']) ) ? $_SERVER['HTTP_ACCEPT_ENCODING'] : 'e';
+			$browser	.= ( isset($_SERVER['HTTP_ACCEPT_CHARSET']) )  ? $_SERVER['HTTP_ACCEPT_CHARSET']  : 'g';
+
+			// add seed to current secret
+			$secret     .= md5( $Seed ) . md5( $serverdata ) . md5( $browser );
+
+			return $secret;
+
+		}   // end function __createSecret()
+		
+        /**
+         *
+         *
+         *
+         *
+         **/
+		private function __terminateSession( $strict = true, $reason = NULL ) {
+		
+		    if ( ! empty($this->_lastMatch) ) {
+		    	$this->__log_( 'WARN', '__terminateSession() - '. $this->_lastMatch );
+			}
+			if ( ! empty($reason) ) {
+		    	$this->__log_( 'WARN', '__terminateSession() - '. $reason );
+			}
+
+		    // unset session variables
+		    if (isset($_SESSION)) {
+		        $_SESSION = array();
+		    }
+		    if (isset($HTTP_SESSION_VARS)) {
+		        $HTTP_SESSION_VARS = array();
+		    }
+
+		    // unset globals
+		    unset( $_REQUEST );
+            unset( $_POST    );
+            unset( $_GET     );
+            unset( $_SERVER  );
+
+		    session_unset();
+
+			if ( ! empty( $this->_config['onerror_redirect_to'] ) ) {
+			    if ( ! headers_sent() ) {
+		            header("Location: " . $this->_config['onerror_redirect_to'] );
+		        }
+				else {
+		            $this->__log_( 'WARN', "__terminateSession() - Unable to redirect. Undefined action." );
+		        }
+		        if ( $strict ) { die; }
+            }
+            else {
+	            $this->__log_( 'WARN', "__terminateSession() - Unable to redirect. Undefined action." );
+	        }
+	        if ( $strict ) { die; }
+
+		}   // end function __terminateSession()
+		
+		/**
+		 * Logfile output
+		 */
+		private function __log_( $level, $message ) {
+	        $logfile = fopen( $this->debugDir.'/wbSeq.issues.log', 'a' );
+	        if ( $logfile ) {
+		        fputs($logfile,
+					implode(
+						' : ',
+						array(
+							date("d.m.Y, H:i:s",time()),
+							$level,
+		              		$_SERVER['REMOTE_ADDR'],
+		              		$message,
+		              		$_SERVER['REQUEST_METHOD'],
+		              		$_SERVER['PHP_SELF'],
+		              		$_SERVER['HTTP_USER_AGENT'],
+		              		( isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '' )
+						)
+					) . "\n"
+				);
+		        fclose($logfile);
+			}
+		}   // end function __log_()
+
 
 	}
 
