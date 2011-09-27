@@ -36,6 +36,7 @@
 	
 		private $log_file;
 		private $priority = KLogger::INFO;
+		private $lastline = NULL;
 		
 		private $file_handle;
 		
@@ -137,6 +138,7 @@
 			{
 				$status = $this->getTimeLine( $priority );
 				$this->WriteFreeFormLine ( "$status $line \n" );
+				$lastline = "$status $line";
 			}
 		}
 		
@@ -148,6 +150,11 @@
 			        $this->MessageQueue[] = "The file could not be written to. Check that appropriate permissions have been set.";
 			    }
 			}
+		}
+		
+		public function getLastLog()
+		{
+		    return $lastline;
 		}
 		
 		private function getTimeLine( $level )
