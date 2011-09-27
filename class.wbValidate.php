@@ -179,7 +179,7 @@ class wbValidate extends wbBase {
      *
      * @access public
      * @param  string   $varname  - form field to retrieve
-     * @param  string   $constant - predefined RegExp to use
+     * @param  string   $constant - predefined RegExp to use (default: PCRE_STRING)
      * @param  array    $options  - more options (like default value)
      *
      **/
@@ -190,16 +190,12 @@ class wbValidate extends wbBase {
 
         $this->log()->LogDebug( 'var ['.$varname.']', $options );
         
-        if ( empty ( $constant ) ) {
-            $constant = 'PCRE_STRING';
-        }
-
         // value already validated?
         if ( isset( self::$_valid[ $varname ] ) ) {
             $this->log()->LogDebug( 'returning already validated var '.$varname, self::$_valid[ $varname ] );
             return self::$_valid[ $varname ];
         }
-        
+
         // value available?
         if (
                 ! isset( self::$_tainted[ $varname ] )
@@ -207,6 +203,10 @@ class wbValidate extends wbBase {
         ) {
             $this->log()->LogDebug( 'no data found for var '.$varname );
             return isset( $options['default'] ) ? $options['default'] : NULL;
+        }
+
+        if ( empty ( $constant ) ) {
+            $constant = 'PCRE_STRING';
         }
 
         // so we have a tainted value; let's check it
@@ -669,32 +669,31 @@ class wbValidate extends wbBase {
      *
      **/
     private function __strip ( $filter ) {
-
-        // realign javascript href to onclick
-        $filter = preg_replace("/href=(['\"]).*?javascript:(.*)?\\1/i", "onclick=' $2 '", $filter);
-
-        //remove javascript from tags
-        while( preg_match("/<(.*)?javascript.*?\(.*?((?>[^()]+)|(?R)).*?\)?\)(.*)?>/i", $filter) ) {
-            $filter = preg_replace("/<(.*)?javascript.*?\(.*?((?>[^()]+)|(?R)).*?\)?\)(.*)?>/i", "<$1$3$4$5>", $filter);
-        }
-
-        // dump expressions from contibuted content
-        if(0) $filter = preg_replace("/:expression\(.*?((?>[^(.*?)]+)|(?R)).*?\)\)/i", "", $filter);
-
-        while( preg_match("/<(.*)?:expr.*?\(.*?((?>[^()]+)|(?R)).*?\)?\)(.*)?>/i", $filter) ) {
-            $filter = preg_replace("/<(.*)?:expr.*?\(.*?((?>[^()]+)|(?R)).*?\)?\)(.*)?>/i", "<$1$3$4$5>", $filter);
-        }
-
-        // remove all on* events
-        while( preg_match("/<(.*)?\s?on.+?=?\s?.+?(['\"]).*?\\2\s?(.*)?>/i", $filter) ) {
-           $filter = preg_replace("/<(.*)?\s?on.+?=?\s?.+?(['\"]).*?\\2\s?(.*)?>/i", "<$1$3>", $filter);
-        }
-
-        // remove <script> tags
-        $filter = preg_replace( "/<\/?script.*?>/i", '', $filter );
-
-        return $filter;
-
+		if ( is_array( $filter ) ) {
+		    foreach( $filter as $i => $value ) {
+		        $filter[$i] = $this->__strip($value);
+			}
+		}
+		else {
+	        // realign javascript href to onclick
+	        $filter = preg_replace("/href=(['\"]).*?javascript:(.*)?\\1/i", "onclick=' $2 '", $filter);
+	        //remove javascript from tags
+	        while( preg_match("/<(.*)?javascript.*?\(.*?((?>[^()]+)|(?R)).*?\)?\)(.*)?>/i", $filter) ) {
+	            $filter = preg_replace("/<(.*)?javascript.*?\(.*?((?>[^()]+)|(?R)).*?\)?\)(.*)?>/i", "<$1$3$4$5>", $filter);
+	        }
+	        // dump expressions from contributed content
+	        if(0) $filter = preg_replace("/:expression\(.*?((?>[^(.*?)]+)|(?R)).*?\)\)/i", "", $filter);
+	        while( preg_match("/<(.*)?:expr.*?\(.*?((?>[^()]+)|(?R)).*?\)?\)(.*)?>/i", $filter) ) {
+	            $filter = preg_replace("/<(.*)?:expr.*?\(.*?((?>[^()]+)|(?R)).*?\)?\)(.*)?>/i", "<$1$3$4$5>", $filter);
+	        }
+	        // remove all on* events
+	        while( preg_match("/<(.*)?\s?on.+?=?\s?.+?(['\"]).*?\\2\s?(.*)?>/i", $filter) ) {
+	           $filter = preg_replace("/<(.*)?\s?on.+?=?\s?.+?(['\"]).*?\\2\s?(.*)?>/i", "<$1$3>", $filter);
+	        }
+	        // remove <script> tags
+	        $filter = preg_replace( "/<\/?script.*?>/i", '', $filter );
+		}
+	    return $filter;
     }   // end function __strip ()
 
 }
