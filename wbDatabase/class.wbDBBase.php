@@ -754,12 +754,12 @@ class wbDBBase extends PDO {
      **/
     protected function __get_params( $params ) {
         foreach ( $params as $i => $param ) {
-			if ( ! $this->seq->detectIntrusion($param) ) {
+			if ( ! $this->seq->detectIntrusion( $this->quote($param) ) ) {
 				// no escaping here; we're using PDO, remember?
 			    $params[$i] = $param;
 			}
 			else {
-				$this->printError( 'INTRUSION DETECTED!' );
+				$this->printError( 'INTRUSION DETECTED!<br />'. $this->seq->getLastIssue() );
 			}
         }
         $this->log->LogDebug( 'PARAMS:', $params );
