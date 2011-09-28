@@ -32,8 +32,8 @@ include_once dirname(__FILE__).'/interface.wbDBDriver.php';
 class wbMySQL extends wbDBBase implements wbDBDriver {
 
     // ----- Debugging -----
-    protected        $debugLevel      = KLogger::DEBUG;
-    #protected        $debugLevel      = KLogger::OFF;
+    #protected        $debugLevel      = KLogger::DEBUG;
+    protected        $debugLevel      = KLogger::OFF;
 
     /**
      * set some defaults specific to this driver class
