@@ -37,6 +37,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         protected      $debugLevel      = KLOGGER::WARN;
         #protected      $debugLevel      = KLOGGER::DEBUG;
 
+		// auto-number legend fields if no name is given
+		private        $_legend_number  = 1;
+
         // name of the current form
         private        $_current_form   = NULL;
         
@@ -468,6 +471,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             // ----- for all registered elements of this form... -----
             foreach ( self::$_forms[$formname]['elements'] as $element ) {
+            
+                // skip elements that are not expected to have any data
+                if ( $element['type'] == 'legend' || $element['type'] == 'infotext' ) {
+                    continue;
+                }
 
                 $this->log()->LogDebug(
                     'checking field ['.$element['name'].']'
@@ -721,6 +729,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                         'block_number' => $i,
                                     )
                                 )
+                                // enable cache
+                                //,true
                             );
             }
 
@@ -747,6 +757,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                            :  NULL,
                             )
                         )
+                        // enable cache
+                        //,true
                     );
 
             // ----- render the form -----
@@ -787,6 +799,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                            'js'       => implode( "\n", $this->_js )
                        )
                    )
+                    // enable cache
+                	//,true
                 );
 
             return $output;
@@ -800,12 +814,24 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          **/
 		public function getMimeTypes( $by = 'keys' ) {
-		    if ( isset($by) && $by == 'keys' ) {
+		    if ( isset($by) ) {
 		        $ret = array();
-		        foreach ( $this->_config['mimetypes'] as $type => $item ) {
-		            $ret[$type] = $this->_config['mimetypes'][$type]['label']
-								. ' ( .'. str_replace( '|', ', .', $this->_config['mimetypes'][$type]['suffixes'] ) . ')';
-		        }
+		        if ( $by == 'keys' ) {
+			        foreach ( $this->_config['mimetypes'] as $type => $item ) {
+			            $ret[$type] = $this->_config['mimetypes'][$type]['label']
+									. ' ( .'. str_replace( '|', ', .', $this->_config['mimetypes'][$type]['suffixes'] ) . ')';
+			        }
+				}
+				elseif ( $by == 'suffixes' ) {
+				    foreach ( $this->_config['mimetypes'] as $type => $item ) {
+			            $ret = array_merge(
+								   $ret,
+								   explode( '|', $this->_config['mimetypes'][$type]['suffixes'] )
+							   );
+			        }
+			        $ret = array_unique($ret);
+			        asort($ret);
+				}
 		        return $ret;
 			}
 			return $this->_config['mimetypes'];
@@ -1570,6 +1596,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                         ,
                         'labelclass' => $this->_config['label_class'],
                     )
+                    // enable cache
+                    //,true
                 );
 
             $this->log()->LogDebug( 'returning rendered infotext: ', $output );
@@ -1692,6 +1720,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                         'attributes' => $attributes,
                         'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL )
                     )
+                    // enable cache
+                    //,true
                 );
 
             $this->log()->LogDebug( 'returning rendered input field:', $output );
@@ -1721,7 +1751,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             if ( ! $text ) {
                 $this->log()->LogError( 'no text given for legend element!' );
             }
-                    
+            
             $output =
                 $this->tpl->getTemplate(
                     'legend.'.$this->_config['output_as'].'.tpl',
@@ -1732,6 +1762,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                         //)
                                         ,
                     )
+	                // enable cache
+	                //,true
                 );
 
             $this->log()->LogDebug( 'returning rendered legend: ', $output );
@@ -1833,6 +1865,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                            //'tooltip'    => ( isset ( $element['infotext'] ) ? SEQ_OUTPUT( $this->translate( $element['infotext'] ) ) : NULL ),
                            'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
                        )
+                        // enable cache
+                        //,true
                    );
 
             $this->log()->LogDebug( 'returning rendered select field:', $output );
@@ -1976,6 +2010,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                            //'content'    => ( isset ( $element['content'] ) ? SEQ_OUTPUT( $element['content'] ) : ''   ),
                            'content'    => ( isset ( $element['content'] ) ? $element['content'] : ''   ),
                        )
+                        // enable cache
+                        //,true
+
                    );
 
         }   // end function radio()
@@ -2022,6 +2059,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                            //'value'      => ( isset ( $element['value'] ) ? SEQ_OUTPUT($element['value']) : '' ),
                            'value'      => ( isset ( $element['value'] ) ? $element['value'] : '' ),
                        )
+                        // enable cache
+                        //,true
+
                    );
 
         }   // end function textarea ()
@@ -2222,15 +2262,20 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             $formname = $this->__validateFormName( $formname );
 
-            // make sure we have an element name
-            $element['name'] = isset( $element['name'] )
-                             ? $element['name']
-                             : $formname.'_'.$this->generateRandomString();
-
             // make sure we have a type
             $element['type'] = isset( $element['type'] )
                              ? $element['type']
                              : 'text';
+
+            // make sure we have an element name
+            if ( ! isset( $element['name'] ) ) {
+                if ( $element['type'] == 'legend' ) {
+                	$element['name'] = 'legend_'.++$this->_legend_number;
+            	}
+				else {
+					$element['name'] = $formname.'_'.$this->generateRandomString();
+				}
+			}
 
 // ----- TODO: readonly ist normalerweise auch für weitere Elemente gültig! -----
             // set valid value for 'readonly'
