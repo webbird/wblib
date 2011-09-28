@@ -114,7 +114,7 @@ class wbDBBase extends PDO {
         // Output the exception details
         if ( is_object( $this ) && is_object($this->log) )
         {
-            $this->log->LogError(
+            $this->warn(
                 '[wbDatabase] Uncaught exception: '. $exception->getMessage()
             );
         }
@@ -143,6 +143,10 @@ class wbDBBase extends PDO {
         else {
             $this->debugDir = realpath( dirname(__FILE__) ).self::$defaultDebugDir;
         }
+        
+        if ( isset($options['debug']) && $options['debug'] === true ) {
+            $this->debugLevel = KLogger::DEBUG;
+		}
 
         $this->log
             = new KLogger(
