@@ -71,11 +71,11 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 		public function createToken( $dynamic = 'wbSeq' ) {
 		
 		    if ( empty($dynamic) ) {
-		        $this->log->LogWarn( 'No dynamic token part given! Please use always a dynamic part!' );
+		        $this->log()->LogWarn( 'No dynamic token part given! Please use always a dynamic part!' );
 		        $dynamic = 'wbSeq';
 			}
 			elseif ( $dynamic == 'wbSeq' ) {
-		        $this->log->LogWarn( 'No dynamic token part given! Please use always a dynamic part!' );
+		        $this->log()->LogWarn( 'No dynamic token part given! Please use always a dynamic part!' );
 			}
 
 			$secret   = $this->__createSecret( $dynamic );
@@ -112,7 +112,7 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 					as $constant
 				) {
 				    if ( preg_match( constant( $constant ), $value ) ) {
-		                $this->__log_( 'ISSUE', 'found mail header injection code! -> ' . $value );
+		                $this->warn( 'SECURITY ISSUE', 'found mail header injection code! -> ' . $value );
 		                $this->_lastMatch = $constant;
 		                $this->_lastIssue = 'found mail header injection code! -> ' . $value;
 		                return true;
@@ -142,7 +142,7 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 					as $constant
 				) {
 					if ( preg_match( constant( $constant ), $value ) ) {
-		                $this->__log_( 'ISSUE', 'found injection code! -> ' . $constant, $value );
+		                $this->warn( 'SECURITY ISSUE', 'found injection code! -> ' . $constant, $value );
 		                $this->_lastMatch = $constant;
                   		$this->_lastIssue = 'found injection code! ' . "\n$constant\n" . constant( $constant ). "\n\n" . $value;
 		                return true;
@@ -154,7 +154,7 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 				    as $constant
 				) {
 				    if ( preg_match( constant( $constant ), $value ) ) {
-		                $this->__log_( 'ISSUE', 'found XSS code! -> ' . $value );
+		                $this->warn( 'SECURITY ISSUE', 'found XSS code! -> ' . $value );
 		                $this->_lastMatch = $constant;
 		                $this->_lastIssue = 'found XSS code! -> ' . $value;
 		                return true;
@@ -211,8 +211,7 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 
             // print notice into log if the secret field name was left to default
             if ( $this->_config['secret_field'] == 'fbseqkey' ) {
-                $this->__log_(
-                    'WARN',
+                $this->log()->LogWarn(
 					'Please note: The "secret_field" option was left to default. You should override this to improve protection.'
 				);
             }
@@ -233,7 +232,7 @@ if ( ! class_exists( 'wbSeq', false ) ) {
                 // check the secret
                 $secret = $this->__createSecret( $dynamic );
                 if ( $hash != sha1( $secret.'-'.$dynamic.'-'.$token ) ) {
-                    $this->__log_( 'WARN', 'invalid token!' );
+                    $this->warn( 'WARN', 'invalid token!' );
                     $this->__terminateSession( $strict, 'invalid token' );
                     return false;
                 }
@@ -318,10 +317,10 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 		private function __terminateSession( $strict = true, $reason = NULL ) {
 		
 		    if ( ! empty($this->_lastMatch) ) {
-		    	$this->__log_( 'WARN', '__terminateSession() - '. $this->_lastMatch );
+		    	$this->log()->LogWarn( '__terminateSession() - '. $this->_lastMatch );
 			}
 			if ( ! empty($reason) ) {
-		    	$this->__log_( 'WARN', '__terminateSession() - '. $reason );
+		    	$this->log()->LogWarn( '__terminateSession() - '. $reason );
 			}
 
 		    // unset session variables
@@ -345,43 +344,17 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 		            header("Location: " . $this->_config['onerror_redirect_to'] );
 		        }
 				else {
-		            $this->__log_( 'WARN', "__terminateSession() - Unable to redirect. Undefined action." );
+		            $this->log()->LogWarn( "__terminateSession() - Unable to redirect. Undefined action." );
 		        }
 		        if ( $strict ) { die; }
             }
             else {
-	            $this->__log_( 'WARN', "__terminateSession() - Unable to redirect. Undefined action." );
+	            $this->log()->LogWarn( "__terminateSession() - Unable to redirect. Undefined action." );
 	        }
 	        if ( $strict ) { die; }
 
 		}   // end function __terminateSession()
 		
-		/**
-		 * Logfile output
-		 */
-		private function __log_( $level, $message ) {
-	        $logfile = fopen( $this->debugDir.'/wbSeq.issues.log', 'a' );
-	        if ( $logfile ) {
-		        fputs($logfile,
-					implode(
-						' : ',
-						array(
-							date("d.m.Y, H:i:s",time()),
-							$level,
-		              		$_SERVER['REMOTE_ADDR'],
-		              		$message,
-		              		$_SERVER['REQUEST_METHOD'],
-		              		$_SERVER['PHP_SELF'],
-		              		$_SERVER['HTTP_USER_AGENT'],
-		              		( isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '' )
-						)
-					) . "\n"
-				);
-		        fclose($logfile);
-			}
-		}   // end function __log_()
-
-
 	}
 
 }

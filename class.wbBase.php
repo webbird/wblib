@@ -172,8 +172,8 @@ if ( ! class_exists( 'wbBase', false ) ) {
       	}   // end function log ()
 
       	/**
-      	 * Fake KLogger's LogDebug function if debug level is "off"; just does
-      	 * nothing
+      	 * Fake KLogger's LogDebug / LogWarn functions if debug level is "off"; 
+      	 * just does nothing
       	 *
       	 * @param ignored
       	 *
@@ -181,6 +181,37 @@ if ( ! class_exists( 'wbBase', false ) ) {
       	public function LogDebug () {
             return;
         }   // end function LogDebug ()
+        public function LogWarn () {
+            return;
+        }   // end function LogWarn ()
+        
+        /**
+         *
+         *
+         *
+         *
+         **/
+		public function warn( $level, $message ) {
+	        $logfile = fopen( $this->debugDir.'/'.get_class($this).'.warn', 'a' );
+	        if ( $logfile ) {
+		        fputs($logfile,
+					implode(
+						' : ',
+						array(
+							sprintf( '%10s', $level ),
+							date("d.m.Y, H:i:s",time()),
+		              		$_SERVER['REMOTE_ADDR'],
+		              		$message,
+		              		$_SERVER['REQUEST_METHOD'],
+		              		$_SERVER['PHP_SELF'],
+		              		$_SERVER['HTTP_USER_AGENT'],
+		              		( isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '' )
+						)
+					) . "\n"
+				);
+		        fclose($logfile);
+			}
+		}   // end function warn()
 
       	/**
       	 * set path
