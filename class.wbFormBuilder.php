@@ -588,6 +588,31 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end function checkForm()
         
         /**
+         *
+         *
+         *
+         *
+         **/
+		public function getAllowedMimeTypes( $formname = '', $name ) {
+		
+		    $formname = $this->__validateFormName( $formname );
+
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+
+            // element found
+            if ( is_array( $path ) ) {
+                $this->log()->LogDebug(
+                    'found element ['.$name.']'
+                );
+                return self::$_forms[ $formname ][ $name ][ 'mimetypes' ];
+			}
+			
+			return NULL;
+			
+		}   // end function getAllowedMimeTypes()
+        
+        /**
          * retrieve validated form data
          *
          * @access public
@@ -1701,6 +1726,16 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 				    $this->_flags['__cal_lang_set'] = true;
 				}
             }
+            
+            // is it a password field?
+            $pwstrength = NULL;
+            if (
+			       ! strcasecmp( $element['type'] , 'password' )
+				&& ! strcasecmp( $element['allow'], 'password' )
+				&&               $element['pwstrength']
+			) {
+				$pwstrength = true;
+			}
 
             // quote value
             if ( isset($element['value']) && strlen( $element['value'] ) > 0 ) {
@@ -1718,7 +1753,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     $template,
                     array(
                         'attributes' => $attributes,
-                        'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL )
+                        'tooltip'    => ( isset ( $element['infotext'] ) ? $this->translate( $element['infotext'] ) : NULL ),
+                        'pwstrength' => $pwstrength,
+                        'name'       => $element['name']
                     )
                     // enable cache
                     //,true
