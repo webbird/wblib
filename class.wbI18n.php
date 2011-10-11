@@ -228,7 +228,6 @@ class wbI18n extends wbBase
         {
             $msg = self::$_lang[ $msg ];
         }
-
         foreach ( $attr as $key => $value )
         {
             $msg = str_replace( "{{ " . $key . " }}", $value, $msg );
