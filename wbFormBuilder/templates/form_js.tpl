@@ -18,6 +18,7 @@
 <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/tooltip/rounded-corners.js"></script>
 <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/tooltip/form-field-tooltip.js"></script>
 <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/jquery.jqEasyCharCounter.js"></script>
+<script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/jquery.passwordstrength.js"></script>
 {{ :if use_calendar }}
   <link media="screen" rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" />
   <script type="text/javascript">
