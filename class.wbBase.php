@@ -90,7 +90,7 @@ if ( ! class_exists( 'wbBase', false ) ) {
                 	$this->setPath( $this->_config['workdir'].'/'.$this->_config['path'] );
 				}
 				else {
-				    $this->log()->LogDebug( 'Invalid "path" option - path ['.$this->_config['path'].'] does not exist!' );
+				    $this->log()->LogDebug( 'Invalid "path" option - path [['.$this->_config['workdir'].']'.$this->_config['path'].'] does not exist!' );
 				}
             }
 
@@ -324,9 +324,14 @@ if ( ! class_exists( 'wbBase', false ) ) {
         }   // end function setFile ()
 
         /**
+         * Scan a directory
          *
-         *
-         *
+         * @access public
+         * @param  string  $dir - directory to scan
+         * @param  string  $remove_prefix - remove this part from results
+         * @param  boolean $with_files    - return dirs and files
+         * @param  boolean $files_only    - return files only
+         * @return array
          *
          **/
         public function scanDirectory( $dir, $remove_prefix = NULL, $with_files = false, $files_only = false ) {
