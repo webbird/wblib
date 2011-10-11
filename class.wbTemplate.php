@@ -798,7 +798,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                 // ---- handle ifs -----
                 case 'if':
 
-                    $var  = '$fillings';
+                    $var         = '$fillings';
                     $check_value = NULL;
                     $check_with  = NULL;
                     
@@ -822,7 +822,8 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                     $data = preg_replace( "/$O\s*:else\s*$C/im", '<?php else: ?>', $data );
                     $neg  = ( isset( $el['is_negative'] ) && $el['is_negative'] ) ? ' ! ' : '';
                     $loop = ( isset( $el['is_loop'] )     && $el['is_loop']     ) ? ' && is_array('.$var.') ' : NULL;
-                    $code = '<?php if ( '
+                    //if ( isset( $fillings["HAS_BACKUPS"] ) && $fillings["HAS_BACKUPS"] != ""  ):
+                    $code = '<?php if ( ( '
                           . ( ( $neg ) ? ' ! ' : NULL )
                           . 'isset( '.$var.' ) '
                           . ( ( ! $neg ) ? '&& '.$var.' != "" ' : NULL )
@@ -831,7 +832,16 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                               ? ' && ( '.$var.' '.$check_with.' '.$check_value.' ) '."\n"
                               : ''
                             )
-                          . $loop.' ): ?>'."\n"
+						  . ( ( $neg ) ? ' ) && ( ' : ' ) || ( ' )
+                          . ( ( $neg ) ? ' ! ' : NULL )
+                          . 'isset( '.str_replace( '$fillings', '$globals', $var ).' ) '
+                          . ( ( ! $neg ) ? '&& '.str_replace( '$fillings', '$globals', $var ).' != "" ' : NULL )
+                          . (
+                              ( $check_value && $check_with )
+                              ? ' && ( '.str_replace( '$fillings', '$globals', $var ).' '.$check_with.' '.$check_value.' ) '."\n"
+                              : ''
+                            )
+                          . $loop.' ) ): ?>'."\n"
                           . $data
                           . '<?php endif; ?>';
 
