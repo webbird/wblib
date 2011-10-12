@@ -60,6 +60,7 @@ $LANG = array(
     
     // Captcha
     'Different Image' => 'Neues Bild',
+    'The security code entered was incorrect' => 'Der angegebene Sicherheitscode war leider nicht richtig',
     
 );
 
