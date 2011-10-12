@@ -26,6 +26,9 @@
 
 **/
 
+// boolean; any value means 'true'
+define( 'PCRE_BOOLEAN'     , '/^.+$/' );
+
 // any string that doesn't have control characters (ASCII 0 - 31) - spaces allowed
 define( 'PCRE_STRING'      , '/^[^\x-\x1F]+$/D' );
 
