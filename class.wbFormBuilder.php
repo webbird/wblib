@@ -323,12 +323,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $formname = $this->__validateFormName( $formname );
 
             if ( ! $this->hasElement( $formname, $element['name'] ) ) {
-      	    $this->log()->LogDebug(
-                'adding element to form ['.$formname.']',
-                $element
-            );
-
-            self::$_forms[ $formname ]['elements'][] = $this->__registerElement( $formname, $element );
+	      	    $this->log()->LogDebug(
+	                'adding element to form ['.$formname.']',
+	                $element
+	            );
+	            self::$_forms[ $formname ]['elements'][] = $this->__registerElement( $formname, $element );
             }
 
             return NULL;
@@ -529,11 +528,23 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 }
                 // allow can be a list of allowed values
                 else {
+                    // value can be a list, too
+					$check_values = $this->val->param( $element['name'] );
+					if ( ! is_array( $check_values ) ) {
+                        $check_values = array( $check_values );
+					}
                     foreach ( $allow as $allowed_value ) {
-                        if ( ! strcasecmp( $allowed_value, $this->val->param( $element['name'] ) ) ) {
-                            $value = $allowed_value;
-                            break;
-                        }
+						foreach( $check_values as $check_value ) {
+	                        if ( ! strcasecmp( $allowed_value, $check_value ) ) {
+	                            if ( $value ) {
+	                                $value   = array( $value );
+	                            	$value[] = $allowed_value;
+								}
+								else {
+								    $value = $allowed_value;
+								}
+	                        }
+						}
                     }
                 }
                 
@@ -952,6 +963,38 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         }   // end function hasElement()
 
+        /**
+      	 * Insert an element at a given position
+      	 *
+      	 * Can be used to insert a new element after an already
+      	 * existing element. If the element is not found, the new element
+      	 * is added to the end of the form.
+      	 *
+      	 * @access public
+      	 * @param  string   $name    - name of the element to add after
+      	 * @param  array    $element - complete element definition
+      	 * @return void
+      	 *
+      	 **/
+      	public function insertAfter( $formname = NULL, $name, $element ) {
+            $formname = $this->__validateFormName( $formname );
+      	    $this->log()->LogDebug(
+                'adding new element into form ['.$formname.'], after ['.$name.']',
+                $element
+            );
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
+            // element found
+            if ( is_array( $path ) ) {
+                array_splice( self::$_forms[ $formname ]['elements'], ++$path[0], 0, array( $element ) );
+            }
+            // element not found; add to top
+            else {
+                array_push( self::$_forms[ $formname ]['elements'], $element );
+            }
+            return true;
+        }   // end function insertAfter()
+        
         /**
       	 * Insert an element at a given position
       	 *
@@ -2247,7 +2290,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                       'plain'    => 'PCRE_PLAIN',
                       'mime'     => 'PCRE_MIME',
                       'tel_de'   => 'PCRE_TEL_GERMAN',
-                      'boolean'  => 1,
+                      'boolean'  => 'PCRE_BOOLEAN',
                   );
 
         }   // end function __init()
