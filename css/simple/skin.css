@@ -1,0 +1,14 @@
+/*
+    wbFormBuilder Simple Skin
+*/
+
+@import url(../formbuilder_default.css);
+
+form, input, select, textarea {margin: 0;padding: 0;}
+.fbform fieldset{border:0;}
+.fbform ol{border-top:1px solid #aaa;}
+label.fblabel{width:200px;font-weight:normal;margin-right:auto;}
+input.fbtext,input.fbfile,input.fbpassword,select.fbselect,select.fbmultiselect,textarea.fbtextarea{width:370px;}
+.fbrequired{background-image:url();}
+fieldset.fbfieldset li.fbtypecheckbox span.fbrequired,fieldset.fbfieldset li span span {float:none;}
+li.fbtypecheckbox input.fbcheckbox{margin-left:260px;}
