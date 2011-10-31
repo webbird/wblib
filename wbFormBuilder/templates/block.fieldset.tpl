@@ -4,7 +4,7 @@
 {{ :loop elements }}{{ :if ! header }}
         <li class="fbtype{{ type }}">
           {{ :if label }}{{ label }}{{ :ifend }}
-          <span{{ :if req }} class="fbrequired"{{ :ifend }}>&nbsp;</span>
+          <span{{ :if req }} class="fbrequired"{{ :ifend }}><span style="color:red;font-weight:bold;font-size:1.3em">{{ req }}</span></span>
           {{ field }}
           {{ :if error }}<span class="fbspan fberror" style="float: right;">{{ error }}</span>{{ :ifend }}
           {{ :if info }}<span class="fbspan fbinfo" id="{{ name }}_info">{{ info }}</span>{{ :ifend }}

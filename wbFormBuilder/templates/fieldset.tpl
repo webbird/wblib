@@ -4,7 +4,7 @@
     {{ :ifend }}
     {{ :if errors }}<br style="clear: both;" /><div class="{{ icon_class }} {{ error_class }}">{{ errors }}</div>{{ :ifend }}
     {{ :if info }}<br style="clear: both;" /><div class="fbicon{{ :if info_class }} {{ info_class }}"{{ :ifend }}>{{ info }}</div>{{ :ifend }}
-    {{ :if req_info }}<br style="clear: both;" /><div class="fbicon{{ :if req_class }} {{ req_class }}{{ :ifend }}">{{ req_info }}</div>{{ :ifend }}
+    {{ :if req_info }}<br style="clear: both;" /><div class="fbicon{{ :if req_class }} {{ req_class }}{{ :ifend }}"><span style="color:red;font-weight:bold;font-size:1.3em;margin-right:15px;">*</span>{{ req_info }}</div>{{ :ifend }}
     {{ form }}
     <br style="clear: left;" />
     {{ :if buttons }}
