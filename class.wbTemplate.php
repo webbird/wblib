@@ -437,7 +437,8 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
             $fh = fopen( $this->_config['workdir'].'/'.$this->_config['cachedir'].'/'.$cache_file, 'w' );
             fwrite( $fh, '<'.'?php'."\n" );
             fwrite( $fh, '    $fillings = $this->data;'."\n" );
-            fwrite( $fh, '    $globals  = $this->globals;'."\n".'?'.'>'."\n" );
+            fwrite( $fh, '    $globals  = $this->globals;'."\n" );
+			fwrite( $fh, '?'.'>'."\n" );
             fwrite( $fh, $string );
             fwrite( $fh, "\n" );
             fclose( $fh );
@@ -529,10 +530,10 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
          **/
         private function __extractBlocks( $string ) {
 
-        		// reset all needed counters and stacks
-        		$this->_depth	    =	0;
-        		$this->_stack	    =	array();
-        		$this->_data	    =	array();
+        	// reset all needed counters and stacks
+        	$this->_depth	    =	0;
+        	$this->_stack	    =	array();
+        	$this->_data	    =	array();
 
             // $1 - complete tag
             // $2 - only set if closing tag matches
@@ -558,12 +559,11 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                           PREG_SPLIT_DELIM_CAPTURE
                       );
 
-            // see how many tokens we have found, and if there are
-        		// none, we just return the string.
-        		$cnt = count( $tokens );
-        		if( $cnt <= 1 ) {
+            // see how many tokens we have found
+        	$cnt = count( $tokens );
+        	if( $cnt <= 1 ) {
                 $this->log()->LogDebug( 'No blocks found' );
-        		    return $string;
+        		return $string;
             }
 
             // this is the string before the first match
@@ -725,24 +725,18 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
 
                 // ----- handle loops -----
                 case 'loop':
-
                     $var = '$fillings';
-
                     // the last element of the path is the current loop itself
                     array_pop( $el['path'] );
-
                     if ( count( $el['path'] > 0 ) )
                     {
                         $i = 1;
-
                         foreach ( $el['path'] as $index => $item )
                         {
                             $var .= '["'.$item.'"][$'.$this->_loop_vars[$i].']';
                             $i++;
                         }
-
                         $index = count($el['path'])+1;
-
                     }
                     else {
                         $index = 1;
@@ -754,13 +748,23 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                     $code = '<?php '."\n"
                           . 'if ( isset( '.$var.' ) ):'."\n"
                           . '    if ( is_array( '.$var.' ) ):'."\n"
-						  . '        if ( count ( '.$var.' ) > 0 ): '."\n";
+						  . '        if ( count ( '.$var.' ) > 0 ):'."\n"
+						  . '            $__current__ = 0;'."\n"
+						  . '            $__first__   = true;'."\n"
+						  . '            end( '.$var.' );'."\n"
+						  . '            $__last__    = key('.$var.');'."\n"
+						  ;
 
 					if( $el['by_keys'] == true ) {
 						$code .= '        foreach( '.$var.' as $key => $item ): ?>'."\n";
 					}
 					else {
-                        $code .= '        for ( '.$i.'=0; '.$i.'<count('.$var.'); '.$i.'++ ): ?>'."\n";
+                        $code .= '        for ( '.$i.'=0; '.$i.'<count('.$var.'); '.$i.'++ ): '."\n"
+							  .  '            '.$var.'['.$i.']["__current__"] = ++$__current__;'."\n"
+							  .  '            if ( $__first__ ) : '.$var.'['.$i.']["__first__"] = true; endif;'."\n"
+							  .  '            if ( '.$i.' == $__last__ ): '.$var.'['.$i.']["__last__"] = true; endif;'."\n"
+							  .  '            $__first__ = false;'."\n"
+							  .  '        ?>'."\n";
 					}
 
                     // replace vars in cdata
@@ -790,7 +794,9 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                                $code.$data.
 							   '<?php ' .
 							     ( ( $el['by_keys'] == true ) ? 'endforeach' : 'endfor' ) .
-							     '; endif; else: echo '.$var.'; endif; endif; ' .
+							     '; endif; endif; ' .
+								 'else: echo '.$var.'; ' .
+								 'endif; ' .
 							   '?>'
                            );
                     break;
@@ -801,7 +807,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                     $var         = '$fillings';
                     $check_value = NULL;
                     $check_with  = NULL;
-                    
+
                     if ( preg_match( '#(.*)(==|!=|<>|>|<)(.*)#', $el['key'], $match ) ) {
                         $el['key']   = trim( $match[1] );
                         $check_value = trim( $match[3] );
