@@ -14,3 +14,5 @@ select.fbselect{display:block;}
 .fbtyperadio{width:22em !important;background-color:#ddd;border:1px inset #FFF;margin:1em 0 2em;padding:5px;}
 .fbtyperadio input.fbinput{clear:both;float:left;width:auto;}
 fieldset.fbfieldset li span{float:right;}
+fieldset.fbfieldset li span span{display:none;}
+fieldset.fbouter div.fbicon span{display:none;}

@@ -47,3 +47,5 @@ div.fberror, div.fbinfo {
 div.fbinfo {
     background           : url("info.png") no-repeat scroll 15px center transparent;
 }
+fieldset.fbfieldset li span span{display:none;}
+fieldset.fbouter div.fbicon span{display:none;}

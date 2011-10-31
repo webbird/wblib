@@ -10,6 +10,7 @@ fieldset.fbfieldset legend.fblegend{font-weight:700;}
 fieldset.fbfieldset ol{list-style:none;padding:1em 1em 0;}
 fieldset.fbfieldset li{float:left;clear:left;width:100%;padding-bottom:1em;text-align:left;list-style:none;}
 fieldset.fbfieldset li span{width:20px;height:20px;min-height:20px;display:block;float:left;padding:2px;}
+fieldset.fbfieldset li span span{padding:0;margin-top:-5px;}
 fieldset.fbfieldset li span.fbinfotext{height:auto;}
 fieldset.fbfieldset li span.fberror,fieldset.fbfieldset li span.fbinfotext{padding-left:5px;width:auto;border:0;}
 .fberror{color:#C00;border:1px solid #c00;padding:5px;}

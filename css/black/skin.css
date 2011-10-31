@@ -92,3 +92,5 @@ input.fbbutton {
   padding-top: 15px;
   text-align: center !important;
 }
+fieldset.fbfieldset li span span{display:none;}
+fieldset.fbouter div.fbicon span{display:none;}
