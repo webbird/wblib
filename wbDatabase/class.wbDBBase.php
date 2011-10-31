@@ -45,6 +45,7 @@ class wbDBBase extends PDO {
     protected $errors               = array();
     protected $lasterror            = NULL;
     protected $lastInsertID         = NULL;
+    protected $_lastStatement 		= NULL;
     private   $val;
     private   $seq;
     
@@ -209,6 +210,16 @@ class wbDBBase extends PDO {
     }   // end function getLastInsertID()
     
     /**
+     *
+     *
+     *
+     *
+     **/
+	public function getLastStatement() {
+	    return $this->_lastStatement;
+	}
+    
+    /**
      * Function prototype; override this in your driver
      *
      * @access public
@@ -366,7 +377,8 @@ class wbDBBase extends PDO {
                      )
                    . " FROM $tables $where $group $order $limit";
 
-        $this->log->LogDebug( wbDatabase::interpolateQuery($statement,$params) );
+		$this->_lastStatement = wbDatabase::interpolateQuery($statement,$params);
+        $this->log->LogDebug( $this->_lastStatement );
 
         $stmt      = $this->prepare( $statement );
         
@@ -442,7 +454,8 @@ class wbDBBase extends PDO {
         $stmt      = $this->prepare( $statement );
         $params    = $this->__get_params($options['values']);
 
-        $this->log->LogDebug( wbDatabase::interpolateQuery($statement,$params) );
+        $this->_lastStatement = wbDatabase::interpolateQuery($statement,$params);
+        $this->log->LogDebug( $this->_lastStatement );
 
         if ( ! is_object( $stmt ) ) {
             $error_info = '['.implode( "] [", $this->errorInfo() ).']';
@@ -700,7 +713,8 @@ class wbDBBase extends PDO {
             $execute_params = $params;
         }
         
-        $this->log->LogDebug( wbDatabase::interpolateQuery($statement,$execute_params) );
+        $this->_lastStatement = wbDatabase::interpolateQuery($statement,$execute_params);
+        $this->log->LogDebug( $this->_lastStatement );
 
         if ( $stmt->execute( $execute_params ) ) {
             $this->log->LogDebug( 'statement successful:', $statement );
