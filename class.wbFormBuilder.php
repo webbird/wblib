@@ -61,14 +61,17 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         // 'formname' => array of elements
         private static $_forms;
         
-        //
+        // array to store invalid form elements
         private        $_invalid    = array();
         
         //
         private        $_js         = array();
         
-        //
+        // array to store file upload information
         private        $_uploads    = array();
+        
+        // array to store upload errors
+        private        $_upload_errors = array();
         
         //
         private        $_flags      = array(
@@ -126,6 +129,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 				  'thumb_height'     => 'auto',
 				  'thumb_prefix'     => 'thumb_',
 				  'upload_dir'       => '/uploads',
+				  'max_file_size'    => NULL,
 				  
                   # known mime types
 				  'mimetypes'        => array(
@@ -133,61 +137,73 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 						    array(
 								'suffixes' => 'mp3',
 								'label'    => 'MPEG Audio Stream, Layer III (MP3)',
+								'icon'     => 'mime-audio.png',
 							),
 					  'application/octet-stream' =>
 							array(
 								'suffixes' => 'bin|dms|lha|lzh|exe|class|ani|pgp|so|dll|dmg',
-								'label'    => 'Binary'
+								'label'    => 'Binary',
+								'icon'     => 'mime-octet.png',
 							),
 					  'image/gif'                =>
 					  		array(
 							  	'suffixes' => 'gif',
 							  	'label'    => 'GIF Images',
+							  	'icon'     => 'mime-gif.png',
 							),
 					  'image/*'                  =>
 					  		array(
 							  	'suffixes' => 'gif|ief|jpeg|jpg|jpe|png|tga|tif|tiff',
-							  	'label'    => 'All kinds of images'
+							  	'label'    => 'All kinds of images',
+							  	'icon'     => 'mime-image.png',
 							),
 					  'application/gzip'		 =>
 					  		array(
 							  	'suffixes' => 'gzip',
 							  	'label'    => 'GZIP compressed files',
+							  	'icon'     => 'mime-compressed.png',
 							),
 					  'image/ief'				 =>
 					  		array(
 							  	'suffixes' => 'ief',
-							  	'label'    => 'IEF images'
+							  	'label'    => 'IEF images',
+							  	'icon'     => 'mime-image.png',
 							),
 					  'image/jpeg'				 =>
 					  		array(
 							  	'suffixes' => 'jpeg|jpg|jpe',
-							  	'label'    => 'JP(e)G images'
+							  	'label'    => 'JP(e)G images',
+							  	'icon'     => 'mime-jpg.png',
 							),
 					  'application/pdf'	 		 =>
 					  		array(
 							  	'suffixes' => 'pdf',
-							  	'label'    => 'PDF files'
+							  	'label'    => 'PDF files',
+							  	'icon'     => 'mime-pdf.png',
 							),
 					  'image/png'				 =>
 					  		array(
 							  	'suffixes' => 'png',
-							  	'label'    => 'PNG images'
+							  	'label'    => 'PNG images',
+							  	'icon'     => 'mime-image.png',
 							),
 					  'image/targa'				 =>
 					  		array(
 							  	'suffixes' => 'tga',
-							  	'label'    => 'TGA (Targa) images'
+							  	'label'    => 'TGA (Targa) images',
+							  	'icon'     => 'mime-tga.png',
 							),
 					  'image/tiff'			     =>
 					  		array(
 							  	'suffixes' => 'tiff|tif',
-							  	'label'    => 'TIFF images'
+							  	'label'    => 'TIFF images',
+							  	'icon'     => 'mime-tiff.png',
 							),
 					  'application/zip'			 =>
 					  		array(
 							  	'suffixes' => 'zip',
-							  	'label'    => 'ZIP compressed files'
+							  	'label'    => 'ZIP compressed files',
+							  	'icon'     => 'mime-compressed.png',
 							),
 				  ),
 
@@ -606,9 +622,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             // if we don't have any errors so far, handle file uploads
 			if ( count($uploads) ) {
 			    foreach( $uploads as $element ) {
-				    $result = $this->__saveUploadFile( $element['name'] );
+				    $result = $this->__saveUploadFile( $formname, $element['name'] );
 				    if ( $result !== true ) {
-				        $errors[ $element['name'] ] = $result;
+				        $errors[ $element['name'] ] = $this->_upload_errors[$formname][$element['name']];
 				    }
 				}
 			}
@@ -630,12 +646,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          **/
 		public function getAllowedMimeTypes( $formname = '', $name ) {
-		
 		    $formname = $this->__validateFormName( $formname );
-
             // find given element
             $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
-
             // element found
             if ( is_array( $path ) ) {
                 $this->log()->LogDebug(
@@ -643,9 +656,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 );
                 return self::$_forms[ $formname ][ $name ][ 'mimetypes' ];
 			}
-			
 			return NULL;
-			
 		}   // end function getAllowedMimeTypes()
         
         /**
@@ -679,11 +690,45 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          *
          **/
-        public function getErrors( $formname = '' ) {
+		public function getElement( $formname = '', $name ) {
+			$formname = $this->__validateFormName( $formname );
+      	    $this->log()->LogDebug(
+                'searching element',
+                $name
+            );
+            // find given element
+            $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
+            // element found
+            if ( is_array( $path ) ) {
+                return self::$_forms[ $formname ]['elements'][ $path[0] ];
+            }
+            // element not found
+            else {
+                return NULL;
+            }
+		}
+        
+        /**
+         * returns the list of errors
+         *
+         * @access public
+         * @param  string  $formname
+         * @param  booloan $upload_errors - return file upload errors
+         * @return array
+         *
+         **/
+        public function getErrors( $formname = '', $upload_errors = false ) {
             $formname = $this->__validateFormName( $formname );
-            return is_array( $this->_errors[$formname] )
-                 ? $this->_errors[$formname]
-                 : array();
+            if ( ! $upload_errors ) {
+	            return is_array( $this->_errors[$formname] )
+	                 ? $this->_errors[$formname]
+	                 : array();
+			}
+			else {
+	            return is_array( $this->_upload_errors[$formname] )
+	                 ? $this->_upload_errors[$formname]
+	                 : array();
+			}
         }   // end function getErrors()
 
         /**
@@ -893,6 +938,13 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			        $ret = array_unique($ret);
 			        asort($ret);
 				}
+				elseif ( $by == 'icon' ) {
+				    foreach ( $this->_config['mimetypes'] as $type => $item ) {
+				        foreach( explode( '|', $this->_config['mimetypes'][$type]['suffixes'] ) as $suffix ) {
+			            	$ret[$suffix] = $this->_config['mimetypes'][$type]['icon'];
+						}
+			        }
+				}
 		        return $ret;
 			}
 			return $this->_config['mimetypes'];
@@ -956,9 +1008,12 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end function getOptionsForArea()
         
         /**
+         * returns the complete path and filename of an uploaded file
          *
-         *
-         *
+         * @access public
+         * @param  string   $formname
+         * @param  string   $name      Name of the form element
+         * @return string
          *
          **/
 		public function getUploadFilePath( $formname = NULL, $name ) {
@@ -970,9 +1025,31 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 		}   // end function getUploadFilePath()
 		
 		/**
+         * returns the complete path and filename of thumbnail
          *
+         * @access public
+         * @param  string   $formname
+         * @param  string   $name      Name of the form element
+         * @return string
          *
+         **/
+		public function getUploadFileThumbPath( $formname = NULL, $name ) {
+		    $formname = $this->__validateFormName( $formname );
+		    if ( isset($this->_uploads[$name]) ) {
+		        if ( isset( $this->_uploads[$name]['thumb'] ) ) {
+		            return $this->_uploads[$name]['thumb'];
+		        }
+			}
+		    return NULL;
+		}   // end function getUploadFileThumbPath()
+		
+		/**
+         * returns the type (image or file) of an uploaded file
          *
+         * @access public
+         * @param  string   $formname
+         * @param  string   $name      Name of the form element
+         * @return string   image || file
          *
          **/
 		public function getUploadFileType( $formname = NULL, $name ) {
@@ -984,9 +1061,12 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 		}   // end function getUploadFileType()
 		
 		/**
+         * returns the mime type of an uploaded file
          *
-         *
-         *
+         * @access public
+         * @param  string   $formname
+         * @param  string   $name      Name of the form element
+         * @return string
          *
          **/
 		public function getUploadFileMimeType( $formname = NULL, $name ) {
@@ -1231,6 +1311,24 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
 
         }   // end function removeElement()
+        
+        /**
+         * removes a formerly uploaded file
+         *
+         * @access public
+         * @param  string   $formname
+         * @param  string   $name      Name of the form element
+         * @return boolean  (unlink() result)
+         *
+         **/
+		public function removeUploadFile( $formname = NULL, $name ) {
+		    $formname = $this->__validateFormName( $formname );
+		    $path     = $this->getUploadFilePath( $formname, $name );
+		    if ( $path == '' ) {
+				return true;
+			}
+			return @unlink( $path );
+		}   // end function removeUploadFile()
 
         /**
          * set action-attribute
@@ -1545,22 +1643,22 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end function setReadonly
 
         /**
+         * set selected value(s) for select and multiselect type fields
          *
-         *
-         *
+         * @access public
+         * @param  string  $formname
+         * @param  string  $name
+         * @param  string  $value
+         * @return boolean
          *
          **/
         public function setSelected( $formname = '', $name, $value = NULL ) {
-
             $formname = $this->__validateFormName( $formname );
-
             $this->log()->LogDebug(
                 'Searching for form element ['.$name.'] in form ['.$formname.']'
             );
-
             // find given element
             $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name' );
-
             // element found
             if ( is_array( $path ) ) {
                 if (
@@ -1585,7 +1683,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 );
                 return false;
             }
-
         }   // end function setSelected()
 
         /**
@@ -2362,85 +2459,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         }   // end function __init()
         
-		/**
-		 *
-		 *
-		 *
-		 *
-		 **/
-		private function __saveUploadFile( $name, $output_dir = NULL ) {
-
-			if ( $output_dir == '' ) {
-			    $output_dir = $this->_config['upload_dir'];
-			}
-			if ( isset( $_FILES[$name] ) && $_FILES[$name]['error'] != 4 ) { // error 4 = no file
-                $handle    = new upload($_FILES[$name]);
-                $mimetypes = $this->getAllowedMimeTypes( NULL, $name );
-                if ( $handle->uploaded ) {
-					// set allowed MIME types
-					if ( count($mimetypes) ) {
-					    $handle->mime_check = true;
-					    $handle->allowed 	= $mimetypes;
-					}
-                    $handle->process( $output_dir );
-                    if ( ! $handle->processed ) {
-                        return $handle->error;
-                    }
-                    if (
-					       $handle->file_is_image
-					    && isset( $this->_config['create_thumbs'] )
-						&&        $this->_config['create_thumbs'] === true
-					) {
-                        $thumb_width  = ( isset($this->_config['thumb_width']) && is_int($this->_config['thumb_width']) )
-									  ? $this->_config['thumb_width']
-									  : 150;
-                        $thumb_height = ( isset($this->_config['thumb_height']) && is_int($this->_config['thumb_height']) )
-									  ? $this->_config['thumb_height']
-									  : 'auto';
-						$thumb_prefix = ( isset($this->_config['thumb_prefix']) )
-									  ? $this->_config['thumb_prefix']
-									  : 'thumb_';
-                        if ( ! $thumb_width || $thumb_width > 300 ) {
-                            $thumb_width = 300;
-                        }
-                        if ( $handle->image_dst_x > $thumb_width ) {
-                            if ( $thumb_width > $handle->image_dst_x ) {
-                                $thumb_width = $handle->image_dst_x;
-                            }
-                            $this->log()->LogDebug( 'creating thumb of size (x) ['.$thumb_width.'] in directory ['.$output_dir.']' );
-                            // create thumb
-                            $handle->image_resize       = true;
-                            $handle->image_x            = $thumb_width;
-                            if ( $thumb_height == 'auto' ) {
-                            	$handle->image_ratio_y      = true;
-							}
-							else {
-							    $handle->image_y        = $thumb_height;
-							}
-                            $handle->file_name_body_pre = $thumb_prefix;
-                            // save thumb
-                            $handle->process($output_dir);
-                            if ( ! $handle->processed ) {
-                                $this->log()->LogDebug( 'error while creating thumb: '.$handle->error );
-                                return $handle->error;
-                            }
-                        }
-                    }
-                    $this->_uploads[$name] = array(
-						'path' => $handle->file_dst_pathname,
-						'type' => $handle->file_is_image ? 'image' : 'file',
-						'mime' => $handle->file_src_mime,
-					);
-                    $handle->clean();
-                    return true;
-                }
-                else {
-                    return $handle->error;
-                }
-            }
-            return true;
-		}   // end function __saveUploadFile()
-
         /**
          *
          *
@@ -2631,6 +2649,103 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         }   // end function __renderFormElements()
         
+		/**
+		 * handle file uploads; returns TRUE on success, FALSE otherwise
+		 *
+		 * Default directory can be set via
+		 *     $form->config( 'upload_dir', '<DIR>' );
+		 * Default is '/uploads'
+		 *
+		 * @access private
+		 * @param  string  $name       - element name
+		 * @param  string  $output_dir - (optional) directory to store the file
+		 * @return boolean
+		 *
+		 **/
+		private function __saveUploadFile( $formname = NULL, $name, $output_dir = NULL ) {
+    		$formname = $this->__validateFormName( $formname );
+			if ( $output_dir == '' ) {
+			    $output_dir = $this->_config['upload_dir'];
+			}
+			if ( isset( $_FILES[$name] ) && $_FILES[$name]['error'] != 4 ) { // error 4 = no file
+                $handle    = new upload($_FILES[$name]);
+                $mimetypes = $this->getAllowedMimeTypes( NULL, $name );
+                if ( $handle->uploaded ) {
+                    if ( isset($this->_config['max_file_size']) && $this->_config['max_file_size'] > 0 ) {
+                        if ( $handle->file_src_size > $this->_config['max_file_size'] ) {
+                            $this->_upload_errors[$formname][$name] = $this->lang->translate( 'File too large!' );
+                            return false;
+                        }
+					}
+					// set allowed MIME types
+					if ( count($mimetypes) ) {
+					    $handle->mime_check = true;
+					    $handle->allowed 	= $mimetypes;
+					}
+                    $handle->process( $output_dir );
+                    if ( ! $handle->processed ) {
+						$this->_upload_errors[$formname][$name] = $handle->error;
+                        return false;
+                    }
+                    $this->_uploads[$name] = array(
+						'path' => $handle->file_dst_pathname,
+						'type' => $handle->file_is_image ? 'image' : 'file',
+						'mime' => $handle->file_src_mime,
+					);
+                    if (
+					       $handle->file_is_image
+					    && isset( $this->_config['create_thumbs'] )
+						&&        $this->_config['create_thumbs'] === true
+					) {
+                        $thumb_width  = ( isset($this->_config['thumb_width']) && is_int($this->_config['thumb_width']) )
+									  ? $this->_config['thumb_width']
+									  : 150;
+                        $thumb_height = ( isset($this->_config['thumb_height']) && is_int($this->_config['thumb_height']) )
+									  ? $this->_config['thumb_height']
+									  : 'auto';
+						$thumb_prefix = ( isset($this->_config['thumb_prefix']) )
+									  ? $this->_config['thumb_prefix']
+									  : 'thumb_';
+                        if ( ! $thumb_width || $thumb_width > 300 ) {
+                            $thumb_width = 300;
+                        }
+                        if ( $handle->image_dst_x > $thumb_width ) {
+                            if ( $thumb_width > $handle->image_dst_x ) {
+                                $thumb_width = $handle->image_dst_x;
+                            }
+                            $this->log()->LogDebug( 'creating thumb of size (x) ['.$thumb_width.'] in directory ['.$output_dir.']' );
+                            // create thumb
+                            $handle->image_resize       = true;
+                            $handle->image_x            = $thumb_width;
+                            if ( $thumb_height == 'auto' ) {
+                            	$handle->image_ratio_y      = true;
+							}
+							else {
+							    $handle->image_y        = $thumb_height;
+							}
+                            $handle->file_name_body_pre = $thumb_prefix;
+                            // save thumb
+                            $handle->process($output_dir);
+                            if ( ! $handle->processed ) {
+                                $this->log()->LogDebug( 'error while creating thumb: '.$handle->error );
+                                $this->_upload_errors[$formname][$name] = $handle->error;
+                                return false;
+                            }
+                            $this->_uploads[$name]['thumb'] = $handle->file_dst_pathname;
+                        }
+                    }
+
+                    $handle->clean();
+                    return true;
+                }
+                else {
+                    $this->_upload_errors[$formname][$name] = $handle->error;
+                    return false;
+                }
+            }
+            return true;
+		}   // end function __saveUploadFile()
+
         /**
          *
          *
