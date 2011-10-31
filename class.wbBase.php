@@ -600,6 +600,82 @@ if ( ! class_exists( 'wbBase', false ) ) {
             return $new_path;
 
         }   // end function sanitizePath()
+        
+	    /**
+	     *
+	     **/
+	    public function copyRecursive( $dirsource, $dirdest, $move = false ) {
+		    if ( is_dir($dirsource) ) {
+		        $dir_handle = opendir($dirsource);
+		    }
+		    else {
+		        return false;
+			}
+			$errors = array();
+		    if ( is_resource($dir_handle) ) {
+			    while ( $file = readdir($dir_handle) ) {
+			        if( $file != "." && $file != ".." ) {
+			            if( ! is_dir($dirsource."/".$file) ) {
+			                if ( ! copy ($dirsource."/".$file, $dirdest.'/'.$file) ) {
+                                $errors[] = error_get_last();
+							}
+			            }
+			            else {
+			                if ( ! make_dir($dirdest."/".$file) ) {
+			                    $errors[] = error_get_last();
+							}
+				            $ret = $this->copyRecursive($dirsource."/".$file, $dirdest.'/'.$file);
+				            if ( is_array($ret) ) {
+				                $errors = array_merge( $errors, $ret );
+							}
+			            }
+			        }
+			    }
+			    closedir($dir_handle);
+			    if ( count($errors) ) {
+			        $this->removeRecursive( $dirdest );
+			        return false;
+				}
+			    if ( $move ) {
+			        $this->removeRecursive( $dirsource );
+			    }
+				return true;
+			}
+			else {
+			    return false;
+			}
+		}   // end function _copyRecursive()
+		
+		/**
+		 *
+		 *
+		 *
+		 *
+		 **/
+		function removeRecursive( $directory ) {
+			// If suplied dirname is a file then unlink it
+			if ( is_file( $directory ) ) {
+				return unlink($directory);
+			}
+			if ( is_dir( $directory ) ) {
+				$dir = dir($directory);
+				while ( false !== ( $entry = $dir->read() ) ) {
+                	if ( $entry == '.' || $entry == '..' ) {
+                    	continue;
+                	}
+                	if ( is_dir($directory . '/' . $entry) ) {
+                    	$this->removeRecursive($directory . '/' . $entry);
+					}
+					else {
+                    	unlink($directory . '/' . $entry);
+					}
+				}
+				// Now delete the folder
+				$dir->close();
+				return @rmdir($directory);
+			}
+    	}   // end function removeRecursive()
+
 
       	/**
          *
