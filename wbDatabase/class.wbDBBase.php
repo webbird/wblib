@@ -191,10 +191,14 @@ class wbDBBase extends PDO {
      * Accessor to last error
      *
      * @access public
+     * @param  boolean $fullstack - return the full error stack; default false
      * @return string
      *
      **/
-    public function getError() {
+    public function getError( $fullstack = false ) {
+        if ( $fullstack ) {
+            return $this->errors;
+		}
         return $this->lasterror;
     }   // end function getError()
 
@@ -210,14 +214,15 @@ class wbDBBase extends PDO {
     }   // end function getLastInsertID()
     
     /**
+     * Accessor to last executed statement; useful for debugging
      *
-     *
-     *
+     * @access public
+     * @return string
      *
      **/
 	public function getLastStatement() {
 	    return $this->_lastStatement;
-	}
+	}   // end function getLastStatement()
     
     /**
      * Function prototype; override this in your driver
@@ -277,7 +282,7 @@ class wbDBBase extends PDO {
             array_merge(
                 $options,
                 array(
-                    'limit' => 1,
+                    'limit'  => 1,
                     'fields' => "max($fieldname) as maximum",
                 )
             )
@@ -302,7 +307,7 @@ class wbDBBase extends PDO {
             array_merge(
                 $options,
                 array(
-                    'limit' => 1,
+                    'limit'  => 1,
                     'fields' => "min($fieldname) as minimum",
                 )
             )
@@ -322,7 +327,7 @@ class wbDBBase extends PDO {
      *
      * @access public
      * @param  array   $options - see below
-     * @return array
+     * @return mixed   returns false if an error occured, or an array of rows
      *
      * Usage:
      *
@@ -340,7 +345,7 @@ class wbDBBase extends PDO {
             return NULL;
         }
         
-        $this->lasterror = NULL;
+        $this->__setError( NULL );
 
         $tables = $this->__map_tables( $options['tables'], $options );
 
@@ -367,6 +372,12 @@ class wbDBBase extends PDO {
         $group  = isset( $options['group_by'] )
                 ? 'GROUP BY '.$options['group_by']
                 : NULL;
+                
+		// any errors so far?
+		if ( $this->isError() ) {
+		    // let the caller handle the error, just return false here
+		    return false;
+		}
 
         // create the statement
         $statement = "SELECT "
@@ -384,7 +395,8 @@ class wbDBBase extends PDO {
         
         if ( ! is_object( $stmt ) ) {
             $error_info = '['.implode( "] [", $this->errorInfo() ).']';
-            $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
+            $this->__setError( 'prepare() ERROR: '.$error_info, 'fatal' );
+            return false;
         }
 
         if ( $stmt->execute( $params ) ) {
@@ -395,18 +407,20 @@ class wbDBBase extends PDO {
             if ( $stmt->errorInfo() ) {
                 $error = '['.implode( "] [", $stmt->errorInfo() ).']';
             }
-            $this->log->LogFatal(
-                $error
-            );
-            $this->lasterror = $error;
+            $this->__setError( $error, 'fatal' );
+            return false;
         }
 
     }   // end function search ()
     
     /**
+     * inserts a new line; return false on error, true on success
      *
+     * Use isError() and getError() to check for errors
      *
-     *
+     * @access public
+     * @param  array  $options
+     * @return mixed
      *
      **/
     public function insert( $options ) {
@@ -415,7 +429,8 @@ class wbDBBase extends PDO {
             return NULL;
         }
         
-        $this->lasterror = NULL;
+        // reset error
+        $this->__setError( NULL );
         
         $do     = isset( $options['do'] )
                 ? $options['do']
@@ -453,13 +468,20 @@ class wbDBBase extends PDO {
                        
         $stmt      = $this->prepare( $statement );
         $params    = $this->__get_params($options['values']);
+        
+		// any errors so far?
+		if ( $this->isError() ) {
+		    // let the caller handle the error, just return false here
+		    return false;
+		}
 
         $this->_lastStatement = wbDatabase::interpolateQuery($statement,$params);
         $this->log->LogDebug( $this->_lastStatement );
 
         if ( ! is_object( $stmt ) ) {
             $error_info = '['.implode( "] [", $this->errorInfo() ).']';
-            $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
+            $this->__setError( 'prepare() ERROR: '.$error_info, 'fatal' );
+            return false;
         }
         
         if ( $stmt->execute( $params ) ) {
@@ -473,21 +495,14 @@ class wbDBBase extends PDO {
         else {
             if ( $stmt->errorInfo() ) {
                 $error = '['.implode( "] [", $stmt->errorInfo() ).']';
-                $this->errors[] = $error;
-                $this->lasterror = $error;
-                $this->log->LogFatal(
-                    $error
-                );
+                $this->__setError( $error, 'fatal' );
+                return false;
             }
         }
-
     }   // end function insert()
     
     /**
-     *
-     *
-     *
-     *
+     * replace a row; in fact, this is only a wrapper to insert()
      **/
     public function replace( $options ) {
         $this->log->LogDebug( '', $options );
@@ -496,7 +511,7 @@ class wbDBBase extends PDO {
     }   // end function replace()
     
     /**
-     *
+     * update a row
      *
      *
      *
@@ -507,13 +522,19 @@ class wbDBBase extends PDO {
             return NULL;
         }
 
-        $this->lasterror = NULL;
+        $this->__setError( NULL );
         
         $tables = $this->__map_tables( $options['tables'], $options, true );
         $where  = isset( $options['where'] )
                 ? $this->__parse_where( $options['where'] )
                 : NULL;
-        
+                
+		// any errors so far?
+		if ( $this->isError() ) {
+		    // let the caller handle the error, just return false here
+		    return false;
+		}
+
         $carr = array();
         if ( isset( $options['fields'] ) && ! is_array( $options['fields'] ) ) {
             $options['fields'] = array( $options['fields'] );
@@ -543,14 +564,20 @@ class wbDBBase extends PDO {
             return NULL;
         }
         
-        $this->lasterror = NULL;
+        $this->__setError( NULL );
         $options['__is_delete'] = true;
 
         $tables = $this->__map_tables( $options['tables'], $options, true );
         $where  = isset( $options['where'] )
                 ? $this->__parse_where( $options['where'] )
                 : NULL;
-    
+                
+		// any errors so far?
+		if ( $this->isError() ) {
+		    // let the caller handle the error, just return false here
+		    return false;
+		}
+
         // create the statement
         $statement = "DELETE FROM $tables "
                    . " $where";
@@ -573,13 +600,19 @@ class wbDBBase extends PDO {
             return NULL;
         }
 
-        $this->lasterror = NULL;
+        $this->__setError( NULL );
         $options['__is_delete'] = true;
         
         $tables = $this->__map_tables( $options['tables'], $options, true );
         $where  = isset( $options['where'] )
                 ? $this->__parse_where( $options['where'] )
                 : NULL;
+
+		// any errors so far?
+		if ( $this->isError() ) {
+		    // let the caller handle the error, just return false here
+		    return false;
+		}
 
         // create the statement
         $statement = "TRUNCATE $tables "
@@ -643,17 +676,42 @@ class wbDBBase extends PDO {
 /*******************************************************************************
  * PROTECTED / PRIVATE FUNCTIONS
  ******************************************************************************/
-
+ 
     /**
+     * checks params for SQL injection code; uses __setError() to log any
+     * positive matches
      *
-     *
-     *
+     * @access protected
+     * @param  array     $params - params to check
+     * @return array
      *
      **/
-    protected function __map_tables( $tables, $options = array(), $is_insert = false ) {
-    
+    protected function __get_params( $params ) {
+        foreach ( $params as $i => $param ) {
+			if ( ! $this->seq->detectSQLInjection( $this->quote($param) ) ) {
+				// no escaping here; we're using PDO, remember?
+			    $params[$i] = $param;
+			}
+			else {
+				$this->__setError('SQL INJECTION DETECTED!', 'fatal');
+				return NULL;
+			}
+        }
+        $this->log->LogDebug( 'PARAMS:', $params );
+        return $params;
+    }   // end function __get_params()
+
+    /**
+     * adds prefix to table names, handles joins
+     *
+     * @access protected
+     * @param  mixed     $tables    - array of tables or single table name
+     * @param  array     $options
+     * @return string
+     *
+     **/
+    protected function __map_tables( $tables, $options = array() ) {
         if ( is_array( $tables ) ) {
-        
             // join(s) defined?
             if ( isset( $options['join'] ) ) {
                 return $this->__parse_join( $tables, $options );
@@ -670,21 +728,20 @@ class wbDBBase extends PDO {
                     $tables[$i] = $t_name . ( isset( $options['__is_delete'] ) ? '' : ' as t' . ($i+1) );
                 }
                 return implode( ', ', $tables );
-
             }
-
         }
         else {
             return $this->prefix . $tables . ( ( isset( $options['__is_insert'] ) || isset( $options['__is_delete'] ) ) ? NULL : ' as t1' );
         }
-        
-        
     }   // end function __map_tables()
     
     /**
+     * prepares a statement and calls execute()
      *
-     *
-     *
+     * @access protected
+     * @param  string    $statement - the statement to execute
+     * @param  array     $options   - any additional options
+     * @return boolean
      *
      **/
     protected function __prepare_and_execute( $statement, $options ) {
@@ -695,7 +752,8 @@ class wbDBBase extends PDO {
 
         if ( ! is_object( $stmt ) ) {
             $error_info = '['.implode( "] [", $this->errorInfo() ).']';
-            $this->log->LogFatal( 'prepare() ERROR: '.$error_info );
+            $this->__setError( 'prepare() ERROR: '.$error_info, 'fatal' );
+            return false;
         }
 
         $params = array();
@@ -723,66 +781,36 @@ class wbDBBase extends PDO {
         else {
             if ( $stmt->errorInfo() ) {
                 $error = '['.implode( "] [", $stmt->errorInfo() ).']';
-                $this->errors[] = $error;
-                $this->lasterror = $error;
-                $this->log->LogFatal(
-                    $error
-                );
+                $this->__setError( $error, 'fatal' );
             }
             return false;
         }
         
     }   // end function __prepare_and_execute()
     
-
     /**
+     * parse where conditions
      *
-     *
-     *
+     * @access protected
+     * @param  mixed     $where - array or scalar
+     * @return mixed     parsed WHERE statement or NULL
      *
      **/
     protected function __parse_where( $where ) {
-    
         $this->log->LogDebug( '', $where );
-    
         if ( is_array( $where ) ) {
             $where = implode( ' AND ', $where );
         }
-
-        // replace conjunctions 
+        // replace conjunctions
         $string = $this->__replaceConj( $where );
-
         // replace operators
         $string = $this->__replaceOps( $string );
-        
         if ( ! empty( $string ) ) {
             $this->log->LogDebug( $string );
             return ' WHERE '.$string;
         }
-        
         return NULL;
-
     }   // end function __parse_where()
-    
-    /**
-     *
-     *
-     *
-     *
-     **/
-    protected function __get_params( $params ) {
-        foreach ( $params as $i => $param ) {
-			if ( ! $this->seq->detectIntrusion( $this->quote($param) ) ) {
-				// no escaping here; we're using PDO, remember?
-			    $params[$i] = $param;
-			}
-			else {
-				$this->printError( 'INTRUSION DETECTED!<br />'. $this->seq->getLastIssue() );
-			}
-        }
-        $this->log->LogDebug( 'PARAMS:', $params );
-        return $params;
-    }   // end function __get_params()
     
     /**
      * parse join statement
@@ -803,9 +831,7 @@ class wbDBBase extends PDO {
         }
 
         if ( count( $tables ) > 2 && ! is_array( $join ) ) {
-            $this->log->LogError(
-                '$tables count > 2 and $join is not an array'
-            );
+            $this->__setError( '$tables count > 2 and $join is not an array' );
             return NULL;
         }
         
@@ -814,9 +840,7 @@ class wbDBBase extends PDO {
         }
         
         if ( count( $join ) <> ( count( $tables ) - 1 ) ) {
-            $this->log->LogFatal(
-                'table count <> join count'
-            );
+            $this->__setError( 'table count <> join count', 'fatal' );
             return;
         }
             
@@ -882,10 +906,8 @@ class wbDBBase extends PDO {
      *
      **/
     private final function __initialize($options) {
-    
         // load defaults
         $this->defaults();
-
         // check options
         foreach ( $this->_options as $opt ) {
             $key  = $opt['name'];
@@ -901,12 +923,30 @@ class wbDBBase extends PDO {
                 }
             }
         }
-
         $this->getDSN();
-
         return true;
-
     }   // end function __initialize()
+    
+    /**
+     * put error on error stack and set $lasterror
+     *
+     * @access private
+     * @return void
+     *
+     **/
+    private function __setError( $error, $level = 'error' ) {
+        $this->lasterror = $error;
+        // push onto error stack
+        if ( $error != NULL ) {
+        	$this->errors[]  = $error;
+		}
+        $log_method = 'LogError';
+        if ( isset($level) && $level == 'fatal' ) {
+			$log_method = 'LogFatal';
+		}
+        $this->log->$log_method( $error );
+    }   // end function __setError()
+
 
 }   // end class wbDBBase
 
