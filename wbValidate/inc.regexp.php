@@ -42,6 +42,10 @@ define( 'PCRE_ALPHANUM_EXT', '/^[a-zA-Z0-9_]+$/D'  );
 define( 'PCRE_INT'         , "/^[0-9]+$/D"      );
 define( 'PCRE_INTEGER'     , PCRE_INT );
 
+// any valid number number ('1234', '1.234,55', ...)
+//define( 'PHP_NUMBER'        , 'is_numeric' );
+define( 'PCRE_NUMBER'      , '/^[+-]?(((([0-9]+)|([0-9]{1,4}(,[0-9]{3,4})+)))?(\\.[0-9])?([0-9]*)|((([0-9]+)|([0-9]{1,4}(\\.[0-9]{3,4})+)))?(,[0-9])?([0-9]*))(e[0-9]+)?$/' );
+
 // CSS style definition
 define( 'PCRE_STYLE'       , "/^[a-zA-Z0-9\:\;\s\#\-]*$/D" );
 
