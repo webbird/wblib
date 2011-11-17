@@ -58,7 +58,9 @@ class wbI18n extends wbBase
                 $lang = LANGUAGE;
             }
         }
-        self::$_current_lang = $lang;
+        if ( isset($lang) && $lang != '' ) {
+        	self::$_current_lang = $lang;
+		}
         $this->init();
     } // end function __construct()
 
