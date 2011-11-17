@@ -13,3 +13,6 @@ input.fbtext,input.fbfile,input.fbpassword,select.fbselect,select.fbmultiselect,
 fieldset.fbfieldset li.fbtypecheckbox span.fbrequired,fieldset.fbfieldset li span span {float:none;}
 fieldset.fbfieldset li.fbtypecheckbox span{margin-right: -25px;}
 li.fbtypecheckbox input.fbcheckbox{margin-left:260px;}
+li.fbtypecheckbox label.fblabel{float:none;}
+.fbbuttonpane{border-top:1px solid #aaa;padding-top:25px;}
+div.cleditorMain {margin-right:50px !important;}
