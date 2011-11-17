@@ -36,7 +36,8 @@
   <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/jquery.datepicker.js"></script>
 {{ :ifend }}
 {{ :if use_editor }}
-  <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.min.js"></script>
+  <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.js"></script>
+  <link rel="stylesheet" href="{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.css" type="text/css" />
   <script type="text/javascript">
     $.cleditor.defaultOptions.width = 486;
     $.cleditor.defaultOptions.height = 300;
