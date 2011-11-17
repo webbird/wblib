@@ -37,7 +37,7 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 
         // array to store config options
         protected        $_config         = array(
-			'debug' => false,
+			'debug'            => false,
             # CSRF protection settings; can and SHOULD be overwritten by caller
 			'secret'           => '!p"/.m4fk{ay{£1R0W0O',
 			'secret_time'      => 86400,
@@ -121,15 +121,16 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 			}
 			return false;
 	    }   // function detectMailInjection()
-    
-        /**
-         *
-         *
-         *
-         *
-         **/
-		public function detectIntrusion( $values ) {
-		    if ( empty( $values ) ) {
+	    
+	    /**
+	     * This method checks for typical SQL injection code
+	     *
+	     * @access public
+         * @param  mixed $values - array of values or single value (scalar)
+         * @return boolean       - returns false if no intrusion code was found
+	     **/
+		public function detectSQLInjection( $values ) {
+			if ( empty( $values ) ) {
 		        return false;
 			}
 			if ( is_scalar( $values ) ) {
@@ -142,19 +143,41 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 					as $constant
 				) {
 					if ( preg_match( constant( $constant ), $value ) ) {
-		                $this->warn( 'SECURITY ISSUE', 'found injection code! -> ' . $constant, $value );
+		                $this->warn( 'SECURITY', 'found SQL injection! ('.$constant.') -> [' . $value . ']' );
 		                $this->_lastMatch = $constant;
-                  		$this->_lastIssue = 'found injection code! ' . "\n$constant\n" . constant( $constant ). "\n\n" . $value;
+                  		$this->_lastIssue = 'found SQL injection! ' . "\n$constant\n" . constant( $constant ). "\n\n" . $value;
 		                return true;
 		            }
 				}
+			}
+			// all checks passed
+			return false;
+		}   // end function detectSQLInjection()
+    
+        /**
+         * This methods checks for angled content (<something>) and images
+         * (<img...>). It should NOT be used to check content created by
+         * WYSIWYG editors, because this will make the check fail in any case!
+         *
+         * @access public
+         * @param  mixed $values - array of values or single value (scalar)
+         * @return boolean       - returns false if no intrusion code was found
+         **/
+		public function detectIntrusion( $values ) {
+		    if ( empty( $values ) ) {
+		        return false;
+			}
+			if ( is_scalar( $values ) ) {
+			    $values = array( $values );
+			}
+			foreach( $values as $value ) {
 				// check for XSS
 				foreach(
 				    array( 'XSS_IMG_JS' ) //, 'XSS_ANGLED'
 				    as $constant
 				) {
 				    if ( preg_match( constant( $constant ), $value ) ) {
-		                $this->warn( 'SECURITY ISSUE', 'found XSS code! -> ' . $value );
+		                $this->warn( 'SECURITY', 'found XSS code! ('.$constant.') -> [' . $value .']' );
 		                $this->_lastMatch = $constant;
 		                $this->_lastIssue = 'found XSS code! -> ' . $value;
 		                return true;
@@ -170,7 +193,7 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 		 * found here:
 		 * http://www.php.net/manual/de/function.htmlspecialchars.php#97991
 		 *
-		 * @access private
+		 * @access public
 		 * @param  string   $value - form data to encode
 		 * @return string
 		 *
@@ -238,7 +261,9 @@ if ( ! class_exists( 'wbSeq', false ) ) {
         /**
          * validate a token
          *
-         *
+         * @access public
+         * @param  string  $dynamic
+         * @param  boolean $strict  - passed to __terminateSession(), default true
          *
          **/
 		public function validateToken( $dynamic, $strict = true ) {
