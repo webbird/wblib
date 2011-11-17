@@ -184,6 +184,9 @@ if ( ! class_exists( 'wbBase', false ) ) {
         public function LogWarn () {
             return;
         }   // end function LogWarn ()
+        public function LogError () {
+            return;
+        }   // end function LogError ()
         
         /**
          *
