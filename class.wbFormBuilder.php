@@ -47,7 +47,10 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         protected      $_buttons        = array();
 
         // wbTemplate object handler
-        private        $tpl;
+        protected      $tpl;
+        
+        // wbI18n object handler
+        protected      $lang;
 
         // wbValidate object handler
         private        $val;
@@ -59,7 +62,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         // variable to store forms
         // 'formname' => array of elements
-        private static $_forms;
+        protected static $_forms;
         
         // array to store invalid form elements
         private        $_invalid    = array();
@@ -84,8 +87,10 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         protected      $_config
             = array(
                   'debug'           => 'false',
+                  'current_file'    => NULL,
                   // default path to search inc.forms.php
                   'path'            => '/forms',
+                  'fallback_path'   => '/forms',
                   // default forms definition file name
                   'file'            => 'inc.forms.php',
                   // default variable name
@@ -261,15 +266,15 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             // load file
  			parent::setFile( $file, $path, $var );
-			include_once $this->_config['current_file'];
-			
-			$ref = NULL;
-            @eval( "\$ref = & \$".$this->_config['var'].";" );
-            
-            if ( isset($ref) && is_array($ref) )
-            {
-				// add contents of current file to internal array
-				self::$__FORMS__ = array_merge( self::$__FORMS__, $FORMS );
+ 			if ( isset( $this->_config['current_file'] ) && $this->_config['current_file'] != '' ) {
+				include_once $this->_config['current_file'];
+				$ref = NULL;
+            	@eval( "\$ref = & \$".$this->_config['var'].";" );
+            	if ( isset($ref) && is_array($ref) )
+            	{
+					// add contents of current file to internal array
+					self::$__FORMS__ = array_merge( self::$__FORMS__, $FORMS );
+				}
 			}
 
 	    }   // end function addFile()
@@ -478,7 +483,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 $this->log()->LogDebug(
                     'validateToken returned false!'
 				);
-				$this->_errors[$formname][] = $this->lang->translate( 'Invalid token!' );
+				$this->_errors[$formname][] = $this->translate( 'Invalid token!' );
 				return $this->_errors[ $formname ];
             }
 
@@ -912,6 +917,16 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $output;
 
         }   //end function getForm()
+        
+        /**
+         * allows wbFormWizard to get the list of forms
+         *
+         *
+         *
+         **/
+		protected function getForms () {
+		    return self::$__FORMS__;
+		}   // end funciton getForms()
         
         /**
          *
@@ -1665,9 +1680,13 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                      self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] != 'select'
                      &&
                      self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] != 'multiselect'
+                     &&
+                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] != 'checkbox'
+                     &&
+                     self::$_forms[ $formname ]['elements'][ $path[0] ]['type'] != 'radio'
                 ) {
                     $this->log()->LogDebug(
-                        'element ['.$name.'] found, but not of type "select"!'
+                        'element ['.$name.'] found, but not of type "select", "checkbox" or "radio"!'
                     );
                     return false;
                 }
@@ -1794,7 +1813,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			return
 				'<img id="captcha" src="'.$uri.'" alt="CAPTCHA Image" />' .
 				$this->input( array( 'name' => $element['name'], 'maxlength' => 6 ) ).
-				'<a href="#" onclick="document.getElementById(\'captcha\').src = \'/securimage/securimage_show.php?\' + Math.random(); return false">'.
+				'<a href="#" onclick="document.getElementById(\'captcha\').src = \''.$uri.'?\' + Math.random(); return false">'.
 				'[ '.$this->lang->translate('Different Image').' ]</a>';
 		}   // end function captcha()
  
@@ -1819,11 +1838,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     array(
                         'attributes' => $this->__validateAttributes( $element ),
                         'label'      => //SEQ_OUTPUT(
-                                        $this->lang->translate( $text )
+                                        $this->translate( $text )
                                         //)
                                         ,
                         'value'      => //SEQ_OUTPUT(
-                                        $this->lang->translate( $element['value'] )
+                                        $this->translate( $element['value'] )
                                         //)
                                         ,
                         'labelclass' => $this->_config['label_class'],
@@ -1864,7 +1883,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             if ( ! strcasecmp( $element[ 'type' ], 'submit' ) ) {
                 $this->log()->LogDebug( 'creating button' );
                 if ( isset( $element['label'] ) ) {
-                    $element['value'] = $this->lang->translate( $element['label'] );
+                    $element['value'] = $this->translate( $element['label'] );
                 }
                 if (
                         ! isset( $this->_buttons[ $this->_current_form ] )
@@ -2002,7 +2021,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     array(
                         'attributes' => $this->__validateAttributes( $element ),
                         'value'      => //SEQ_OUTPUT(
-                                        $this->lang->translate( $text )
+                                        $this->translate( $text )
                                         //)
                                         ,
                     )
@@ -2083,7 +2102,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     $opt[] = array(
                                      'key'      => $key,
                                      'value'    => //SEQ_OUTPUT(
-                                                   $this->lang->translate( $value )
+                                                   $this->translate( $value )
                                                    //)
                                                    ,
                                      'selected' => $selected
@@ -2217,7 +2236,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     $opt[] = array(
                                      'text'
                                          => //SEQ_OUTPUT(
-                                            $this->lang->translate( $value )
+                                            $this->translate( $value )
                                             //)
                                             ,
                                      'attributes'
@@ -2286,7 +2305,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 $this->_js[] = "jQuery('#" . $element['name'] . "').jqEasyCounter({ "
   			                     . "maxChars: " . $element['maxlength'] . ", "
 			                       . "maxCharsWarning: " . ( $element['maxlength'] - intval( ($element['maxlength']*10/100 ) ) ) . ", "
-			                       . "msgText: '" . $this->lang->translate("Characters") . ": '"
+			                       . "msgText: '" . $this->translate("Characters") . ": '"
 			                       . " });\n";
             }
             if ( isset( $element['editor'] ) && $element['editor'] === true ) {
@@ -2444,7 +2463,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             // support "nicer" names for allowed types
             $this->_config['_allowed']
                 = array(
-                      'number'   => 'PCRE_INT',
+                      'number'   => 'PCRE_NUMBER',
                       'integer'  => 'PCRE_INT',
                       'string'   => 'PCRE_STRING',
                       'password' => 'PCRE_PASSWORD',
@@ -2607,7 +2626,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     'infotext' => ( isset($infotext) ? $infotext : NULL ),
                     'name'     => $element['name'],
                     'info'     => ( isset ( $element['info'] ) && ( ! empty( $element['info'] ) ) )
-                               ?  $this->lang->translate( $element['info'] )
+                               ?  $this->translate( $element['info'] )
                                :  NULL,
                     'field'    => $field,
                     'req'      => (
@@ -2673,7 +2692,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 if ( $handle->uploaded ) {
                     if ( isset($this->_config['max_file_size']) && $this->_config['max_file_size'] > 0 ) {
                         if ( $handle->file_src_size > $this->_config['max_file_size'] ) {
-                            $this->_upload_errors[$formname][$name] = $this->lang->translate( 'File too large!' );
+                            $this->_upload_errors[$formname][$name] = $this->translate( 'File too large!' );
                             return false;
                         }
 					}
@@ -2779,6 +2798,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 $this->log()->LogDebug( 'known attributes:', $known_attributes );
 
                 foreach ( $element as $attr => $value ) {
+                
+					if ( empty( $value ) ) {
+					    $this->log()->LogDebug( 'Skipping empty value for attr ['.$attr.']' );
+						continue;
+					}
 
                     if (
                          ! array_key_exists( $attr, $known_attributes )
