@@ -342,15 +342,30 @@ class wbValidate extends wbBase {
                 print_r( debug_backtrace() );
                 echo "</textarea>";
             }
-            // check pattern; returns 0 (false) or 1 (true)
-            if ( preg_match( constant( $constant ), $value ) ) {
-                $this->log()->LogDebug( 'valid value:', $value );
-                return true;
-            }
-            else {
-                $this->log()->LogDebug( 'invalid (doesn\'t match regexp)' );
-                return false;
-            }
+
+			// if it's a pattern...
+			if ( substr( $constant, 0, 5 ) == 'PCRE_' ) {
+	            // check pattern; returns 0 (false) or 1 (true)
+	            if ( preg_match( constant( $constant ), $value ) ) {
+	                $this->log()->LogDebug( 'valid value:', $value );
+	                return true;
+	            }
+	            else {
+	                $this->log()->LogDebug( 'invalid (doesn\'t match regexp)' );
+	                return false;
+	            }
+			}
+			// if it's a method...
+			elseif ( substr( $constant, 0, 4 ) == 'PHP_' ) {
+			    $method = constant($constant);
+echo "$method -$value- RESULT: ", $method( $value ), "<br />";
+			    if ( $method( $value ) == true ) {
+			        return true;
+				}
+				else {
+				    return false;
+				}
+			}
 
         }
 
