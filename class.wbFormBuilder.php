@@ -532,6 +532,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 // leave uploads for later
                 if ( $element['type'] == 'file' ) {
                     $uploads[] = $element;
+                    continue;
 				}
                 
                 // check validity
@@ -558,7 +559,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                 : $this->translate( 'Please insert a valid value' );
                         }
                         else {
-                            $errors[$element['name']] = $val_errors;
+                            $this->_invalid[$formname][$element['name']] = $val_errors;
+                            //$errors[$element['name']] = $val_errors;
                         }
                     }
                 }
@@ -623,7 +625,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 $this->_valid[ $formname ][ $element['name'] ] = $value;
 
             }
-            
+
             // if we don't have any errors so far, handle file uploads
 			if ( count($uploads) ) {
 			    foreach( $uploads as $element ) {
@@ -643,6 +645,36 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $errors;
 
         }   // end function checkForm()
+        
+    /**
+     * dump all stored items; you should NEVER use this method in production code!
+     *
+     *
+     *
+     **/
+    public function dump() {
+
+        echo "<hr /><h2>wbFormBuilder Var Dump</h2><pre>",
+			 "isCanceled: ", $this->isCanceled(), "\n",
+			 "isSent:     ", $this->isSent(), "\n",
+			 "isChecked:  ", $this->isChecked(), "\n",
+			 "isValid:    ", $this->isValid(), "\n",
+			 "</pre>"
+			 ;
+
+        echo "FORMS<br /><textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+        print_r( self::$_forms );
+        echo "</textarea>";
+
+        echo "VALID<br /><textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+        print_r( $this->_valid );
+        echo "</textarea>";
+
+        echo "ERRORS<br /><textarea cols=\"100\" rows=\"20\" style=\"width: 100%;\">";
+        print_r( $this->_errors );
+        echo "</textarea>";
+
+    }   // end function dump()
         
         /**
          *
@@ -718,16 +750,27 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          * @access public
          * @param  string  $formname
-         * @param  booloan $upload_errors - return file upload errors
+         * @param  boolean $upload_errors - return file upload errors
          * @return array
          *
          **/
-        public function getErrors( $formname = '', $upload_errors = false ) {
+        public function getErrors( $formname = '', $upload_errors = false, $as_string = false ) {
             $formname = $this->__validateFormName( $formname );
             if ( ! $upload_errors ) {
-	            return is_array( $this->_errors[$formname] )
-	                 ? $this->_errors[$formname]
-	                 : array();
+                $errors = array();
+                if ( is_array( $this->_errors[$formname] ) ) {
+                    $errors =& $this->_errors[$formname];
+				}
+				if ( is_array( $this->_invalid[$formname] ) ) {
+                    $errors =& array_merge( $this->_errors[$formname], $this->_invalid[$formname] );
+				}
+				if ( count($errors) ) {
+				    if ( $as_string ) {
+				        return implode( "<br />\n", $errors );
+				    }
+				    return $errors;
+				}
+				return NULL;
 			}
 			else {
 	            return is_array( $this->_upload_errors[$formname] )
@@ -859,9 +902,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                 // info text if there are required fields
                                 'req_info' => $req_info,
                                 // errors
-                                'errors'   => ( isset( $this->_errors[ $formname ] ) && is_array( $this->_errors[ $formname ] ) && count( $this->_errors[ $formname ] ) > 0 )
-                                           ?  implode( "<br />\n", $this->_errors[ $formname ] )
-                                           :  NULL,
+                                'errors'   => $this->getErrors( $formname, false, true ),
                                 // info messages
                                 'info'     => ( isset( $this->_info[ $formname ] ) && is_array( $this->_info[ $formname ] ) && count( $this->_info[ $formname ] ) > 0 )
                                            ?  implode( "<br />\n", $this->_info[ $formname ] )
@@ -1023,6 +1064,19 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         }   // end function getOptionsForArea()
         
         /**
+         *
+         *
+         *
+         *
+         **/
+		public function getUploadFileCount( $formname = NULL ) {
+		    $formname = $this->__validateFormName( $formname );
+			return
+			      ( isset( $this->_uploads[$formname] ) )
+			    ? count($this->_uploads[$formname])
+			    : 0;
+		}
+        /**
          * returns the complete path and filename of an uploaded file
          *
          * @access public
@@ -1033,8 +1087,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
 		public function getUploadFilePath( $formname = NULL, $name ) {
 		    $formname = $this->__validateFormName( $formname );
-		    $path     = ( isset($this->_uploads[$name]) )
-		              ? $this->_uploads[$name]['path']
+		    $path     = ( isset($this->_uploads[$formname][$name]) )
+		              ? $this->_uploads[$formname][$name]['path']
 		              : NULL;
 		    return $path;
 		}   // end function getUploadFilePath()
@@ -1050,9 +1104,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
 		public function getUploadFileThumbPath( $formname = NULL, $name ) {
 		    $formname = $this->__validateFormName( $formname );
-		    if ( isset($this->_uploads[$name]) ) {
-		        if ( isset( $this->_uploads[$name]['thumb'] ) ) {
-		            return $this->_uploads[$name]['thumb'];
+		    if ( isset($this->_uploads[$formname][$name]) ) {
+		        if ( isset( $this->_uploads[$formname][$name]['thumb'] ) ) {
+		            return $this->_uploads[$formname][$name]['thumb'];
 		        }
 			}
 		    return NULL;
@@ -1069,8 +1123,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
 		public function getUploadFileType( $formname = NULL, $name ) {
 		    $formname = $this->__validateFormName( $formname );
-		    $path     = ( isset($this->_uploads[$name]) )
-		              ? $this->_uploads[$name]['type']
+		    $path     = ( isset($this->_uploads[$formname][$name]) )
+		              ? $this->_uploads[$formname][$name]['type']
 		              : NULL;
 		    return $path;
 		}   // end function getUploadFileType()
@@ -1086,8 +1140,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
 		public function getUploadFileMimeType( $formname = NULL, $name ) {
 		    $formname = $this->__validateFormName( $formname );
-		    $path     = ( isset($this->_uploads[$name]) )
-		              ? $this->_uploads[$name]['mime']
+		    $path     = ( isset($this->_uploads[$formname][$name]) )
+		              ? $this->_uploads[$formname][$name]['mime']
 		              : NULL;
 		    return $path;
 		}   // end function getUploadFileMimeType()
@@ -1283,6 +1337,17 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                  count ( $this->_errors[$formname] ) > 0
             ) {
                 $this->log()->LogDebug( 'form invalid (errors found)' );
+                return false;
+            }
+            
+            if (
+                 isset( $this->_invalid[$formname] )
+                 &&
+                 is_array( $this->_invalid[$formname] )
+                 &&
+                 count ( $this->_invalid[$formname] ) > 0
+            ) {
+                $this->log()->LogDebug( 'form invalid (invalid items found)' );
                 return false;
             }
 
@@ -2706,7 +2771,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 						$this->_upload_errors[$formname][$name] = $handle->error;
                         return false;
                     }
-                    $this->_uploads[$name] = array(
+                    $this->_uploads[$formname][$name] = array(
 						'path' => $handle->file_dst_pathname,
 						'type' => $handle->file_is_image ? 'image' : 'file',
 						'mime' => $handle->file_src_mime,
@@ -2750,7 +2815,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                 $this->_upload_errors[$formname][$name] = $handle->error;
                                 return false;
                             }
-                            $this->_uploads[$name]['thumb'] = $handle->file_dst_pathname;
+                            $this->_uploads[$formname][$name]['thumb'] = $handle->file_dst_pathname;
                         }
                     }
 
