@@ -263,10 +263,11 @@ if ( ! class_exists( 'wbSeq', false ) ) {
          *
          * @access public
          * @param  string  $dynamic
-         * @param  boolean $strict  - passed to __terminateSession(), default true
+         * @param  boolean $terminate - terminate session, default false
+         * @param  boolean $strict    - passed to __terminateSession(), default true
          *
          **/
-		public function validateToken( $dynamic, $strict = true ) {
+		public function validateToken( $dynamic, $terminate = false, $strict = true ) {
 
             // print notice into log if the secret field name was left to default
             if ( $this->_config['secret_field'] == 'fbseqkey' ) {
@@ -284,15 +285,19 @@ if ( ! class_exists( 'wbSeq', false ) ) {
                 list( $token, $hash, $time ) = $parts;
                 // check if token is expired
                 if ( $time < ( time() - 30 * 60 ) ) {
-                    $this->log()->LogWarn( 'token is expired (token time -'.$time.'- checked against -'.( time() - 30*60 ).'-' );
-                    $this->__terminateSession( $strict, 'token expired' );
+                    $this->warn( 'token is expired (token time -'.$time.'- checked against -'.( time() - 30*60 ).'-' );
+                    if ( $terminate ) {
+                    	$this->__terminateSession( $strict, 'token expired' );
+					}
                     return false;
                 }
                 // check the secret
                 $secret = $this->__createSecret( $dynamic );
                 if ( $hash != sha1( $secret.'-'.$dynamic.'-'.$token ) ) {
                     $this->warn( 'WARN', 'invalid token!' );
-                    $this->__terminateSession( $strict, 'invalid token' );
+                    if ( $terminate ) {
+                    	$this->__terminateSession( $strict, 'invalid token' );
+					}
                     return false;
                 }
                 else {
@@ -301,7 +306,10 @@ if ( ! class_exists( 'wbSeq', false ) ) {
             }
 
 			// token should have 3 parts; if not, it's invalid
-            $this->__terminateSession( $strict, 'invalid token ['.$key.'] - parts count != 3');
+			if ( $terminate ) {
+                $this->warn( 'invalid token ['.$key.'] - parts count != 3' );
+            	$this->__terminateSession( $strict, 'invalid token ['.$key.'] - parts count != 3');
+			}
             return false;
 
 		}   // function validateToken()
@@ -376,10 +384,10 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 		private function __terminateSession( $strict = true, $reason = NULL ) {
 		
 		    if ( ! empty($this->_lastMatch) ) {
-		    	$this->log()->LogWarn( '__terminateSession() - '. $this->_lastMatch );
+		    	$this->warn( '__terminateSession() - '. $this->_lastMatch );
 			}
 			if ( ! empty($reason) ) {
-		    	$this->log()->LogWarn( '__terminateSession() - '. $reason );
+		    	$this->warn( '__terminateSession() - '. $reason );
 			}
 
 		    // unset session variables
