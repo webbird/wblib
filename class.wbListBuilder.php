@@ -488,6 +488,9 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
                 'building dropdown from tree:',
                 $list
             );
+            $this->log()->LogDebug(
+                'options', $options
+			);
 
             if ( isset( $options['open_nodes'] ) ) {
                 $this->open_nodes = $options['open_nodes'];
