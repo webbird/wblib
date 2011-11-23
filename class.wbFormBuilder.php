@@ -510,7 +510,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 $this->log()->LogDebug(
                     'checking field ['.$element['name'].']'
                 );
-
+                
                 $allow = 'string';
                 if ( isset( $element['allow'] ) ) {
                     $allow = $element['allow'];
@@ -534,7 +534,19 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     $uploads[] = $element;
                     continue;
 				}
-                
+				
+				// If the editor was filled with some text and then emptied,
+                // a "<br>" is left, which is treated as "some data". This
+				// makes the check for required field fail.
+				if ( $element['type'] == 'textarea' ) {
+					if ( isset($element['editor']) && $element['editor'] == true ) {
+                        $value = $this->val->param( $element['name'] );
+                        if ( preg_match( '/^<br>$/i', $value ) ) {
+                            $this->val->delete( $element['name'] );
+                        }
+					}
+				}
+
                 // check validity
                 $value = NULL;
                 if ( ! is_array( $allow ) ) {
