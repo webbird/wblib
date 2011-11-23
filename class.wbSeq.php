@@ -285,7 +285,7 @@ if ( ! class_exists( 'wbSeq', false ) ) {
                 list( $token, $hash, $time ) = $parts;
                 // check if token is expired
                 if ( $time < ( time() - 30 * 60 ) ) {
-                    $this->warn( 'token is expired (token time -'.$time.'- checked against -'.( time() - 30*60 ).'-' );
+                    $this->warn( 'SECURITY', 'token is expired (token time -'.$time.'- checked against -'.( time() - 30*60 ).'-' );
                     if ( $terminate ) {
                     	$this->__terminateSession( $strict, 'token expired' );
 					}
@@ -307,7 +307,7 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 
 			// token should have 3 parts; if not, it's invalid
 			if ( $terminate ) {
-                $this->warn( 'invalid token ['.$key.'] - parts count != 3' );
+                $this->warn( 'WARN', 'invalid token ['.$key.'] - parts count != 3' );
             	$this->__terminateSession( $strict, 'invalid token ['.$key.'] - parts count != 3');
 			}
             return false;
@@ -384,10 +384,10 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 		private function __terminateSession( $strict = true, $reason = NULL ) {
 		
 		    if ( ! empty($this->_lastMatch) ) {
-		    	$this->warn( '__terminateSession() - '. $this->_lastMatch );
+		    	$this->warn( 'INFO', '__terminateSession() - '. $this->_lastMatch );
 			}
 			if ( ! empty($reason) ) {
-		    	$this->warn( '__terminateSession() - '. $reason );
+		    	$this->warn( 'INFO', '__terminateSession() - '. $reason );
 			}
 
 		    // unset session variables
