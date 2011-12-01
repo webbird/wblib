@@ -199,7 +199,6 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 		 *
 		 **/
 		public function encodeFormData( $var ) {
-        	$pattern = '/&(#)?[a-zA-Z0-9]{0,};/';
             // If variable is an array
 	        if ( is_array($var) ) {
 	            $out = array();
@@ -209,14 +208,12 @@ if ( ! class_exists( 'wbSeq', false ) ) {
 	            }
 	        } else {
 	            $out = $var;
-	            // avoid double encoding (&amp; -> &amp;amp;)
-	            while ( preg_match( $pattern, $out ) > 0 ) {
-	                $out = htmlspecialchars_decode( $out, ENT_QUOTES );
-	            }
 	            // make sure it's really UTF-8
 				$out = mb_convert_encoding($out, 'UTF-8', mb_detect_encoding($out));
 	            // Trim the variable, strip all slashes, and encode it
 	            $out = htmlspecialchars( stripslashes(trim($out)), ENT_QUOTES, 'UTF-8', true );
+	            // fix double encoded
+	            $out = str_ireplace( '&amp;amp;', '&amp;', $out );
 	        }
 			// return result
 	        return $out;
