@@ -480,9 +480,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             $this->seq->config( 'secret_field', $this->_config['secret_field'] );
             if ( ! $this->seq->validateToken( $formname, false ) ) {
-                $this->log()->LogDebug(
-                    'validateToken returned false!'
-				);
+                $this->log()->LogDebug( 'validateToken returned false!' );
 				$this->_errors[$formname][] = $this->translate( 'Invalid token!' );
 				return $this->_errors[ $formname ];
             }
@@ -599,7 +597,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 }
                 
                 // encode HTML? - default is YES!
-                if ( ! isset( $element['encode'] ) || $element['encode'] !== false ) {
+                if ( $value != '' && ! isset( $element['encode'] ) || $element['encode'] !== false ) {
                     $value = $this->seq->encodeFormData($value);
                 }
 
@@ -639,7 +637,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
 
             // if we don't have any errors so far, handle file uploads
-			if ( count($uploads) ) {
+			if ( ! count($errors) && $this->isValid() && count($uploads) ) {
 			    foreach( $uploads as $element ) {
 				    $result = $this->__saveUploadFile( $formname, $element['name'] );
 				    if ( $result !== true ) {
@@ -1403,6 +1401,26 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
 
         }   // end function removeElement()
+        
+        /**
+         * removes all formerly uploaded files
+         *
+         * @access public
+         * @param  string   $formname
+         * @return boolean  (unlink() result)
+         *
+         **/
+		public function removeUploadedFiles( $formname = NULL ) {
+		    $formname = $this->__validateFormName( $formname );
+		    if ( ! is_array( $this->_uploads[$formname] ) ) {
+		        return true;
+			}
+		    foreach( $this->_uploads[$formname] as $file ) {
+				@unlink( $file['path'] );
+			}
+			return true;
+		}   // end function removeUploadedFiles()
+
         
         /**
          * removes a formerly uploaded file
