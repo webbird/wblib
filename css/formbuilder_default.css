@@ -27,6 +27,7 @@ input.fbdisabled,textarea.fbdisabled{border:0 !important;background-color:transp
     Tooltip
 *******************************************************************************/
 #DHTMLgoodies_formTooltipDiv{background-color:#fff !important;color:#000 !important;border:1px solid #000;}
+#DHTMLgoodies_formTooltipDiv a{color:#000 !important;}
 .DHTMLgoodies_formTooltipDiv{padding:5px;}
 #DHTMLgoodies_formTooltipContent{margin-bottom:10px;}
 .DHTMLgoodies_formTooltip_closeMessage{font-size:0.8em;}
