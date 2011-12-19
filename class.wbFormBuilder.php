@@ -2060,10 +2060,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             // quote value
             if ( isset($element['value']) && strlen( $element['value'] ) > 0 ) {
-                $element['value'] = //SEQ_OUTPUT(
-                                    $element['value']
-                                    //)
-                                    ;
+                $element['value'] = $this->seq->encodeFormData( $element['value'] );
             }
 
             // get attributes
@@ -2706,9 +2703,10 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 }
 
                 $label    = NULL;
+      			$id    = preg_replace( '#\[\]$#', '', $element['name'] );
 
                 if ( isset ( $element['label'] ) ) {
-                    $label = '<label for="'.$element['name'].'" '
+                    $label = '<label for="'.$id.'" '
                            . 'class="'.$this->_config['label_class'].'">'
                            . $this->translate( $element['label'] )
                            . '</label>';
@@ -2719,6 +2717,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     'label'    => $label,
                     'type'     => $element['type'],
                     'infotext' => ( isset($infotext) ? $infotext : NULL ),
+                    'id'       => $id,
                     'name'     => $element['name'],
                     'info'     => ( isset ( $element['info'] ) && ( ! empty( $element['info'] ) ) )
                                ?  $this->translate( $element['info'] )
@@ -2894,7 +2893,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
                 foreach ( $element as $attr => $value ) {
                 
-					if ( empty( $value ) ) {
+					if ( is_scalar($value) && ! strlen($value) && strcasecmp($attr,'value') ) {
 					    $this->log()->LogDebug( 'Skipping empty value for attr ['.$attr.']' );
 						continue;
 					}
@@ -2931,7 +2930,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                         );
                     }
 
-                    if ( empty( $valid ) && strlen( $valid ) == 0 ) {
+                    if ( empty( $valid ) && strlen( $valid ) == 0 && strcasecmp($attr,'value') ) {
                         $this->log()->LogDebug( 'Invalid value for attribute: '.$attr, $value );
                         continue;
                     }
@@ -2950,7 +2949,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 }
 
                 if ( ! $id_seen ) {
-                    $attrs[] = 'id="'.$element['name'].'"';
+                    $attrs[] = 'id="'.preg_replace( '#\[\]$#', '', $element['name'] ).'"';
                 }
 
                 // add type specific css class to the element
