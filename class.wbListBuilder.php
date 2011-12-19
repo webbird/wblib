@@ -923,10 +923,10 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
          *
          *
          **/
-        function getListItemCSS ( $item, $isfirst = false, $last_id = NULL, $has_children = false ) {
+        function getListItemCSS ( $item, $isfirst = false, $last_id = NULL, $has_children = false, $for = 'li' ) {
 
             $li_css = $this->_config['css_prefix']
-                    . $this->_config['li_class'];
+                    . $this->_config[$for.'_class'];
 
             // special CSS class for each level?
             if (
@@ -937,14 +937,14 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
                    )
                    &&
                    (
-                          isset( $this->_config['li_class'] )
+                          isset( $this->_config[$for.'_class'] )
                        &&
-                       ! empty ( $this->_config['li_class'] )
+                       ! empty ( $this->_config[$for.'_class'] )
                    )
             ) {
                 $li_css .= ' '
                         .  $this->_config['css_prefix']
-                        .  $this->_config['li_class']
+                        .  $this->_config[$for.'_class']
                         .  (
                                 isset( $item[ $this->_config['__level_key'] ] )
                               ? '_'.$item[ $this->_config['__level_key'] ]
@@ -954,22 +954,22 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
 
             // markup for current page
             if ( isset( $item[ $this->_config['__current_key'] ] ) ) {
-                $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['current_li_class'];
+                $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['current_'.$for.'_class'];
             }
 
 // ----- TODO -----
             // markup for pages on current trail
             if ( isset( $item['em_on_current_trail'] ) ) {
-                $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['trail_li_class'];
+                $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['trail_'.$for.'_class'];
             }
 // ----- TODO -----
 
             // markup for pages that have children
             if ( $has_children ) {
-                $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['has_child_li_class'];
+                $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['has_child_'.$for.'_class'];
             }
             elseif (
-                  isset( $this->_config['has_child_li_class'] )
+                  isset( $this->_config['has_child_'.$for.'_class'] )
                && isset( $item[ $this->_config['__children_key'] ] )
             ) {
                 if (
@@ -978,18 +978,18 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
                      )
                      || $item[ $this->_config['__children_key'] ] > 0
                 ) {
-                    $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['has_child_li_class'];
+                    $li_css .= ' ' . $this->_config['css_prefix'] . $this->_config['has_child_'.$for.'_class'];
                 }
             }
             
             // markup for first element
             if ( $isfirst ) {
-                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['first_li_class'];
+                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['first_'.$for.'_class'];
             }
 
             // markup for last element
             if ( $last_id === $item[ $this->_config['__id_key'] ] ) {
-                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['last_li_class'];
+                $li_css  .= ' ' . $this->_config['css_prefix'] . $this->_config['last_'.$for.'_class'];
             }
 
             return $li_css;
@@ -1016,7 +1016,7 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
          * @return string
          *
          **/
-        private function __getID() {
+        protected function __getID() {
             if ( $this->_config['unique_id'] === false ) {
                 return NULL;
             }
