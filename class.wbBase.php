@@ -347,7 +347,7 @@ if ( ! class_exists( 'wbBase', false ) ) {
                                 $dirs[]  = str_ireplace( $remove_prefix, '', $dir.'/'.$file );
                             }
                             // recurse
-                            $subdirs = $this->getDirectories( $dir.'/'.$file, $with_files, $files_only );
+                            $subdirs = $this->scanDirectory( $dir.'/'.$file, $with_files, $files_only );
                             $dirs    = array_merge( $dirs, $subdirs );
                         }
                         elseif ( $with_files ) {
@@ -422,8 +422,15 @@ if ( ! class_exists( 'wbBase', false ) ) {
             if ( $url ) {
                 $this->_url = $url;
             }
-            if ( empty( self::$_url ) && isset($_SERVER['REQUEST_URI']) ) {
-                $this->_url = $_SERVER['REQUEST_URI'];
+            if ( empty( self::$_url ) ) {
+				// Apache
+				if ( isset($_SERVER['REQUEST_URI']) ) {
+                	$this->_url = $_SERVER['REQUEST_URI'];
+				}
+				// IIS
+				if ( isset($_SERVER['SCRIPT_NAME']) ) {
+                	$this->_url = $_SERVER['SCRIPT_NAME'];
+				}
             }
             return $this->_url;
         }   // end function selfURL()
