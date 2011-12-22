@@ -2271,7 +2271,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                  count( $element['options'] ) > 0
             ) {
 
-                if ( $element['type'] == 'checkbox' && ! preg_match( '#\[\]$#', $element['name'] ) ) {
+				$name = $element['name'];
+                if ( $element['type'] == 'checkbox' && ! preg_match( '#\[\]$#', $name ) ) {
                     $element['name'] .= '[]';
                 }
 
@@ -2287,7 +2288,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     $marked = $element['value'];
                 }
                 
-
+				$i = 1;
                 foreach ( $element['options'] as $key => $value ) {
 
                     if ( $isIndexed ) { $key = $value; }
@@ -2314,7 +2315,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
                     $opt[] = array(
 									 'id'
-										 => $element['name'] . '_' . $value,
+										 => $name . '_' . $i,
                                      'text'
                                          => $this->seq->encodeFormData( $this->translate( $value ) ),
                                      'attributes'
@@ -2324,7 +2325,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                                     array(
                                                         'checked' => $checked,
                                                         'value'   => $key,
-                                                        'id'      => $element['name'] . '_' . $value,
+                                                        'id'      => $name . '_' . $i,
+                                                        'class'   => 'fbcheckbox'.$i
                                                     )
                                                 )
                                             ),
@@ -2334,6 +2336,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                            			 'break'
 										 => ( isset ( $element['break'] )    ? true                						: NULL ),
                                  );
+					$i++;
 
                 }
 
