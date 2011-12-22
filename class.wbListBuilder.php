@@ -40,12 +40,21 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
         private        $last_ul_id     = NULL;
         private        $_path          = array();
         protected      $_config        = array(
-
+            '__children_key'        => 'children',
+            '__current_key'         => 'current',
+            '__hidden_key'          => 'hidden',
+            '__href_key'            => 'href',
+            '__id_key'              => 'id',
+            '__level_key'           => 'level',
+            '__more_info_key'       => '',
+            '__nodes_cookie_name'   => NULL,
+            '__parent_key'          => 'parent',
+            '__title_key'           => 'title',
             'create_level_css'      => true,
-            'deep_recursion_level'  => 25,
 
             'css_prefix'            => '',
             'current_li_class'      => 'current_item',
+            'deep_recursion_level'  => 25,
             'first_li_class'        => 'first_item',
             'has_child_li_class'    => 'has_child',
             'is_open_li_class'      => 'is_open',
@@ -53,28 +62,15 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
             'item_open'             => '<li id="%%id%%" class="%%{{lastcss}}">',
             'last_li_class'         => 'last_item',
             'li_class'              => 'item',
+            'li_id_prefix'          => 'li_',
             'list_close'            => '</ul>',
             'list_open'             => '<ul id="%%id%%" class="%%">',
+            'more_info'             => '<span class="more_info">%%</span>',
+            'space'                 => '    ',
             'trail_li_class'        => 'trail_item',
             'ul_class'              => 'list',
-            'space'                 => '    ',
-            'more_info'             => '<span class="more_info">%%</span>',
-
             'ul_id_prefix'          => 'ul_',
-            'li_id_prefix'          => 'li_',
             'unique_id'             => true,
-
-            '__children_key'        => 'children',
-            '__current_key'         => 'current',
-            '__hidden_key'          => 'hidden',
-            '__href_key'            => 'href',
-            '__id_key'              => 'id',
-            '__level_key'           => 'level',
-            '__parent_key'          => 'parent',
-            '__title_key'           => 'title',
-            '__more_info_key'       => '',
-            '__nodes_cookie_name'   => NULL,
-
         );
 
         /**
@@ -341,7 +337,6 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
                 $this->log()->LogDebug( 'no list items to show' );
                 return;
             }
-            
             if ( $this->depth >= $this->_config['deep_recursion_level'] ) {
                 $this->log()->LogDebug( 'ERROR: DEEP RECURSION!' );
                 $this->printError( 'buildDropDown() ERROR: DEEP RECURSION! Recursion level '.$this->depth );
@@ -535,6 +530,7 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
 
             // loop will be false if the root has no children (i.e., an empty menu!)
             $loop         = !empty( $children[$root_id] );
+            if ( ! $loop ) { return $this->buildDropDownRecursive( $list, $options ); }
             
             // initializing $parent as the root
             $parent       = $root_id;
@@ -624,7 +620,7 @@ if ( ! class_exists( 'wbListBuilder', false ) ) {
             
             if ( $this->depth >= $this->_config['deep_recursion_level'] ) {
                 $this->log()->LogDebug( 'ERROR: DEEP RECURSION!' );
-                $this->printError( 'buildDropDown() ERROR: DEEP RECURSION! Recursion level '.$this->depth );
+                $this->printError( 'buildDropDown() ERROR: DEEP RECURSION! Recursion level '.$this->depth.' >= '.$this->_config['deep_recursion_level'] );
                 return;
             }
             
