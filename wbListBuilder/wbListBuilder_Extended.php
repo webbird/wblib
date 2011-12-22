@@ -28,7 +28,7 @@ if ( ! class_exists( 'wbListBuilder_Extended', false ) ) {
 
     class wbListBuilder_Extended extends wbListBuilder {
     
-        protected $_config = array(
+        private static $specialconfig = array(
             'table_open'  => '<table class="%%">',
             'table_close' => '</table>',
             'row_open'    => '<tr class="%%{{lastcss}}">',
@@ -43,6 +43,15 @@ if ( ! class_exists( 'wbListBuilder_Extended', false ) ) {
             'last_tr_class'         => 'last_item',
             'td_class'              => 'item',
         );
+        
+        public function __construct($options) {
+            foreach( self::$specialconfig as $key => $value ) {
+                if ( ! isset($options[$key]) ) {
+                    $options[$key] = $value;
+				}
+			}
+			parent::__construct($options);
+        }
 
 		public function buildTable( $list, $options = array() ) {
 
