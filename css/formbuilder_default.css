@@ -9,14 +9,14 @@ fieldset.fbfieldset{margin:15px auto;}
 fieldset.fbfieldset legend.fblegend{font-weight:700;}
 fieldset.fbfieldset ol{list-style:none;padding:1em 1em 0;}
 fieldset.fbfieldset li{float:left;clear:left;width:100%;padding-bottom:1em;text-align:left;list-style:none;}
-fieldset.fbfieldset li span{width:20px;height:20px;min-height:20px;display:block;float:left;padding:2px;}
+fieldset.fbfieldset li span.fbspan20{width:20px;height:20px;min-height:20px;display:block;float:left;padding:2px;}
 fieldset.fbfieldset li span span{padding:0;margin-top:-5px;}
 fieldset.fbfieldset li span.fbinfotext{height:auto;}
 fieldset.fbfieldset li span.fberror,fieldset.fbfieldset li span.fbinfotext{padding-left:5px;width:auto;border:0;}
 .fberror{color:#C00;border:1px solid #c00;padding:5px;}
 div.fberror,div.fbinfo{text-align:center;margin-bottom:15px;padding:10px;}
 div.fbinfo{border:1px solid #060;}
-label.fblabel{font-weight:700;display:block;float:left;width:20em;margin-right:1em;text-align:right;}
+label.fblabel, span.fblabel{font-weight:700;display:block;float:left;width:20em;margin-right:1em;text-align:right;}
 input.fbtext,input.fbfile,input.fbsubmit,input.fbpassword,span.fbinfotext,select.fbselect,select.fbmultiselect,textarea.fbtextarea{border:1px solid #ccc;padding:3px;}
 select.fbmultiselect{max-height:100px;}
 span.fbinfotext{border:none;}

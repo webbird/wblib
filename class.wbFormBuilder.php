@@ -2294,19 +2294,6 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
                     $checked = NULL;
 
-                    #if (
-                    #     (
-                    #       isset( $element['value'] )
-                    #       &&
-                    #       ( ! empty( $element['value'] ) || strlen( $element['value'] > 0 ) )
-                    #     )
-                    #     &&
-                    #     ! strcasecmp( $element['value'], $key )
-                    #) {
-                    #    $checked   = 'checked';
-                    #    $found_val = true;
-                    #}
-                    #if ( in_array( $value, $marked ) ) {
                     if ( in_array( $key, $marked ) ) {
                         $checked   = 'checked';
                         $found_val = true;
@@ -2326,11 +2313,10 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     }
 
                     $opt[] = array(
+									 'id'
+										 => $element['name'] . '_' . $value,
                                      'text'
-                                         => //SEQ_OUTPUT(
-                                            $this->translate( $value )
-                                            //)
-                                            ,
+                                         => $this->seq->encodeFormData( $this->translate( $value ) ),
                                      'attributes'
                                          => $this->__validateAttributes(
                                                 array_merge(
@@ -2338,6 +2324,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                                     array(
                                                         'checked' => $checked,
                                                         'value'   => $key,
+                                                        'id'      => $element['name'] . '_' . $value,
                                                     )
                                                 )
                                             ),
@@ -2694,6 +2681,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                         : $this->_config['error_class'];
                 }
 
+                $label = NULL;
+      			$id    = preg_replace( '#\[\]$#', '', $element['name'] );
+
                 // create element
                 if ( method_exists( $this, $element['type'] ) ) {
                     $field = $this->{$element['type']}( $element );
@@ -2702,14 +2692,16 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     $field = $this->input( $element );
                 }
 
-                $label    = NULL;
-      			$id    = preg_replace( '#\[\]$#', '', $element['name'] );
-
-                if ( isset ( $element['label'] ) ) {
-                    $label = '<label for="'.$id.'" '
-                           . 'class="'.$this->_config['label_class'].'">'
+                if ( isset($element['label']) ) {
+					$tag   = 'label';
+					if ( $element['type'] == 'radio' || $element['type'] == 'checkbox' ) {
+					    $tag = 'span';
+					}
+                    $label = '<'.$tag
+						   . ( ( $tag == 'label' ) ? ' for="'.$id.'"' : '' )
+                           . ' class="'.$this->_config['label_class'].'">'
                            . $this->translate( $element['label'] )
-                           . '</label>';
+                           . '</'.$tag.'>';
                 }
 
                 // add rendered element to referenced array
@@ -2949,7 +2941,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 }
 
                 if ( ! $id_seen ) {
-                    $attrs[] = 'id="'.preg_replace( '#\[\]$#', '', $element['name'] ).'"';
+                    $id = preg_replace( '#\[\]$#', '', $element['name'] );
+                    if ( $element['type'] == 'radio' && $element['type'] == 'checkbox' ) {
+                        $id .= '_' . $element['value'];
+                    }
+                    $attrs[] = 'id="'.$id.'"';
                 }
 
                 // add type specific css class to the element
