@@ -401,10 +401,9 @@ if ( ! class_exists( 'wbBase', false ) ) {
         public function config( $option, $value = NULL ) {
 
            if ( is_array( $option ) ) {
-                $this->_config = array_merge(
-                                     $this->_config,
-                                     $option
-                                 );
+                foreach( $option as $key => $value ) {
+                    $this->_config[$key] = $value;
+				}
             }
             else {
                 $this->_config[$option] = $value;
@@ -422,15 +421,8 @@ if ( ! class_exists( 'wbBase', false ) ) {
             if ( $url ) {
                 $this->_url = $url;
             }
-            if ( empty( self::$_url ) ) {
-				// Apache
-				if ( isset($_SERVER['REQUEST_URI']) ) {
+            if ( empty( self::$_url ) && isset($_SERVER['REQUEST_URI']) ) {
                 	$this->_url = $_SERVER['REQUEST_URI'];
-				}
-				// IIS
-				if ( isset($_SERVER['SCRIPT_NAME']) ) {
-                	$this->_url = $_SERVER['SCRIPT_NAME'];
-				}
             }
             return $this->_url;
         }   // end function selfURL()
