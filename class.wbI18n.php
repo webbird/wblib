@@ -126,14 +126,14 @@ class wbI18n extends wbBase
      **/
     public function addFile( $file, $path = NULL, $var = NULL )
     {
-        global $LANG;
-
-        $lang_var =& $LANG;
+        $check_var = 'LANG';
 
         if ( isset( $var ) )
         {
+            $var = str_ireplace( '$', '', $var );
             eval( 'global $' . $var . ';' );
             eval( "\$lang_var = & \$$var;" );
+            $check_var = $var;
         }
 
         if ( empty( $path ) )
@@ -141,34 +141,76 @@ class wbI18n extends wbBase
             $path = $this->_config[ 'langPath' ];
         }
 
-        $file = $path . '/' . $file;
+        $file = $this->sanitizePath( $path . '/' . $file );
 
-        if ( file_exists( $file ) )
+        if ( file_exists( $file ) && ! $this->isLoaded($file) )
         {
             $this->log()->LogDebug( 'found language file: ', $file );
-
-            require_once( $file );
-
-            if ( isset( $LANG ) )
-            {
-                self::$_lang = array_merge( self::$_lang, $lang_var );
-                if ( preg_match( "/(\w+)\.php/", $file, $matches ) )
-                {
-                    self::$_current_lang = $matches[ 1 ];
-                }
-                $this->log()->LogDebug( 'loaded language file: ', $file );
-                return true;
-            }
-            else
-            {
-                $this->printError( 'invalid lang file: ', $file );
-            }
-
+            $this->checkFile( $file, $check_var );
+            return;
         }
 
         $this->log()->LogDebug( 'language file does not exist: ', $file );
 
     } // end function addFile ()
+
+    /**
+     *
+     *
+     *
+     *
+     **/
+	public function checkFile( $file, $check_var, $check_only = false )
+	{
+		{
+			// require the language file
+		    @require( $file );
+			// check if the var is defined now
+		    if ( isset( ${$check_var} ) )
+		    {
+                $isIndexed = array_values( ${$check_var} ) === ${$check_var};
+                if ( $isIndexed )
+                {
+                    return false;
+                }
+		        if ( $check_only )
+		        {
+		        	return ${$check_var};
+				}
+				else
+            {
+	                self::$_lang = array_merge( self::$_lang, ${$check_var} );
+                if ( preg_match( "/(\w+)\.php/", $file, $matches ) )
+                {
+                    self::$_current_lang = $matches[ 1 ];
+                }
+	                $this->__loaded[$file] = 1;
+                $this->log()->LogDebug( 'loaded language file: ', $file );
+                return true;
+            }
+            }
+            else
+            {
+                $this->log()->logInfo( 'invalid lang file: ', $file );
+                return false;
+            }
+		}
+	}   // end function checkFile()
+
+	/**
+	 *
+	 *
+	 *
+	 *
+	 **/
+	public function isLoaded( $file )
+	{
+	    if ( isset( $this->__loaded[$file] ) )
+	    {
+	        return true;
+        }
+		return false;
+	}   // end function isLoaded()
 
     /**
      * set language file path
