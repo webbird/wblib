@@ -559,7 +559,7 @@ if ( ! class_exists( 'wbBase', false ) ) {
             return
             (
                   array_key_exists( 'scheme', $rel_parsed )
-                ? $rel_parsed['scheme'] . '://' . $rel_parsed['host']
+                ? $rel_parsed['scheme'] . '://' . $rel_parsed['host'] . ( isset($rel_parsed['port']) ? ':'.$rel_parsed['port'] : NULL )
                 : ""
             ) . "/" . implode("/", $parts);
 
@@ -573,6 +573,10 @@ if ( ! class_exists( 'wbBase', false ) ) {
          **/
         function sanitizePath( $path )
         {
+        
+            // remove / at end of string; this will make sanitizePath fail otherwise!
+		    $path       = preg_replace( '~/$~', '', $path );
+		    
 			$path       = str_replace( '\\', '/', $path );
 			
             // bla/./bloo ==> bla/bloo
