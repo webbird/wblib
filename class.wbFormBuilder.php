@@ -516,6 +516,10 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 
                 // check captcha
                 if ( $element['type'] == 'captcha' ) {
+                    if ( ! class_exists( 'securimage' ) ) {
+				        // ----- including securImage -----
+						require_once dirname( __FILE__ ).'/vendors/securimage/securimage.php';
+				    }
                     $securimage = new Securimage();
 					$securimage->use_sqlite_db = true;
 					$securimage->sqlite_database = dirname(__FILE__).'/vendors/securimage/database/securimage.sqlite';
@@ -2451,11 +2455,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                       'accesskey'     => 'PCRE_STRING',       # single char
                       'disabled'      => array( 'disabled' ),
                       'name'          => 'PCRE_STRING',
-                      'onblur'        => 1,
+                      'onblur'        => 'PCRE_PLAIN',
                       'onclick'       => 'PCRE_PLAIN',
                       'onchange'      => 'PCRE_PLAIN',
-                      'onfocus'       => 1,
-                      'onselect'      => 1,
+                      'onfocus'       => 'PCRE_PLAIN',
+                      'onselect'      => 'PCRE_PLAIN',
                       'readonly'      => array( 'readonly' ),
 
                   );
