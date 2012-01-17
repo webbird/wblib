@@ -11,7 +11,8 @@ fieldset.fbfieldset input.datepicker{display:inline-block;margin-right:5px;}
 fieldset.fbfieldset select.fbselect,fieldset.fbfieldset select.fbmultiselect{width:20.6em;}
 label.fblabel{display:block;margin-bottom:1em;font-weight:700;text-align:left;float:none;width:100% !important;}
 select.fbselect{display:block;}
-.fbtyperadio{width:22em !important;background-color:#ddd;border:1px inset #FFF;margin:1em 0 2em;padding:5px;}
+.fbtyperadio{width:22em !important;background-color:#ddd;border:1px inset #FFF;margin: 1em 0 2em 24px;padding:5px;}
+li.fbtyperadio span.fblabel{display:block;float:none;font-weight:700;margin-bottom:1em;text-align:left;padding-left:5px;width:100% !important;}
 .fbtyperadio input.fbinput{clear:both;float:left;width:auto;}
 fieldset.fbfieldset li span{float:right;}
 fieldset.fbfieldset li span span{display:none;}
