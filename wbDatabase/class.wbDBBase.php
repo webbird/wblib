@@ -254,6 +254,21 @@ class wbDBBase extends PDO {
     }   // end function getDSN()
     
     /**
+     *
+     *
+     *
+     *
+     **/
+	public function showTables() {
+	    $data   = $this->query('SHOW TABLES');
+	    $tables = array();
+		while( $result = $data->fetch() ) {
+     		$tables[] = $result[0];
+		}
+		return $tables;
+	}   // end function showTables()
+    
+    /**
      * Check if last action set lasterror
      *
      * @access public
