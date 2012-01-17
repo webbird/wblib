@@ -19,7 +19,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, see <http://www.gnu.org/licenses/>.
-  
+
   $Id$
 
 **/
@@ -42,40 +42,40 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
         // name of the current form
         private        $_current_form   = NULL;
-        
+
         // store buttons we've already seen
         protected      $_buttons        = array();
 
         // wbTemplate object handler
         protected      $tpl;
-        
+
         // wbI18n object handler
         protected      $lang;
 
         // wbValidate object handler
         private        $val;
-        
+
         // wbSeq object handler
         private        $seq;
-        
+
         private static $__FORMS__   = array();
 
         // variable to store forms
         // 'formname' => array of elements
         protected static $_forms;
-        
+
         // array to store invalid form elements
         private        $_invalid    = array();
-        
+
         //
         private        $_js         = array();
-        
+
         // array to store file upload information
         private        $_uploads    = array();
-        
+
         // array to store upload errors
         private        $_upload_errors = array();
-        
+
         //
         private        $_flags      = array(
             'use_filetype_check' => false,
@@ -87,6 +87,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         protected      $_config
             = array(
                   'debug'           => 'false',
+                  // this is used for Securimage()
+                  'session_name'    => NULL,
                   'current_file'    => NULL,
                   // default path to search inc.forms.php
                   'path'            => '/forms',
@@ -127,7 +129,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                   # output as table or fieldset
                   'output_as'        => 'fieldset',
                   'secret_field'     => 'fbformkey',
-                  
+
                   # ----- File uploads -----
 				  'create_thumbs'    => true,
 				  'thumb_width'      => 150,
@@ -135,7 +137,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 				  'thumb_prefix'     => 'thumb_',
 				  'upload_dir'       => '/uploads',
 				  'max_file_size'    => NULL,
-				  
+
                   # known mime types
 				  'mimetypes'        => array(
 					  'audio/mpeg' =>
@@ -218,13 +220,13 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          * constructor
          **/
         function __construct ( $options = array() ) {
-        
+
             // wbBase adds given $options to $this->_config
             parent::__construct( $options );
 
             // define known attributes
             $this->__init();
-            
+
             // get wbSeq object
             $this->seq = new wbSeq();
 
@@ -247,7 +249,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $this->tpl->setPath( realpath( dirname(__FILE__) ).'/wbFormBuilder/templates' );
 
         }   // end __construct()
-        
+
         /**
 	     *
 	     *
@@ -256,7 +258,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 	     **/
 	    public function setFile ( $file, $path = NULL, $var = NULL )
 	    {
-	    
+
 			if ( $var == '' )
 			{
 				$var = 'FORMS';
@@ -496,10 +498,10 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $this->log()->LogDebug(
                 'checking form: '.$formname
             );
-            
+
             // ----- for all registered elements of this form... -----
             foreach ( self::$_forms[$formname]['elements'] as $element ) {
-            
+
                 // skip elements that are not expected to have any data
                 if ( $element['type'] == 'legend' || $element['type'] == 'infotext' ) {
                     continue;
@@ -508,21 +510,19 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 $this->log()->LogDebug(
                     'checking field ['.$element['name'].']'
                 );
-                
+
                 $allow = 'string';
                 if ( isset( $element['allow'] ) ) {
                     $allow = $element['allow'];
                 }
-                
+
                 // check captcha
                 if ( $element['type'] == 'captcha' ) {
-                    if ( ! class_exists( 'securimage' ) ) {
-				        // ----- including securImage -----
-						require_once dirname( __FILE__ ).'/vendors/securimage/securimage.php';
+                    if ( ! class_exists('wbFormBuilderCaptcha',false) ) {
+                        include dirname(__FILE__).'/wbFormBuilder/class.Captcha.php';
+
 				    }
-                    $securimage = new Securimage();
-					$securimage->use_sqlite_db = true;
-					$securimage->sqlite_database = dirname(__FILE__).'/vendors/securimage/database/securimage.sqlite';
+                    $securimage = new wbFormBuilderCaptcha( $this->_config['session_name'] );
                     if ($securimage->check($this->val->param($element['name'])) == false) {
                         $errors[ $element['name'] ]
                             = isset( $element['invalid'] )
@@ -530,13 +530,13 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                             : $this->translate( 'The security code entered was incorrect' );
                     }
                 }
-                
+
                 // leave uploads for later
                 if ( $element['type'] == 'file' ) {
                     $uploads[] = $element;
                     continue;
 				}
-				
+
 				// If the editor was filled with some text and then emptied,
                 // a "<br>" is left, which is treated as "some data". This
 				// makes the check for required field fail.
@@ -599,7 +599,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 						}
                     }
                 }
-                
+
                 // encode HTML? - default is YES!
                 if ( $value != '' && ! isset( $element['encode'] ) || $element['encode'] !== false ) {
                     $value = $this->seq->encodeFormData($value);
@@ -659,7 +659,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $errors;
 
         }   // end function checkForm()
-        
+
     /**
      * dump all stored items; you should NEVER use this method in production code!
      *
@@ -689,7 +689,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         echo "</textarea>";
 
     }   // end function dump()
-        
+
         /**
          *
          *
@@ -709,7 +709,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			}
 			return NULL;
 		}   // end function getAllowedMimeTypes()
-        
+
         /**
          * retrieve validated form data
          *
@@ -734,7 +734,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 ? $this->_valid[ $formname ]
                 : array();
         }   // end function getData()
-        
+
         /**
          *
          *
@@ -758,7 +758,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 return NULL;
             }
 		}
-        
+
         /**
          * returns the list of errors
          *
@@ -809,7 +809,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $this->log()->LogDebug(
                 'creating form ['.$formname.'], Form data:', $formdata
             );
-            
+
             // print notice into log if the secret field name was left to default
             if ( $this->_config['secret_field'] == 'fbformkey' ) {
                 $this->log()->LogWarn(
@@ -820,7 +820,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 
             // use correct template
             $template = 'block.'.$this->_config['output_as'].'.tpl';
-            
+
             // set some defaults
             $this->tpl->setGlobal(
                 array(
@@ -972,7 +972,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $output;
 
         }   //end function getForm()
-        
+
         /**
          * allows wbFormWizard to get the list of forms
          *
@@ -982,7 +982,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 		protected function getForms () {
 		    return self::$__FORMS__;
 		}   // end funciton getForms()
-        
+
         /**
          *
          *
@@ -1019,7 +1019,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			}
 			return $this->_config['mimetypes'];
 		}   // end function getMimeTypes()
-        
+
         /**
          *
          *
@@ -1041,7 +1041,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
             return $elements;
         }   // end function getOptionsByRegex()
-        
+
         /**
          * returns the registered element for a block
          * (start element named $start -> next legend element)
@@ -1076,7 +1076,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $this->log()->LogDebug( 'returning array_slice:', $temp );
             return $temp;
         }   // end function getOptionsForArea()
-        
+
         /**
          *
          *
@@ -1106,7 +1106,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 		              : NULL;
 		    return $path;
 		}   // end function getUploadFilePath()
-		
+
 		/**
          * returns the complete path and filename of thumbnail
          *
@@ -1125,7 +1125,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			}
 		    return NULL;
 		}   // end function getUploadFileThumbPath()
-		
+
 		/**
          * returns the type (image or file) of an uploaded file
          *
@@ -1142,7 +1142,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 		              : NULL;
 		    return $path;
 		}   // end function getUploadFileType()
-		
+
 		/**
          * returns the mime type of an uploaded file
          *
@@ -1224,7 +1224,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
             return true;
         }   // end function insertAfter()
-        
+
         /**
       	 * Insert an element at a given position
       	 *
@@ -1279,7 +1279,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $this->log()->LogDebug( '---> no' );
             return false;
         }   // end function isCanceled ()
-        
+
         /**
          *
          *
@@ -1301,7 +1301,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $this->log()->LogDebug( '---> no' );
             return false;
         }   // end function isSent()
-        
+
         /**
          * convenience method; check if form is already checked
          *
@@ -1313,7 +1313,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         public function isChecked ( $formname = '' ) {
 
             $formname = $this->__validateFormName( $formname );
-            
+
             $this->log()->LogDebug( 'checking if form ['.$formname.'] is checked' );
 
             $return = isset( $this->_checked[ $formname ] )
@@ -1353,7 +1353,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 $this->log()->LogDebug( 'form invalid (errors found)' );
                 return false;
             }
-            
+
             if (
                  isset( $this->_invalid[$formname] )
                  &&
@@ -1405,7 +1405,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
 
         }   // end function removeElement()
-        
+
         /**
          * removes all formerly uploaded files
          *
@@ -1425,7 +1425,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			return true;
 		}   // end function removeUploadedFiles()
 
-        
+
         /**
          * removes a formerly uploaded file
          *
@@ -1463,7 +1463,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
             return NULL;
         }   // end function setAction()
-        
+
         /**
          * add error message
          *
@@ -1489,7 +1489,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 }
             }
         }   // end function setError()
-        
+
         /**
          * set current form to use
          *
@@ -1578,7 +1578,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             $formname = $this->__validateFormName( $formname );
             self::$_forms[ $formname ]['config']['formheader'] = $header;
         }   // end function setHeader()
-        
+
         /**
          * add info text
          *
@@ -1627,7 +1627,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
 
         }   // end function setInfotext()
-        
+
         /**
          * set allowed MIME types for file upload field
          *
@@ -1635,9 +1635,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          **/
 		public function setAllowedMimeTypes( $formname = '', $name, $types ) {
-		
+
             $formname = $this->__validateFormName( $formname );
-            
+
             // find given element
             $path = $this->ArraySearchRecursive( $name, self::$_forms[ $formname ]['elements'], 'name', true );
 
@@ -1687,9 +1687,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
 
             return false;
-            
+
 		}   // end function setAllowedMimeTypes()
-        
+
         /**
          * set option of an already existing element
          *
@@ -1893,29 +1893,29 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return false;
 
         }  // end function setVal()
-        
+
 
 
 /*******************************************************************************
  * create (render) fields
  ******************************************************************************/
- 
+
         /**
          *
          **/
-		public function captcha( $element ) {
-		    if ( ! class_exists( 'securimage' ) ) {
-		        // ----- including securImage -----
-				require_once dirname( __FILE__ ).'/vendors/securimage/securimage.php';
-		    }
-			$uri = $this->sanitizeURI( $this->_config['wblib_base_url'] . '/wblib/vendors/securimage/securimage_show.php' );
-			return
-				'<img id="captcha" src="'.$uri.'" alt="CAPTCHA Image" />' .
-				$this->input( array( 'name' => $element['name'], 'maxlength' => 6 ) ).
-				'<a href="#" onclick="document.getElementById(\'captcha\').src = \''.$uri.'?\' + Math.random(); return false">'.
-				'[ '.$this->lang->translate('Different Image').' ]</a>';
-		}   // end function captcha()
- 
+        public function captcha( $element ) {
+            $uri 	  = $this->sanitizeURI( $this->_config['wblib_base_url'] . '/wblib/wbFormBuilder/showcaptcha.php' );
+            $img_name = 'captcha_img_'.$this->generateRandomString(5);
+            if ( isset($this->_config['session_name']) && $this->_config['session_name'] != '' ) {
+                $uri .= '?SN='.$this->_config['session_name'];
+            }
+            return
+                '<img id="'.$img_name.'" src="'.$uri.'" alt="CAPTCHA Image" />' .
+                $this->input( array( 'name' => $element['name'], 'maxlength' => 6 ) ).
+                '<a href="#" onclick="document.getElementById(\''.$img_name.'\').src = \''.$uri.'?\' + Math.random(); return false">'.
+                '[ '.$this->lang->translate('Different Image').' ]</a>';
+        }   // end function captcha()
+
         /**
          * create a file upload field
          **/
@@ -1955,7 +1955,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $output;
 
         }   // end function infotext
-        
+
         /**
          * create <input /> field
          *
@@ -2013,7 +2013,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             }
 
 			$formname = $this->__validateFormName();
-          
+
             // is it a file upload field?
             if ( ! strcasecmp( $element['type'], 'file' ) ) {
                 if ( isset( self::$_forms[ $formname ][ $element['name'] ][ 'mimetypes' ]) && is_array(self::$_forms[ $formname ][ $element['name'] ][ 'mimetypes' ]) ) {
@@ -2030,7 +2030,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 					$element['onchange'] = 'TestFileType( this.form.'.$element['name'].'.value, [ \''.implode("', '", $mimetypes).'\' ] );';
                 }
             }
-            
+
             // is it a calendar field?
             if ( ! strcasecmp( $element['type'], 'text' ) && isset( $element['calendar'] ) && $element['calendar'] === true ) {
                 if ( isset( $element['class'] ) ) {
@@ -2051,7 +2051,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 				    $this->_flags['__cal_lang_set'] = true;
 				}
             }
-            
+
             // is it a password field?
             $pwstrength = NULL;
             if (
@@ -2110,7 +2110,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             if ( ! $text ) {
                 $this->log()->LogError( 'no text given for legend element!' );
             }
-            
+
             $output =
                 $this->tpl->getTemplate(
                     'legend.'.$this->_config['output_as'].'.tpl',
@@ -2130,7 +2130,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $output;
 
         }   // end function legend()
-        
+
         /**
          *
          *
@@ -2157,7 +2157,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         public function select ( $element ) {
 
             $this->log()->LogDebug( 'creating select field:', $element );
-            
+
             if ( isset( $element['multiple'] ) ) {
                 $element['type'] = 'multiselect';
                 if ( substr_compare( $element['name'], '[]', -2, 2 ) ) {
@@ -2260,7 +2260,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          **/
         public function radio ( $element ) {
-        
+
             if ( ! isset( $element['type'] ) ) {
                 $element['type'] = 'radio';
             }
@@ -2291,7 +2291,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     }
                     $marked = $element['value'];
                 }
-                
+
 				$i = 1;
                 foreach ( $element['options'] as $key => $value ) {
 
@@ -2563,7 +2563,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                   );
 
         }   // end function __init()
-        
+
         /**
          *
          *
@@ -2760,7 +2760,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return array( 'fields' => $fields, 'hidden' => $hidden, 'req_count' => $required, 'blocks' => $blocks );
 
         }   // end function __renderFormElements()
-        
+
 		/**
 		 * handle file uploads; returns TRUE on success, FALSE otherwise
 		 *
@@ -2867,7 +2867,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         private function __validateAttributes( $element ) {
 
             $this->log()->LogDebug( '', $element );
-            
+
             if ( is_array( $element ) ) {
 
                 $this->log()->LogDebug(
@@ -2891,7 +2891,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 $this->log()->LogDebug( 'known attributes:', $known_attributes );
 
                 foreach ( $element as $attr => $value ) {
-                
+
 					if ( is_scalar($value) && ! strlen($value) && strcasecmp($attr,'value') ) {
 					    $this->log()->LogDebug( 'Skipping empty value for attr ['.$attr.']' );
 						continue;
@@ -2998,7 +2998,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $formname;
 
         }   // end function __validateFormName
-        
+
     }
 
 }
