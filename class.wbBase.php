@@ -421,8 +421,23 @@ if ( ! class_exists( 'wbBase', false ) ) {
             if ( $url ) {
                 $this->_url = $url;
             }
-            if ( empty( self::$_url ) && isset($_SERVER['REQUEST_URI']) ) {
-                	$this->_url = $_SERVER['REQUEST_URI'];
+            if ( empty( self::$_url ) ) {
+				if ( ! isset($_SERVER['REQUEST_URI']) ) {
+					$serverrequri = $_SERVER['PHP_SELF'];
+				}
+				else {
+					$serverrequri = $_SERVER['REQUEST_URI'];
+				}
+				$s          = empty($_SERVER["HTTPS"])
+							? ''
+							: (
+								  ($_SERVER["HTTPS"] == "on")
+								? "s"
+								: ""
+							  );
+				$protocol   = substr(strtolower($_SERVER["SERVER_PROTOCOL"]), 0, strpos(strtolower($_SERVER["SERVER_PROTOCOL"]), "/")).$s;
+				$port 	    = ($_SERVER["SERVER_PORT"] == "80") ? "" : (":".$_SERVER["SERVER_PORT"]);
+               	$this->_url = $protocol."://".$_SERVER['SERVER_NAME'].$port.$serverrequri;
             }
             return $this->_url;
         }   // end function selfURL()
@@ -465,9 +480,9 @@ if ( ! class_exists( 'wbBase', false ) ) {
                 list ( $path, $paramstring ) = explode( '?', $base_url );
             }
 
-    #echo "BASE URL: $base_url<br />\n",
-    #     "PATH:     $path<br />\n",
-    #     "PARAMS:   $paramstring<br />\n";
+#echo "BASE URL: $base_url<br />\n",
+#     "PATH:     $path<br />\n",
+#     "PARAMS:   $paramstring<br />\n";
 
             $aParam = preg_split( "/[;&]/", $paramstring );
             if ( is_array( $aParam ) ) {
@@ -510,14 +525,14 @@ if ( ! class_exists( 'wbBase', false ) ) {
                      ? '?' . implode( '&', $carr )
                      : NULL
                    );
-    #echo "getURI() URI before match servername: -$URI-<br />";
+#echo "getURI() URI before match servername: -$URI-<br />";
 
             // make sure that we have a server name
             if ( ! preg_match( "#^http(?:s)?://#", $URI ) ) {
                 $URI = 'http://'.$servername.'/'.$URI;
             }
 
-    #echo "getURI() URI: -$URI-<br />";
+#echo "getURI() URI: -$URI-<br />";
 
             return $URI;
 
