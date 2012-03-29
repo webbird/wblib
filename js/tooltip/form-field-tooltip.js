@@ -490,6 +490,7 @@ DHTMLgoodies_formTooltip.prototype = {
 	{
 		this.tooltipDiv = document.createElement('DIV');
 		this.tooltipDiv.style.position = 'absolute';
+		this.tooltipDiv.style.zIndex = '99';
 		
 		if(this.displayArrow){
 			var topDiv = document.createElement('DIV');
