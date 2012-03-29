@@ -147,7 +147,7 @@ class wbI18n extends wbBase
         {
             $this->log()->LogDebug( 'found language file: ', $file );
             $this->checkFile( $file, $check_var );
-            return;
+            return true;
         }
 
         $this->log()->LogDebug( 'language file does not exist: ', $file );
