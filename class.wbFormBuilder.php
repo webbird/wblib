@@ -83,6 +83,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             'use_editor'         => false,
 			'__cal_lang_set'     => false,
         );
+        
+        //
+        protected      $_errors;
 
         protected      $_config
             = array(
@@ -775,7 +778,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 if ( is_array( $this->_errors[$formname] ) ) {
                     $errors =& $this->_errors[$formname];
 				}
-				if ( is_array( $this->_invalid[$formname] ) ) {
+				if ( isset($this->_invalid[$formname]) && is_array( $this->_invalid[$formname] ) ) {
                     $errors =& array_merge( $this->_errors[$formname], $this->_invalid[$formname] );
 				}
 				if ( count($errors) ) {
@@ -981,7 +984,21 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
 		protected function getForms () {
 		    return self::$__FORMS__;
-		}   // end funciton getForms()
+		}   // end function getForms()
+		
+		/**
+         * allows wbFormWizard to get element definitions
+         *
+         *
+         *
+         **/
+		protected function getElements( $formname = '' ) {
+		    $formname = $this->__validateFormName( $formname );
+		    if ( isset( self::$__FORMS__[$formname] ) ) {
+		        return self::$__FORMS__[$formname];
+			}
+			return NULL;
+		}   // end function getElements()
 
         /**
          *
