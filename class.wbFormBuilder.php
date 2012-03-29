@@ -2338,7 +2338,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 									 'id'
 										 => $name . '_' . $i,
                                      'text'
-                                         => $this->seq->encodeFormData( $this->translate( $value ) ),
+                                         => $this->translate( $value ),
                                      'attributes'
                                          => $this->__validateAttributes(
                                                 array_merge(
@@ -2372,6 +2372,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return $this->tpl->getTemplate(
                        'radio.tpl',
                        array(
+						   'type'       => $element['type'],
                            'options'    => ( isset ( $opt ) ? $opt : array() ),
                            //'content'    => ( isset ( $element['content'] ) ? SEQ_OUTPUT( $element['content'] ) : ''   ),
                            'content'    => ( isset ( $element['content'] ) ? $element['content'] : ''   ),
