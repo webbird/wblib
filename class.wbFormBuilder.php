@@ -522,7 +522,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 // check captcha
                 if ( $element['type'] == 'captcha' ) {
                     if ( ! class_exists('wbFormBuilderCaptcha',false) ) {
-                        include dirname(__FILE__).'/wbFormBuilder/class.Captcha.php';
+                        include dirname(__FILE__).'/wbFormBuilder/class.wbFormBuilderCaptcha.php';
 
 				    }
                     $securimage = new wbFormBuilderCaptcha( $this->_config['session_name'] );
