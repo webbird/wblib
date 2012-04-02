@@ -9,18 +9,29 @@
 </form>
 
 <script type="text/javascript">
-  if ( typeof jQuery != 'undefined' ) {
-    jQuery(document).ready(function($) {
-      if ( typeof DHTMLgoodies_formTooltip != "undefined" ) {
-        var tooltipObj = new DHTMLgoodies_formTooltip();
-        tooltipObj.setTooltipPosition('right');
-        tooltipObj.setImagePath('{{ WBLIB_BASE_URL }}/wblib/js/tooltip/images/');
-        tooltipObj.setCloseMessage('{{ :lang Close }}');
-        tooltipObj.setDisableTooltipMessage("{{ :lang Don't show this message again }}");
-        tooltipObj.initFormFieldTooltip();
-      }
-      {{ js }}
-    });
-  }
+    function tryReadyBottom(time_elapsed) {
+        // make sure that jQuery is available
+        if ( typeof jQuery == 'undefined' ) {
+            if (time_elapsed <= 5000) {
+                setTimeout("tryReadyBottom(" + (time_elapsed + 200) + ")", 200);
+            } else {
+                alert("Timed out while loading jQuery.")
+            }
+        }
+        else {
+            jQuery(document).ready(function($) {
+                if ( typeof DHTMLgoodies_formTooltip != "undefined" ) {
+                    var tooltipObj = new DHTMLgoodies_formTooltip();
+                    tooltipObj.setTooltipPosition('right');
+                    tooltipObj.setImagePath('{{ WBLIB_BASE_URL }}/wblib/js/tooltip/images/');
+                    tooltipObj.setCloseMessage('{{ :lang Close }}');
+                    tooltipObj.setDisableTooltipMessage("{{ :lang Don't show this message again }}");
+                    tooltipObj.initFormFieldTooltip();
+                }
+                {{ js }}
+            });
+        }
+    }
+    tryReadyBottom(0);
 </script>
 <!-- /form.tpl -->

@@ -3,7 +3,7 @@
 <!-- position: head -->
 <script type="text/javascript">
 	// make sure that jQuery is available
-	if ( typeof jQuery === undefined ) {
+	if ( typeof jQuery == 'undefined' ) {
 	    var fileref = document.createElement("script");
 	    fileref.setAttribute( "type", "text/javascript" );
 	    fileref.setAttribute( "src", "https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js" );
@@ -17,8 +17,31 @@
 {{ :ifend }}
 <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/tooltip/rounded-corners.js"></script>
 <script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/tooltip/form-field-tooltip.js"></script>
-<script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/jquery.jqEasyCharCounter.js"></script>
-<script type="text/javascript" src="{{ WBLIB_BASE_URL }}/wblib/js/jquery.passwordstrength.js"></script>
+<script type="text/javascript">
+    function tryReady(time_elapsed) {
+		// make sure that jQuery is available
+		if ( typeof jQuery == 'undefined' ) {
+		    if (time_elapsed <= 5000) {
+		        setTimeout("tryReady(" + (time_elapsed + 200) + ")", 200);
+		    } else {
+		        alert("Timed out while loading jQuery.")
+		    }
+		}
+		else {
+		    var fileref = document.createElement("script");
+		    fileref.setAttribute( "type", "text/javascript" );
+		    fileref.setAttribute( "src", "{{ WBLIB_BASE_URL }}/wblib/js/jquery.jqEasyCharCounter.js" );
+		    if (typeof fileref != "undefined" ) {
+		        document.getElementsByTagName("head")[0].appendChild(fileref);
+		    }
+		    fileref.setAttribute( "src", "{{ WBLIB_BASE_URL }}/wblib/js/jquery.passwordstrength.js" );
+		    if (typeof fileref != "undefined" ) {
+		        document.getElementsByTagName("head")[0].appendChild(fileref);
+		    }
+		}
+	}
+	tryReady(0);
+</script>
 {{ :if use_calendar }}
   <link media="screen" rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" />
   <script type="text/javascript">

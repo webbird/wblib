@@ -67,6 +67,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         // array to store invalid form elements
         private        $_invalid    = array();
 
+    	// array to store fields that should have equal values to other fields
+    	private        $_equals     = array();
+
         //
         private        $_js         = array();
 
@@ -83,7 +86,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             'use_editor'         => false,
 			'__cal_lang_set'     => false,
         );
-        
+
         //
         protected      $_errors;
 
@@ -603,6 +606,24 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     }
                 }
 
+                // check equals
+                if ( isset($element['equal_to']) ) {
+                    // find element for equal check
+                    $equal = $this->getElement( $formname, $element['equal_to'] );
+                    if ( ! $equal ) {
+                        $errors[ $element['name'] ]
+                            = $this->translate( 'Element for equal check ('.$element['equal_to'].') not found!' );
+                    }
+                    else {
+                        if ( $this->val->param($element['name']) != $this->val->param($equal['name']) ) {
+                            $errors[ $element['name'] ]
+                                = $this->translate( 'Elements [{{ 0 }}] and [{{ 1 }}] should be equal!', array( $element['label'], $equal['label'] ) );
+                            $errors[ $element['equal_to'] ]
+                                = $this->translate( 'Elements [{{ 0 }}] and [{{ 1 }}] should be equal!', array( $element['label'], $equal['label'] ) );
+                        }
+                    }
+                }
+
                 // encode HTML? - default is YES!
                 if ( $value != '' && ( ! isset( $element['encode'] ) || $element['encode'] !== false ) ) {
                     $value = $this->seq->encodeFormData($value);
@@ -985,7 +1006,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 		protected function getForms () {
 		    return self::$__FORMS__;
 		}   // end function getForms()
-		
+
 		/**
          * allows wbFormWizard to get element definitions
          *

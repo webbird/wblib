@@ -39,6 +39,9 @@ $LANG = array(
     'Please insert a valid value'
         => 'Bitte geben Sie einen g&uuml;ltigen Wert an',
         
+    'Elements [{{ 0 }}] and [{{ 1 }}] should be equal!'
+		=> 'Elemente [{{ 0 }}] und [{{ 1 }}] müssen gleich sein!',
+        
     'Submit' => 'Absenden',
     'Reset'  => 'Zur&uuml;cksetzen',
     'Cancel' => 'Abbrechen',
