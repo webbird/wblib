@@ -37,7 +37,7 @@ class wbDBBase extends PDO {
     protected $host                 = "localhost";
     protected $port                 = 80;
     protected $user                 = "root";
-    protected $pass                 = "password";
+    protected $pass                 = NULL;
     protected $dbname               = "mydb";
     protected $pdo_driver           = 'mysql';
     protected $prefix               = NULL;
@@ -174,7 +174,12 @@ class wbDBBase extends PDO {
         set_exception_handler(array(__CLASS__, 'exception_handler'));
 
         // ... create a PDO object
+        if ( $this->pass == '' ) {
+            parent::__construct( $this->dsn, $this->user, $driver_options );
+        }
+        else {
         parent::__construct( $this->dsn, $this->user, $this->pass, $driver_options );
+        }
 
         // Change the exception handler back to whatever it was before
         restore_exception_handler();
