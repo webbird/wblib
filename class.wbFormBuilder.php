@@ -604,7 +604,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 }
 
                 // encode HTML? - default is YES!
-                if ( $value != '' && ! isset( $element['encode'] ) || $element['encode'] !== false ) {
+                if ( $value != '' && ( ! isset( $element['encode'] ) || $element['encode'] !== false ) ) {
                     $value = $this->seq->encodeFormData($value);
                 }
 
@@ -992,7 +992,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          *
          *
          **/
-		protected function getElements( $formname = '' ) {
+		public function getElements( $formname = '' ) {
 		    $formname = $this->__validateFormName( $formname );
 		    if ( isset( self::$__FORMS__[$formname] ) ) {
 		        return self::$__FORMS__[$formname];
@@ -2074,6 +2074,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             if (
 			       ! strcasecmp( $element['type'] , 'password' )
 				&& ! strcasecmp( $element['allow'], 'password' )
+				&& isset($element['pwstrength'])
 				&&               $element['pwstrength']
 			) {
 				$pwstrength = true;
@@ -2133,10 +2134,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     'legend.'.$this->_config['output_as'].'.tpl',
                     array(
                         'attributes' => $this->__validateAttributes( $element ),
-                        'value'      => //SEQ_OUTPUT(
-                                        $this->translate( $text )
-                                        //)
-                                        ,
+                        'value'      => $this->translate( $text ),
                     )
 	                // enable cache
 	                //,true
