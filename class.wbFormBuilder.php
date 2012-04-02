@@ -1015,8 +1015,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
 		public function getElements( $formname = '' ) {
 		    $formname = $this->__validateFormName( $formname );
-		    if ( isset( self::$__FORMS__[$formname] ) ) {
-		        return self::$__FORMS__[$formname];
+		    if ( isset( self::$_forms[$formname]['elements'] ) ) {
+		        return self::$_forms[$formname]['elements'];
 			}
 			return NULL;
 		}   // end function getElements()
