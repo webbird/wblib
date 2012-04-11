@@ -749,7 +749,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                           . 'if ( isset( '.$var.' ) ):'."\n"
                           . '    if ( is_array( '.$var.' ) ):'."\n"
 						  . '        if ( count ( '.$var.' ) > 0 ):'."\n"
-						  . '            $__current__ = 0;'."\n"
+						  . '            $__current__'.$this->_loop_vars[ $this->_var_index ].'__ = 0;'."\n"
 						  . '            $__first__   = true;'."\n"
 						  . '            end( '.$var.' );'."\n"
 						  . '            $__last__    = key('.$var.');'."\n"
@@ -760,10 +760,11 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
 					}
 					else {
                         $code .= '        for ( '.$i.'=0; '.$i.'<count('.$var.'); '.$i.'++ ): '."\n"
-							  .  '            '.$var.'['.$i.']["__current__"] = ++$__current__;'."\n"
+							  .  '            '.$var.'['.$i.']["__current__"] = ++$__current__'.$this->_loop_vars[ $this->_var_index ].'__;'."\n"
 							  .  '            if ( $__first__ ) : '.$var.'['.$i.']["__first__"] = true; endif;'."\n"
 							  .  '            if ( '.$i.' == $__last__ ): '.$var.'['.$i.']["__last__"] = true; endif;'."\n"
 							  .  '            $__first__ = false;'."\n"
+							  .  '            $globals["__current__'.$this->_loop_vars[ $this->_var_index ].'__"] = $__current__'.$this->_loop_vars[ $this->_var_index ].'__;'."\n"
 							  .  '        ?>'."\n";
 					}
 
@@ -808,7 +809,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                     $check_value = NULL;
                     $check_with  = NULL;
 
-                    if ( preg_match( '#(.*)(==|!=|<>|>|<)(.*)#', $el['key'], $match ) ) {
+                    if ( preg_match( '#(.*)(==|!=|<>|>|<|\%)(.*)#', $el['key'], $match ) ) {
                         $el['key']   = trim( $match[1] );
                         $check_value = trim( $match[3] );
                         $check_with  = trim( $match[2] );
@@ -840,11 +841,11 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                             )
 						  . ( ( $neg ) ? ' ) && ( ' : ' ) || ( ' )
                           . ( ( $neg ) ? ' ! ' : NULL )
-                          . 'isset( '.str_replace( '$fillings', '$globals', $var ).' ) '
-                          . ( ( ! $neg ) ? '&& '.str_replace( '$fillings', '$globals', $var ).' != "" ' : NULL )
+                          . 'isset( $globals["'.$el['key'].'"] ) '
+                          . ( ( ! $neg ) ? '&& $globals["'.$el['key'].'"] != "" ' : NULL )
                           . (
                               ( $check_value && $check_with )
-                              ? ' && ( '.str_replace( '$fillings', '$globals', $var ).' '.$check_with.' '.$check_value.' ) '."\n"
+                              ? ' && ( $globals["'.$el['key'].'"] '.$check_with.' '.$check_value.' ) '."\n"
                               : ''
                             )
                           . $loop.' ) ): ?>'."\n"
