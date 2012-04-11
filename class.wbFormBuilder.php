@@ -521,9 +521,11 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 if ( isset( $element['allow'] ) ) {
                     $allow = $element['allow'];
                 }
+                $this->log()->LogDebug( 'allow: '.$allow );
 
                 // check captcha
                 if ( $element['type'] == 'captcha' ) {
+                    $this->log()->LogDebug( 'checking captcha' );
                     if ( ! class_exists('wbFormBuilderCaptcha',false) ) {
                         include dirname(__FILE__).'/wbFormBuilder/class.wbFormBuilderCaptcha.php';
 
@@ -548,7 +550,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 				// makes the check for required field fail.
 				if ( $element['type'] == 'textarea' ) {
 					if ( isset($element['editor']) && $element['editor'] == true ) {
-                        $value = $this->val->param( $element['name'] );
+                        $value = $this->val->param( $element['name'], 'PCRE_PLAIN' );
+                        // br only means there's no content
                         if ( preg_match( '/^<br>$/i', $value ) ) {
                             $this->val->delete( $element['name'] );
                         }
