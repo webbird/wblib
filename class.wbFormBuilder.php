@@ -545,6 +545,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                     continue;
 				}
 
+                $value = NULL;
+                
 				// If the editor was filled with some text and then emptied,
                 // a "<br>" is left, which is treated as "some data". This
 				// makes the check for required field fail.
@@ -554,60 +556,61 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                         // br only means there's no content
                         if ( preg_match( '/^<br>$/i', $value ) ) {
                             $this->val->delete( $element['name'] );
+                            $value = NULL;
                         }
 					}
 				}
-
-                // check validity
-                $value = NULL;
-                if ( ! is_array( $allow ) ) {
-                    $value = $this->val->param(
-                                 $element['name'],
-                                 $this->_config['_allowed'][ $allow ],
-                                 array(
-                                     'default'  => ( isset( $element['default']  ) ? $element['default'] : NULL ),
-                                     'stripped' => (
-									 			 	 ( ! isset($element['stripped']) || $element['stripped'] !== false )
-									 				 ? true
-									 				 : NULL
-									 			   )
-                                 )
-                             );
-                    $val_errors = $this->val->getErrors($element['name']);
-                    if ( $val_errors ) {
-                        if ( $val_errors == 'invalid' ) {
-                            $this->_invalid[$formname][$element['name']]
-                                = isset( $element['invalid'] )
-                                ? $this->translate( $element['invalid'] )
-                                : $this->translate( 'Please insert a valid value' );
-                        }
-                        else {
-                            $this->_invalid[$formname][$element['name']] = $val_errors;
-                            //$errors[$element['name']] = $val_errors;
-                        }
-                    }
-                }
-                // allow can be a list of allowed values
-                else {
-                    // value can be a list, too
-					$check_values = $this->val->param( $element['name'] );
-					if ( ! is_array( $check_values ) ) {
-                        $check_values = array( $check_values );
-					}
-                    foreach ( $allow as $allowed_value ) {
-						foreach( $check_values as $check_value ) {
-	                        if ( ! strcasecmp( $allowed_value, $check_value ) ) {
-	                            if ( $value ) {
-	                                $value   = array( $value );
-	                            	$value[] = $allowed_value;
-								}
-								else {
-								    $value = $allowed_value;
-								}
+				else {
+	                // check validity
+	                if ( ! is_array( $allow ) ) {
+	                    $value = $this->val->param(
+	                                 $element['name'],
+	                                 $this->_config['_allowed'][ $allow ],
+	                                 array(
+	                                     'default'  => ( isset( $element['default']  ) ? $element['default'] : NULL ),
+	                                     'stripped' => (
+										 			 	 ( ! isset($element['stripped']) || $element['stripped'] !== false )
+										 				 ? true
+										 				 : NULL
+										 			   )
+	                                 )
+	                             );
+	                    $val_errors = $this->val->getErrors($element['name']);
+	                    if ( $val_errors ) {
+	                        if ( $val_errors == 'invalid' ) {
+	                            $this->_invalid[$formname][$element['name']]
+	                                = isset( $element['invalid'] )
+	                                ? $this->translate( $element['invalid'] )
+	                                : $this->translate( 'Please insert a valid value' );
 	                        }
+	                        else {
+	                            $this->_invalid[$formname][$element['name']] = $val_errors;
+	                            //$errors[$element['name']] = $val_errors;
+	                        }
+	                    }
+	                }
+	                // allow can be a list of allowed values
+	                else {
+	                    // value can be a list, too
+						$check_values = $this->val->param( $element['name'] );
+						if ( ! is_array( $check_values ) ) {
+	                        $check_values = array( $check_values );
 						}
-                    }
-                }
+	                    foreach ( $allow as $allowed_value ) {
+							foreach( $check_values as $check_value ) {
+		                        if ( ! strcasecmp( $allowed_value, $check_value ) ) {
+		                            if ( $value ) {
+		                                $value   = array( $value );
+		                            	$value[] = $allowed_value;
+									}
+									else {
+									    $value = $allowed_value;
+									}
+		                        }
+							}
+	                    }
+	                }
+				}
 
                 // check equals
                 if ( isset($element['equal_to']) ) {
