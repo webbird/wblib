@@ -867,7 +867,7 @@ class wbDBBase extends PDO {
         $join_string = $this->prefix . $tables[0] . ' AS t1 ';
             
         foreach ( $join as $index => $item ) {
-            $join_string .= $jointype
+            $join_string .= ( isset($options['jointype']) ? $options['jointype'] : $jointype )
                          .  $this->prefix.$tables[ $index + 1 ]
                          . ' AS t'.($index+2).' ON '
                          . $item;
