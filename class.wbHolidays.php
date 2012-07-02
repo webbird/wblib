@@ -21,6 +21,8 @@ class wbHolidays extends wbBase {
     protected      $debugLevel     = KLOGGER::OFF;
     #protected      $debugLevel     = KLOGGER::DEBUG;
 
+	protected      $year;
+	
     protected      $_config        = array(
         'show_holidays' => true,
         'country'       => 'de_DE',
@@ -36,8 +38,9 @@ class wbHolidays extends wbBase {
      * @param  string   $country - country shortcut (optional; Default de_de)
      *
      **/
-    function __construct ( $options = array() ) {
+    function __construct ( $year, $options = array() ) {
         parent::__construct($options);
+        $this->year = $year;
         $h_file = dirname( __FILE__ ).'/wbHolidays/'.$this->_config['country'].'.php';
         if ( file_exists( $h_file ) ) {
             $this->log()->LogDebug( 'loading holidays for country: '.$this->_config['country'] );
@@ -105,6 +108,10 @@ class wbHolidays extends wbBase {
      **/
     private function __CalcFeastDays ( $y = NULL ) {
     
+        if ( $y == '' ) {
+            $y = $this->year;
+		}
+    
         // easter
         if ( function_exists("easter_days") ) {
     
@@ -137,14 +144,14 @@ class wbHolidays extends wbBase {
         # Das Datum des Buﬂ- und Bettages ist definiert als ÑDer Mittwoch vor
         # dem letzten Sonntag nach Trinitatisì (rechnerisch gleichbedeutend mit:
         # ÑDer letzte Mittwoch vor dem 23. Novemberì)
-        $last = strtotime("last Wednesday", mktime( 0, 0, 0, 11, 23,$y ) );
-        wbHolidays::$HOLIDAYS[ date( 'n', $last ) ][ date('j', $last ) ][] = 'Bu&szlig;- und Bettag';
+        $last_w_in_nov = strtotime("last Wednesday", mktime( 0, 0, 0, 11, 23,$y ) );
+        wbHolidays::$HOLIDAYS[ date( 'n', $last_w_in_nov ) ][ date('j', $last_w_in_nov ) ][] = 'Bu&szlig;- und Bettag';
         
         # Volkstrauertag = 2 Sonntage vor dem 1. Advent
         # berechne 4. Advent
-        $adv = strtotime( "last Sunday", mktime( 0, 0, 0, 12, 24, $y ) );
+        $fourth_adv = strtotime( "last Sunday", mktime( 0, 0, 0, 12, 24, $y ) );
         # 6 Wochen vorher
-        $last = strtotime( "-5 week", $adv );
+        $last = strtotime( "-5 week", $fourth_adv );
         wbHolidays::$HOLIDAYS[ date( 'n', $last ) ][ date('j', $last ) ][] = 'Volkstrauertag';
         
         # Totensonntag = 1 Sonntag vor dem 1. Advent
