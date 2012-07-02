@@ -113,6 +113,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                   # use CSS file
                   'css_file'            => '',
                   'wblib_base_url'      => '',
+                  'load_ui_theme'       => false,
                   // ----- CSS 'skin'; empty means 'green' -----
                   'skin'                => '',
                   // -----          CSS classes            -----
