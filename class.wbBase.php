@@ -331,15 +331,17 @@ if ( ! class_exists( 'wbBase', false ) ) {
          *
          * @access public
          * @param  string  $dir - directory to scan
-         * @param  string  $remove_prefix - remove this part from results
-         * @param  boolean $with_files    - return dirs and files
-         * @param  boolean $files_only    - return files only
+         * @param  string  $remove_prefix - remove this part from results; default NULL
+         * @param  boolean $with_files    - return dirs and files; default false
+         * @param  boolean $files_only    - return files only; default false
+         * @param  boolean $recurse       - scan recursive; default true
+         * @param  boolean $haltonerror   - flag to exit on error (unable to open dir); default false
          * @return array
          *
          **/
-        public function scanDirectory( $dir, $remove_prefix = NULL, $with_files = false, $files_only = false ) {
+        public function scanDirectory( $dir, $remove_prefix = NULL, $with_files = false, $files_only = false, $recurse = true, $haltonerror = false ) {
             $dirs = array();
-            if ( $dh = opendir( $dir ) ) {
+            if ( $dh = @opendir( $dir ) ) {
                 while( $file = readdir($dh) ) {
                     if ( ! preg_match( '#^\.#', $file ) ) {
                         if ( is_dir( $dir.'/'.$file ) ) {
@@ -347,18 +349,22 @@ if ( ! class_exists( 'wbBase', false ) ) {
                                 $dirs[]  = str_ireplace( $remove_prefix, '', $dir.'/'.$file );
                             }
                             // recurse
-                            $subdirs = $this->scanDirectory( $dir.'/'.$file, $with_files, $files_only );
+                            if( $recurse ) {
+                            	$subdirs = $this->scanDirectory( $dir.'/'.$file, $remove_prefix, $with_files, $files_only, $recurse, $haltonerror );
                             $dirs    = array_merge( $dirs, $subdirs );
                         }
+                        }
                         elseif ( $with_files ) {
-                            $dirs[]  = str_ireplace( $remove_prefix, '', str_ireplace( $dir, '', $dir.'/'.$file ) );
+                            $dirs[]  = str_ireplace( $remove_prefix, '', $dir.'/'.$file );
                         }
                     }
                 }
             }
             else {
+                if ( $haltonerror ) {
                 $this->printError( 'Unable to open base directory ['.$dir.']' );
                 exit;
+            }
             }
             return $dirs;
         }   // end function scanDirectory()
@@ -373,7 +379,7 @@ if ( ! class_exists( 'wbBase', false ) ) {
 
             $files = array();
 
-            if ( $dh = opendir($dir) ) {
+            if ( $dh = @opendir($dir) ) {
                 while ( false !== ( $file = readdir($dh) ) )
                 {
                     if ( $file != "." && $file != ".." )
