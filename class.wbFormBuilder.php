@@ -46,6 +46,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
         // store buttons we've already seen
         protected      $_buttons        = array();
 
+        // store validated items
+        protected      $_valid;
+
         // wbTemplate object handler
         protected      $tpl;
 
@@ -114,6 +117,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                   'css_file'            => '',
                   'wblib_base_url'      => '',
                   'load_ui_theme'       => false,
+                  'form2tab'            => true,
                   // ----- CSS 'skin'; empty means 'green' -----
                   'skin'                => '',
                   // -----          CSS classes            -----
@@ -296,6 +300,8 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
          **/
         public function addButtons( $formname = NULL, $buttons, $preserve_default = true ) {
 
+            $formname = $this->__validateFormName( $formname );
+
             // ----- check if we have a submit button -----
             if (
                     $preserve_default
@@ -331,6 +337,9 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                 );
 
             }
+			else {
+			    $this->_buttons[$formname] = array();
+			}
 
             foreach( $buttons as $button ) {
                 $this->_buttons[$formname][] = array(
@@ -340,8 +349,13 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                                        'label' => $this->translate( $button['label'] ),
                                        'value' => $this->translate( $button['label'] ),
                                        'name'  => $button['name'],
-                                       'class' => $this->_config['button_class']
-                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' ),
+                                       'class' =>
+									   (
+										     isset($button['class'])
+										   ? $button['class']
+										   : $this->_config['button_class']
+                                                . ( ! empty( $this->_config['skin'] ) ? ' fb'.$this->_config['skin'] : '' )
+									   ),
                                    )
                                )
                 );
@@ -865,6 +879,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
                         => $this->sanitizeURI( $this->_config['wblib_base_url'] ),
                     'token'
 						=> $this->seq->createToken( $formname ),
+					'form2tab' => $this->_config['form2tab'],
                 )
             );
 
