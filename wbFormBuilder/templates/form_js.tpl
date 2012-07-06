@@ -9,7 +9,16 @@
 		if (typeof fileref != "undefined" ) { document.getElementsByTagName("head")[0].appendChild(fileref); }
 	}
 
-	{{ :if load_ui_theme }}
+{{ :if load_ui_theme }}
+	// avoid to override an already loaded UI theme
+	var rules = document.styleSheets[0].rules || document.styleSheets[0].cssRules;
+	var found = false;
+	for (var i in rules) {
+	    if (typeof rules[i]['selectorText'] != 'undefined' && rules[i]['selectorText'].indexOf("ui-widget") >= 0) {
+	        found = true;
+	    }
+	}
+	if ( ! found ) {
 	// add CSS
 	var fileref=document.createElement("link");
     fileref.setAttribute("rel", "stylesheet");
@@ -19,7 +28,8 @@
     if (typeof fileref!="undefined") {
         document.getElementsByTagName("head")[0].appendChild(fileref);
     }
-    {{ :ifend }}
+	}
+{{ :ifend }}
     
     // Continually polls to see if LAB is loaded.
 	function wblib_LABjs_Ready(time_elapsed) {
@@ -60,16 +70,39 @@
 			)
 			.script('{{ WBLIB_BASE_URL }}/wblib/js/jquery.jqEasyCharCounter.js').wait()
 			.script('{{ WBLIB_BASE_URL }}/wblib/js/jquery.passwordstrength.js').wait()
-			{{ :if use_filetype_check }}
+{{ :if use_filetype_check }}
 			.script('{{ WBLIB_BASE_URL }}/wblib/js/filetypes.js').wait(){{ :ifend }}
-			{{ :if use_calendar }}
+{{ :if use_calendar }}
 			.script('{{ WBLIB_BASE_URL }}/wblib/js/jQuery/jquery-ui.min.js').wait()
 			.script('{{ WBLIB_BASE_URL }}/wblib/js/jquery.datepicker.js').wait(
 			    function() {
 			        var calendar_image = '{{ WBLIB_BASE_URL }}/wblib/wbFormBuilder/templates/calendar.gif';
 			    }
-			){{ :ifend }}
-			{{ :if use_editor }}
+			)
+{{ :ifend }}
+{{ :if form2tab }}
+			.script('{{ WBLIB_BASE_URL }}/wblib/js/jQuery/jquery-ui.min.js').wait(
+			    function() {
+			        var tabs = '';
+			        var num  = 0;
+			        $("fieldset.fbouter").find("fieldset").each(
+			          function() {
+			            var id = jQuery(this).attr('id');
+			            tabs = tabs + '<li><a href="#' + id + '">' + jQuery(this).find("legend").text().trim() + '</a></li>';
+			            num  = num  + 1;
+			            jQuery(this).find("legend").hide();
+			          }
+			        );
+			        if ( num > 1 ) {
+			          $("fieldset.fbouter").prepend('<ul>'+tabs+'</ul>');
+			          $("fieldset.fbouter").tabs({
+	//		            cookie: {} // session cookie
+			          });
+			        }
+				}
+			)
+{{ :ifend }}
+{{ :if use_editor }}
 			.script('{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.js').wait(
 				function() {
 				    var fileref=document.createElement("link");
@@ -106,3 +139,4 @@
 	}
 
 </script>
+
