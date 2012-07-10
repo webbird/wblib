@@ -718,6 +718,7 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 			 "isSent:     ", $this->isSent(), "\n",
 			 "isChecked:  ", $this->isChecked(), "\n",
 			 "isValid:    ", $this->isValid(), "\n",
+			 "hasData:    ", $this->hasData(), "\n",
 			 "</pre>"
 			 ;
 
@@ -1221,6 +1222,22 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
 		}   // end function getUploadFileMimeType()
 
         /**
+         * check if the form has some data
+         *
+         * @access public
+         * @param  string   $formname
+         * @return boolean
+         *
+         **/
+        public function hasData( $formname = '' ) {
+            $formname = $this->__validateFormName( $formname );
+            return
+                  ( isset($this->_valid[ $formname ]) && count($this->_valid[ $formname ]) )
+                ? true
+                : false;
+        }   // end function hasData()
+
+        /**
          * check if an element is already there
          *
          * @access public
@@ -1252,6 +1269,23 @@ if ( ! class_exists( 'wbFormBuilder', false ) ) {
             return true;
 
         }   // end function hasElement()
+        
+        /**
+         *
+         *
+         *
+         *
+         **/
+		public function hasErrors( $formname = '', $with_upload_errors = false ) {
+		    $formname  = $this->__validateFormName( $formname );
+		    $err_count = ( isset($this->_errors[$formname])  ? count($this->_errors[$formname])  : 0 )
+			 		   + ( isset($this->_invalid[$formname]) ? count($this->_invalid[$formname]) : 0 );
+		    if ( $with_upload_errors ) {
+		        $err_count += ( isset($this->_upload_errors[$formname]) ? count($this->_upload_errors[$formname]) : 0 );
+			}
+			return
+		        ( $err_count > 0 ) ? true : false;
+		}   // end function hasErrors()
 
         /**
       	 * Insert an element at a given position
