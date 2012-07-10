@@ -49,6 +49,9 @@ if ( ! class_exists( 'wbBase', false ) ) {
 
         protected        $lang            = NULL; // accessor to wbI18n
 
+        private   static $dirh            = NULL; // directory helper
+		private   static $arrayh          = NULL; // array helper
+
         /**
          * constructor
          **/
@@ -327,75 +330,6 @@ if ( ! class_exists( 'wbBase', false ) ) {
         }   // end function setFile ()
 
         /**
-         * Scan a directory
-         *
-         * @access public
-         * @param  string  $dir - directory to scan
-         * @param  string  $remove_prefix - remove this part from results; default NULL
-         * @param  boolean $with_files    - return dirs and files; default false
-         * @param  boolean $files_only    - return files only; default false
-         * @param  boolean $recurse       - scan recursive; default true
-         * @param  boolean $haltonerror   - flag to exit on error (unable to open dir); default false
-         * @return array
-         *
-         **/
-        public function scanDirectory( $dir, $remove_prefix = NULL, $with_files = false, $files_only = false, $recurse = true, $haltonerror = false ) {
-            $dirs = array();
-            if ( $dh = @opendir( $dir ) ) {
-                while( $file = readdir($dh) ) {
-                    if ( ! preg_match( '#^\.#', $file ) ) {
-                        if ( is_dir( $dir.'/'.$file ) ) {
-                            if ( ! $files_only ) {
-                                $dirs[]  = str_ireplace( $remove_prefix, '', $dir.'/'.$file );
-                            }
-                            // recurse
-                            if( $recurse ) {
-                            	$subdirs = $this->scanDirectory( $dir.'/'.$file, $remove_prefix, $with_files, $files_only, $recurse, $haltonerror );
-                            $dirs    = array_merge( $dirs, $subdirs );
-                        }
-                        }
-                        elseif ( $with_files ) {
-                            $dirs[]  = str_ireplace( $remove_prefix, '', $dir.'/'.$file );
-                        }
-                    }
-                }
-            }
-            else {
-                if ( $haltonerror ) {
-                $this->printError( 'Unable to open base directory ['.$dir.']' );
-                exit;
-            }
-            }
-            return $dirs;
-        }   // end function scanDirectory()
-
-        /**
-         * find files by a given suffix
-         *
-         *
-         *
-         **/
-        public function findFilesBySuffix( $dir, $suffix = 'php' ) {
-
-            $files = array();
-
-            if ( $dh = @opendir($dir) ) {
-                while ( false !== ( $file = readdir($dh) ) )
-                {
-                    if ( $file != "." && $file != ".." )
-                    {
-                        if ( preg_match( '/\.'.$suffix.'$/i', $file ) ) {
-                            $files[] = $file;
-                        }
-                    }
-                }
-            }
-
-            return $files;
-
-        }   // end function findFilesBySuffix()
-
-        /**
          * set config values
          *
          * @access public
@@ -592,120 +526,16 @@ if ( ! class_exists( 'wbBase', false ) ) {
          *
          *
          **/
-        function sanitizePath( $path )
-        {
-        
-            // remove / at end of string; this will make sanitizePath fail otherwise!
-		    $path       = preg_replace( '~/$~', '', $path );
-		    
-			$path       = str_replace( '\\', '/', $path );
-			
-            // bla/./bloo ==> bla/bloo
-            $path       = preg_replace('~/\./~', '/', $path);
-
-            // resolve /../
-            // loop through all the parts, popping whenever there's a .., pushing otherwise.
-            $parts      = array();
-            foreach ( explode('/', preg_replace('~/+~', '/', $path)) as $part )
-            {
-                if ($part === ".." || $part == '')
-                {
-                    array_pop($parts);
+        function sanitizePath( $path ) {
+            if( ! is_object(self::$dirh) ) {
+                include_once dirname(__FILE__).'/class.wbDirectory.php';
+                self::$dirh = new wbDirectory();
                 }
-                elseif ($part!="")
-                {
-                    $parts[] = $part;
-                }
-            }
-            
-            $new_path = implode("/", $parts);
-            // windows
-            if ( ! preg_match( '/^[a-z]\:/i', $new_path ) ) {
-				$new_path = '/' . $new_path;
-			}
-
-            return $new_path;
-
+			return self::$dirh->sanitizePath($path);
         }   // end function sanitizePath()
         
 	    /**
 	     *
-	     **/
-	    public function copyRecursive( $dirsource, $dirdest, $move = false ) {
-		    if ( is_dir($dirsource) ) {
-		        $dir_handle = opendir($dirsource);
-		    }
-		    else {
-		        return false;
-			}
-			$errors = array();
-		    if ( is_resource($dir_handle) ) {
-			    while ( $file = readdir($dir_handle) ) {
-			        if( $file != "." && $file != ".." ) {
-			            if( ! is_dir($dirsource."/".$file) ) {
-			                if ( ! copy ($dirsource."/".$file, $dirdest.'/'.$file) ) {
-                                $errors[] = error_get_last();
-							}
-			            }
-			            else {
-			                if ( ! make_dir($dirdest."/".$file) ) {
-			                    $errors[] = error_get_last();
-							}
-				            $ret = $this->copyRecursive($dirsource."/".$file, $dirdest.'/'.$file);
-				            if ( is_array($ret) ) {
-				                $errors = array_merge( $errors, $ret );
-							}
-			            }
-			        }
-			    }
-			    closedir($dir_handle);
-			    if ( count($errors) ) {
-			        $this->removeRecursive( $dirdest );
-			        return false;
-				}
-			    if ( $move ) {
-			        $this->removeRecursive( $dirsource );
-			    }
-				return true;
-			}
-			else {
-			    return false;
-			}
-		}   // end function _copyRecursive()
-		
-		/**
-		 *
-		 *
-		 *
-		 *
-		 **/
-		function removeRecursive( $directory ) {
-			// If suplied dirname is a file then unlink it
-			if ( is_file( $directory ) ) {
-				return unlink($directory);
-			}
-			if ( is_dir( $directory ) ) {
-				$dir = dir($directory);
-				while ( false !== ( $entry = $dir->read() ) ) {
-                	if ( $entry == '.' || $entry == '..' ) {
-                    	continue;
-                	}
-                	if ( is_dir($directory . '/' . $entry) ) {
-                    	$this->removeRecursive($directory . '/' . $entry);
-					}
-					else {
-                    	unlink($directory . '/' . $entry);
-					}
-				}
-				// Now delete the folder
-				$dir->close();
-				return @rmdir($directory);
-			}
-    	}   // end function removeRecursive()
-
-
-      	/**
-         *
          *
          *
          *
@@ -753,36 +583,6 @@ if ( ! class_exists( 'wbBase', false ) ) {
         }   // end function array_collapse()
 
         /**
-         *
-         *
-         *
-         *
-         **/
-        function ArrayFindKeyRecursive ( $key, $array ) {
-
-            if ( array_key_exists( $key, $array ) ) {
-                return $array[$key];
-            }
-
-            foreach ( $array as $k => $value ) {
-
-                if ( is_array( $value ) ) {
-
-                    // do sub-search
-                    $found = $this->ArrayFindKeyRecursive( $key, $array[$k] );
-                    if ( $found ) {
-                        return $found;
-                    }
-                    else {
-                        return false;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        /**
          * Recursive array search
          *
          * @param  string  $Needle     value to search for
@@ -795,44 +595,11 @@ if ( ! class_exists( 'wbBase', false ) ) {
          *                 false       if $Needle is not found
          **/
         function ArraySearchRecursive( $Needle, $Haystack, $NeedleKey="", $Strict=false, $Path=array() ) {
-
-            if( ! is_array( $Haystack ) ) {
-                $this->log()->LogDebug( 'Haystack is not an array', $Haystack );
-                return false;
+			if( ! is_object(self::$arrayh) ) {
+                include_once dirname(__FILE__).'/class.wbArray.php';
+                self::$arrayh = new wbArray();
             }
-
-            $this->log()->LogDebug( 'searching for ['.$Needle.'] in stack: ', $Haystack );
-
-            reset($Haystack);
-
-            foreach ( $Haystack as $Key => $Val ) {
-
-                $this->log()->LogDebug( 'current key: '.$Key, $Val );
-
-                if (
-                    is_array( $Val )
-                    &&
-                    $SubPath = $this->ArraySearchRecursive($Needle,$Val,$NeedleKey,$Strict,$Path)
-                ) {
-                    $Path=array_merge($Path,Array($Key),$SubPath);
-                    return $Path;
-                }
-                elseif (
-                    ( ! $Strict && $Val  == $Needle && $Key == ( strlen($NeedleKey) > 0 ? $NeedleKey : $Key ) )
-                    ||
-                    (   $Strict && $Val === $Needle && $Key == ( strlen($NeedleKey) > 0 ? $NeedleKey : $Key ) )
-                ) {
-                    $this->log()->LogDebug( "found needle [$Needle], key [$NeedleKey], value [$Val]" );
-                    $Path[]=$Key;
-                    return $Path;
-                }
-
-            }
-
-            $this->log()->LogDebug( "needle [$Needle] not found" );
-
-            return false;
-
+			return self::$arrayh->ArraySearchRecursive($Needle, $Haystack, $NeedleKey, $Strict, $Path);
         }   // end function ArraySearchRecursive()
 
         /**
@@ -841,39 +608,12 @@ if ( ! class_exists( 'wbBase', false ) ) {
          *
          *
          **/
-        function ArraySort ( $array, $index, $order='asc', $natsort=FALSE, $case_sensitive=FALSE )
-        {
-
-            if( is_array($array) && count($array)>0 ) {
-
-                 foreach(array_keys($array) as $key)
-                 {
-                     $temp[$key]=$array[$key][$index];
+        function ArraySort ( $array, $index, $order='asc', $natsort=FALSE, $case_sensitive=FALSE ) {
+            if( ! is_object(self::$arrayh) ) {
+                include_once dirname(__FILE__).'/class.wbArray.php';
+                self::$arrayh = new wbArray();
                  }
-
-                 if(!$natsort)
-                 {
-                     ($order=='asc')? asort($temp) : arsort($temp);
-                 }
-                 else
-                 {
-                     ($case_sensitive)? natsort($temp) : natcasesort($temp);
-                     if($order!='asc')
-                     {
-                         $temp=array_reverse($temp,TRUE);
-                     }
-                 }
-
-                 foreach(array_keys($temp) as $key)
-                 {
-                     (is_numeric($key))? $sorted[]=$array[$key] : $sorted[$key]=$array[$key];
-                 }
-                 return $sorted;
-
-            }
-
-            return $array;
-
+			return self::$arrayh->ArraySort ( $array, $index, $order, $natsort, $case_sensitive );
         }   // function ArraySort
 
 
