@@ -85,6 +85,7 @@ if ( ! class_exists( 'wbTemplate', false ) ) {
                 include_once dirname(__FILE__).'/class.wbI18n.php';
                 $options['lang'] = new wbI18n( array( 'langPath' => $path.'/languages' ) );
             }
+            $this->globals = NULL;
             parent::__construct( $options );
         }   // end function __construct()
 
