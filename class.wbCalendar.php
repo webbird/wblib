@@ -37,8 +37,9 @@ class wbCalendar extends wbBase {
         'day_name_length' => 3,
         'first_day'       => 0, // sunday
         'locale'          => 'de_DE',
-        'rows'            => 1,
+        'rows'            => 0,
         'show_holidays'   => true,
+        'event_popups'    => true,
     );
     
     private        $_labels        = array();
@@ -52,6 +53,7 @@ class wbCalendar extends wbBase {
     function __construct ( $options = array() ) {
         parent::__construct($options);
         $this->tpl = new wbTemplate();
+        $this->tpl->setGlobal( 'WBLIB_BASE_URL', $this->_config['wblib_base_url'] );
         $this->tpl->setPath( realpath( dirname(__FILE__) ).'/wbCalendar/templates' );
         $this->lang = new wbI18n();
     }   // end function __construct()
@@ -221,10 +223,15 @@ class wbCalendar extends wbBase {
         $events = $this->getEvents( $year, $month, $day );
         $rows   = array();
         
-        if ( is_array($events) && count($events) > 0 ) {
+        if ( is_array($events) && count($events) ) {
+            if ( $this->_config['rows'] ) {
             for ( $i=0; $i<$this->_config['rows']; $i++ ) {
                 $rows[$i]['events'] = $events[$i];
             }
+        }
+			else {
+			    $rows = $events;
+			}
         }
         
         $data   = array(
@@ -233,9 +240,23 @@ class wbCalendar extends wbBase {
                   );
         
         if ( $this->hdays->isHoliday( $month, $day ) ) {
-            $event = $this->hdays->getHolidayForDate( $month, $day );
+            $hdays = $this->hdays->getHolidayForDate( $month, $day );
             $data['spanclass'] = 'wbcal_holiday';
-            $data['hovertext'] = implode( "<br />\n", $event );
+            $data['hovertext'] = NULL;
+            foreach( $hdays as $e ) {
+			    $data['hovertext'] .= '<span class="hover_holiday">'.$e.'</span><br />';
+			}
+        }
+        
+        // if event_popups is set, the events are added to the hovertext
+        if ( $this->_config['event_popups'] && count($events) ) {
+            if ( ! isset($data['hovertext']) ) {
+                $data['hovertext'] = NULL;
+			}
+			foreach( $events as $event ) {
+			    $data['hovertext'] .= '<span class="hover_event">'.$event['event'].'</span><br />';
+			}
+			$data['rows'] = NULL;
         }
         
         return
@@ -262,9 +283,9 @@ class wbCalendar extends wbBase {
                             ? $options['year']
                             : $this->currentYear();
                             
-        $last_day_of_month  = strftime( "%d", mktime(0,0,0,$month+1,0,$year) );
-        $first_day_of_month = strftime( "%w", mktime(0,0,0,$month,1,$year ) );
-        $weeknumber         = date( 'W', mktime(0,0,1,$month,1,$year) );
+        $last_day_of_month  = $this->getLastDayOfMonth($month,$year);
+        $first_day_of_month = $this->getFirstDayOfMonth($month,$year);
+        $weeknumber         = $this->getWeekNumber($month,$year);
         $today              = getdate();
         $line               = array();
         $count              = 0;
@@ -272,6 +293,8 @@ class wbCalendar extends wbBase {
         $cols               = 8;
         $labels             = $this->getLabels();
         
+		$this->tpl->setGlobal('event_popups', $this->_config['event_popups']);
+		
         // do we have some labels?
         if ( count( $labels ) > 0 ) {
             $cols = 9;
@@ -287,12 +310,13 @@ class wbCalendar extends wbBase {
         // add holidays
         if ( $this->_config['show_holidays'] === true ) {
             $this->hdays = new wbHolidays( $year, $this->_config['locale'] );
-            $hdays = $this->hdays->getHolidaysForMonth( $month );
         }
 
+		$prepadding = ($first_day_of_month + 7 - $this->_config['first_day'] ) % 7;
+
         // prepadding
-        if ( $first_day_of_month >= 1 ) {
-            for ( $i=1; $i<$first_day_of_month; $i++ ) {
+        if ( $prepadding >= 1 ) {
+            for ( $i=1; $i<=$prepadding; $i++ ) {
                 $line['days'][] =
                     array(
                         'tdclass'  => 'wbcal-pre',
@@ -300,7 +324,7 @@ class wbCalendar extends wbBase {
                         'day'      => ''
                     );
             }
-            $count = $count + $first_day_of_month - 1;
+            $count = $prepadding + $first_day_of_month;
         }
 
         // fill weeks
@@ -311,13 +335,15 @@ class wbCalendar extends wbBase {
                                 'table_month_week.tpl',
                                 array_merge(
                                     array(
-                                        'weeknumber' => date( 'W', mktime(0,0,1,$month,$day+1,$year)),
-                                        'labels'     => $this->getLabels()
+                                        'weeknumber' => $weeknumber,
+                                        'labels'     => ( count($labels) ? $labels : NULL ),
                                     ),
                                     $line
                                 )
                             );
                 $line = array();
+                $count = 0;
+                $weeknumber++;
             }
 
             $tdclass = array();
@@ -328,13 +354,19 @@ class wbCalendar extends wbBase {
             }
             if ( $this->hasEvents( $day, $month, $year ) ) {
                 $tdclass[] = 'wbcal_event';
+                $events    = $this->getEvents( $year, $month, $day );
+            }
+            if ( $this->hdays->isHoliday( $month, $day ) ) {
+	            $event = $this->hdays->getHolidayForDate( $month, $day );
+	            $tdclass[] = 'wbcal_holiday';
             }
 
             $line['days'][] =
                 array(
                     'tdclass'  => implode( ' ', $tdclass ),
                     'dayclass' => '',
-                    'day'      => $this->day( array( 'day' => $day ) )
+                    'day'      => $this->day( array( 'day' => $day ) ),
+                    'events'   => $events,
                 );
             
             $count++;
@@ -344,12 +376,12 @@ class wbCalendar extends wbBase {
         // post-padding
         if ( $count%7 != 0 && $count > 0 )
         {
-            $colspan = ( $cols - 1 ) - strftime( "%w", mktime(0,0,0,$month,$last_day_of_month,$year ) );
+            $colspan = ( $cols - $count );
             if ( $colspan >= 1 ) {
                 for( $i=1; $i<$colspan; $i++ ) {
                     $line['days'][] =
                     array(
-                        'tdclass'  => 'wbcal-post',
+                        'tdclass'  => 'wbcal_post',
                         'dayclass' => '',
                         'day'      => ''
                     );
@@ -362,8 +394,8 @@ class wbCalendar extends wbBase {
                         'table_month_week.tpl',
                         array_merge(
                                     array(
-                                        'weeknumber' => date( 'W', mktime(0,0,1,$month,$day+1,$year)),
-                                        'labels'     => $this->getLabels()
+                                        'weeknumber' => $weeknumber,
+                                        'labels'     => ( count($labels) ? $labels : NULL ),
                                     ),
                                     $line
                                 )
@@ -390,6 +422,8 @@ class wbCalendar extends wbBase {
      *
      **/
     public function getEvents( $year, $month, $day ) {
+        $month = sprintf('%02d', $month);
+        $day   = sprintf('%02d', $day);
         if ( array_key_exists( $year, $this->_events ) ) {
             if ( array_key_exists( $month, $this->_events[$year] ) ) {
                 if ( array_key_exists( $day, $this->_events[$year][$month] ) ) {
@@ -404,13 +438,24 @@ class wbCalendar extends wbBase {
                 }
             }
         }
-        return false;
+        return array();
     }   // end function getEvents()
     
     /**
+     * add an event to the internal events database
      *
+     * options:
+     *     year (optional)  - default: current year
+     *     month (optional) - default: current month
+     *     day (optional)   - default: current day
+     *     row (optional)   - default: 1
+     *     info (optional)  - default: NULL
      *
+     * ...where 'info' is the event text; example: "My birthday"
      *
+     * @access public
+     * @param  array    $options
+     * @return void
      *
      **/
     public function addEvent( $options ) {
@@ -439,7 +484,11 @@ class wbCalendar extends wbBase {
                ? $options['row']
                : 1;
         
-        $this->_events[$year][$month][$day][$row][] = $options;
+		$text  = isset( $options['info'] )
+			   ? $options['info']
+			   : NULL;
+        
+        $this->_events[$year][$month][$day][$row]['event'] = $text;
         
     }   // end function addEvent()
     
@@ -450,6 +499,8 @@ class wbCalendar extends wbBase {
      *
      **/
     public function hasEvents ( $day = NULL, $month = NULL, $year = NULL ) {
+        $month = sprintf('%02d', $month);
+        $day   = sprintf('%02d', $day);
         if ( array_key_exists( $year, $this->_events ) ) {
             if ( array_key_exists( $month, $this->_events[$year] ) ) {
                 if ( array_key_exists( $day, $this->_events[$year][$month] ) ) {
@@ -459,6 +510,54 @@ class wbCalendar extends wbBase {
         }
         return false;
     }
+    
+    /**
+     *
+     *
+     *
+     *
+     **/
+	public function getFirstDayOfMonth( $month = NULL, $year = NULL ) {
+	    $month              = ( $month != '' && is_numeric($month) && $month >= 1 && $month <= 12 )
+                            ? $month
+                            : $this->currentMonth();
+        $year               = ( $year != '' && is_numeric($year) )
+                            ? $year
+                            : $this->currentYear();
+		return strftime( "%w", mktime(0,0,0,$month,1,$year ) );
+	}   // end function getFirstDayOfMonth()
+	
+	/**
+	 *
+	 *
+	 *
+	 *
+	 **/
+	 public function getLastDayOfMonth( $month = NULL, $year = NULL ) {
+	    $month              = ( $month != '' && is_numeric($month) && $month >= 1 && $month <= 12 )
+                            ? $month
+                            : $this->currentMonth();
+        $year               = ( $year != '' && is_numeric($year) )
+                            ? $year
+                            : $this->currentYear();
+		return strftime( "%d", mktime(0,0,0,$month+1,0,$year) );
+	}   // end function getLastDayOfMonth()
+	
+	/**
+	 *
+	 *
+	 *
+	 *
+	 **/
+	public function getWeekNumber( $month = NULL, $year = NULL ) {
+		$month              = ( $month != '' && is_numeric($month) && $month >= 1 && $month <= 12 )
+                            ? $month
+                            : $this->currentMonth();
+        $year               = ( $year != '' && is_numeric($year) )
+                            ? $year
+                            : $this->currentYear();
+		return date( 'W', mktime(0,0,1,$month,1,$year) );
+	}   // end function getWeekNumber()
     
     /**
      *
