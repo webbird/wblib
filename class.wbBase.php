@@ -477,6 +477,19 @@ if ( ! class_exists( 'wbBase', false ) ) {
             return $URI;
 
         }   // end function getURI ()
+
+        /**
+         * this function now resides in class.wbDirectory.php; this is for
+         * backward compatibility
+         * params $recurse and $haltonerror are no longer supported
+         **/
+        function scanDirectory( $dir, $remove_prefix = NULL, $with_files = false, $files_only = false, $recurse = true, $haltonerror = false ) {
+            if( ! is_object(self::$dirh) ) {
+                include_once dirname(__FILE__).'/class.wbDirectory.php';
+                self::$dirh = new wbDirectory();
+            }
+			return self::$dirh->scanDirectory($dir, $with_files, $files_only, $remove_prefix );
+        }   // end function scanDirectory()
         
         /**
          * sanitize URL (remove '/./', '/../', '//')
