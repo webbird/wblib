@@ -64,6 +64,22 @@ class wbDirectory extends wbBase {
 		    return $this->scanDirectory( $dir, true, true, $remove_prefix, array('lte','htt','tpl') );
 		}   // end function getTemplateFiles()
 
+        /**
+         * get file size
+         *
+         * @access public
+         * @param  string  $file
+         * @param  boolean $kb    - return the size in kB; default false
+         * @return mixed   integer or false if file does not exist / is not a file
+         **/
+        public function getSize($file,$kb=false) {
+            $file = $this->sanitizePath($file);
+            if( ! file_exists($file) ) return false;
+            if( ! is_file($file)     ) return false;
+            $size = filesize($file);
+            return ( $kb ? ceil( $size / 1024 ) : $size );
+        }   // end function getSize()
+
 		/**
 		 * fixes a path by removing //, /../ and other things
 		 *
