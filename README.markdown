@@ -13,6 +13,12 @@ wblib is a bunch of library classes you may find useful:
 For more information, please visit
 
 http://wblib.webbird.de/de (German; work in progress)
+
+## Important note for LEPTON/WB users!
+
+Please use the download link on top to download the module for LEPTON/WB. 
+Do NOT use the ZIP option provided by GitHub. This will give you an 
+incomplete download!
     
 ## License
 
