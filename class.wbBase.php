@@ -580,7 +580,7 @@ if ( ! class_exists( 'wbBase', false ) ) {
 
         }   // end function slurp()
 
-    		/**
+        /**
          * transform an array to an array of strings:
          * '<key>' = '<value>'
          *

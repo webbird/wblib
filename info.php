@@ -14,7 +14,7 @@
 $module_directory 	= 'wblib';
 $module_name 		= 'wblib';
 $module_function 	= 'library';
-$module_version 	= '0.61';
+$module_version 	= '0.82';
 $module_platform 	= '2.8';
 $lepton_platform    = '1.x';
 

@@ -86,28 +86,58 @@ if (!class_exists('wbFormBuilder', false)) {
         //
         protected $_errors;
         
-        protected $_config = array('debug' => 'false',
-        // this is used for Securimage()
+        protected $_config = array(
+            'debug' => 'false',
+            // this is used for Securimage()
             'session_name' => NULL, 'current_file' => NULL, 
-        // default path to search inc.forms.php
-            'path' => '/forms', 'fallback_path' => '/forms', 
-        // default forms definition file name
+            // default path to search inc.forms.php
+            'path' => '/forms',
+            'fallback_path' => '/forms', 
+            // default forms definition file name
             'file' => 'inc.forms.php', 
-        // default variable name
+            // default variable name
             'var' => 'FORMS', 
-        // form defaults (<form> tag)
-            'method' => 'post', 'action' => '', 'enctype' => '', 'id' => '', 'save_key' => 'save', 'cancel_key' => 'cancel', 
-        // use CSS file
-            'css_file' => '', 'wblib_base_url' => '', 'load_ui_theme' => false, 'form2tab' => true, 
-        // ----- CSS 'skin'; empty means 'green' -----
+            // form defaults (<form> tag)
+            'method' => 'post',
+            'action' => '',
+            'enctype' => '',
+            'id' => '',
+            'save_key' => 'save',
+            'cancel_key' => 'cancel', 
+            // use CSS file
+            'css_file' => '',
+            'wblib_base_url' => '',
+            'load_ui_theme' => false,
+            'form2tab' => true, 
+            // ----- CSS 'skin'; empty means 'green' -----
             'skin' => '', 
-        // -----          CSS classes            -----
-            'fieldset_class' => 'fbfieldset', 'legend_class' => 'fblegend', 'label_class' => 'fblabel', 'form_class' => 'fbform', 'left_class' => 'fbleft', 'header_class' => 'fbheader', 'info_class' => 'fbinfo', 'req_class' => 'fbrequired', 'table_class' => 'fbtable', 'error_class' => 'fberror', 'info_class' => 'fbinfo', 'buttonpane_class' => 'fbbuttonpane', 'button_class' => 'fbbutton', 'icon_class' => 'fbicon', 'infotext_class' => 'fbinfotext', 
-        // output as table or fieldset
-            'output_as' => 'fieldset', 'secret_field' => 'fbformkey', 
-        // ----- File uploads -----
-            'create_thumbs' => true, 'thumb_width' => 150, 'thumb_height' => 'auto', 'thumb_prefix' => 'thumb_', 'upload_dir' => '/uploads', 'max_file_size' => NULL, 
-        // known mime types
+            // -----          CSS classes            -----
+            'fieldset_class' => 'fbfieldset',
+            'legend_class' => 'fblegend',
+            'label_class' => 'fblabel',
+            'form_class' => 'fbform',
+            'left_class' => 'fbleft',
+            'header_class' => 'fbheader',
+            'info_class' => 'fbinfo',
+            'req_class' => 'fbrequired',
+            'table_class' => 'fbtable',
+            'error_class' => 'fberror',
+            'info_class' => 'fbinfo',
+            'buttonpane_class' => 'fbbuttonpane',
+            'button_class' => 'fbbutton',
+            'icon_class' => 'fbicon',
+            'infotext_class' => 'fbinfotext', 
+            // output as table or fieldset
+            'output_as' => 'fieldset',
+            'secret_field' => 'fbformkey', 
+            // ----- File uploads -----
+            'create_thumbs' => true,
+            'thumb_width' => 150,
+            'thumb_height' => 'auto',
+            'thumb_prefix' => 'thumb_',
+            'upload_dir' => '/uploads',
+            'max_file_size' => NULL, 
+            // known mime types
             'mimetypes' => array('audio/mpeg' => array('suffixes' => 'mp3', 'label' => 'MPEG Audio Stream, Layer III (MP3)', 'icon' => 'mime-audio.png'), 'application/octet-stream' => array('suffixes' => 'bin|dms|lha|lzh|exe|class|ani|pgp|so|dll|dmg', 'label' => 'Binary', 'icon' => 'mime-octet.png'), 'image/gif' => array('suffixes' => 'gif', 'label' => 'GIF Images', 'icon' => 'mime-gif.png'), 'image/*' => array('suffixes' => 'gif|ief|jpeg|jpg|jpe|png|tga|tif|tiff', 'label' => 'All kinds of images', 'icon' => 'mime-image.png'), 'application/gzip' => array('suffixes' => 'gzip', 'label' => 'GZIP compressed files', 'icon' => 'mime-compressed.png'), 'image/ief' => array('suffixes' => 'ief', 'label' => 'IEF images', 'icon' => 'mime-image.png'), 'image/jpeg' => array('suffixes' => 'jpeg|jpg|jpe', 'label' => 'JP(e)G images', 'icon' => 'mime-jpg.png'), 'application/pdf' => array('suffixes' => 'pdf', 'label' => 'PDF files', 'icon' => 'mime-pdf.png'), 'image/png' => array('suffixes' => 'png', 'label' => 'PNG images', 'icon' => 'mime-image.png'), 'image/targa' => array('suffixes' => 'tga', 'label' => 'TGA (Targa) images', 'icon' => 'mime-tga.png'), 'image/tiff' => array('suffixes' => 'tiff|tif', 'label' => 'TIFF images', 'icon' => 'mime-tiff.png'), 'application/zip' => array('suffixes' => 'zip', 'label' => 'ZIP compressed files (zip)', 'icon' => 'mime-compressed.png'), 'application/x-zip-compressed' => array('suffixes' => 'zip', 'label' => 'ZIP compressed files (x-zip-compressed)', 'icon' => 'mime-compressed.png')));
         
         /**

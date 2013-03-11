@@ -116,10 +116,10 @@ class wbDBBase extends PDO {
         if ( is_object( $this ) && is_object($this->log) )
         {
             $this->warn(
-                '[wbDatabase] Uncaught exception: '. $exception->getMessage()
+                '[wbDatabase Exception] '. $exception->getMessage()
             );
         }
-        die( '[wbDatabase] Uncaught exception: '. $exception->getMessage() );
+        die( '[wbDatabase Exception] '. $exception->getMessage() );
     }   // end function exception_handler()
 
     /**

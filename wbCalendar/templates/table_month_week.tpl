@@ -1,14 +1,14 @@
-  <tr>
-    {{ :if labels }}
-    <td class="wbcal-label">
-      {{ :loop labels }}<br /><span class="wbcal-label">{{ label }}</span>{{ :loopend }}
-    </td>
-    {{ :ifend }}
-    {{ :loop days }}
-    <td class="wbcal-day{{ :if tdclass }} {{ tdclass }}{{ :ifend }}">
-      <span class="{{ dayclass }}">{{ day }}</span>{{ :if events }}<br />{{ :ifend }}
-      {{ :loop events }}{{ event }}{{ :loopend }}
-    </td>
-    {{ :loopend }}
-    <td>{{ weeknumber }}</td>
-  </tr>
+{{ :comment table based week sheet }}
+    <tr>
+{{ :if labels }}
+	    <td class="wbcal_label">
+	      {{ :loop labels }}<br /><span class="wbcal_label">{{ label }}</span>{{ :loopend }}
+	    </td>
+{{ :ifend }}
+{{ :loop days }}
+	    <td class="wbcal_day{{ :if tdclass }} {{ tdclass }}{{ :ifend }}">
+	      <span class="{{ dayclass }}">{{ day }}</span>
+	    </td>
+{{ :loopend }}
+    	<td class="wbcal_week">{{ weeknumber }}</td>
+  	</tr>

@@ -24,6 +24,33 @@
 
 class wbArray extends wbBase {
 
+        private static $Needle = NULL;
+        private static $Key    = NULL;
+
+        private static function filter_callback($v)
+        {
+            return !isset($v[self::$Key]) || $v[self::$Key] !== self::$Needle;
+        }
+
+        /**
+         * removes an element from an array
+         *
+         * @access public
+         * @param  string $Needle
+         * @param  array  $Haystack
+         * @param  mixed  $NeedleKey
+         **/
+        public function ArrayRemove( $Needle, &$Haystack, $NeedleKey="" )
+        {
+            if( ! is_array( $Haystack ) ) {
+                return false;
+            }
+            reset($Haystack);
+            self::$Needle = $Needle;
+            self::$Key    = $NeedleKey;
+            $Haystack     = array_filter($Haystack, 'self::filter_callback');
+        }   // end function ArrayRemove()
+
     	/**
          *
          *

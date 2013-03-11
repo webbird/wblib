@@ -64,30 +64,37 @@ class wbDatabase {
     /**
      * Replaces any parameter placeholders in a query with the value of that
      * parameter. Useful for debugging. Assumes anonymous parameters from
-     * $params are are in the same order as specified in $query
+     * $params are in the same order as specified in $query
      *
      * Source: http://stackoverflow.com/questions/210564/pdo-prepared-statements
      *
-     * @param string $query The sql query with parameter placeholders
-     * @param array $params The array of substitution parameters
+     * @access public
+     * @param  string $query  The sql query with parameter placeholders
+     * @param  array  $params The array of substitution parameters
      * @return string The interpolated query
      */
     public static function interpolateQuery($query, $params) {
         $keys = array();
+        $values = $params;
+
         # build a regular expression for each parameter
-        if ( is_array($params) ) {
-            foreach ($params as $key => $value) {
-                if (is_string($key)) {
-                    $keys[] = '/:'.$key.'/';
-                } else {
-                    $keys[] = '/[?]/';
-                }
+        foreach ($params as $key => $value) {
+            if (is_string($key)) {
+                $keys[] = '/:'.$key.'/';
+            } else {
+                $keys[] = '/[?]/';
             }
+
+            if (is_array($value))
+                $values[$key] = implode(',', $value);
+
+            if (is_null($value))
+                $values[$key] = 'NULL';
         }
-        $query = preg_replace($keys, $params, $query, 1, $count);
+        // Walk the array to see if we can add single-quotes to strings
+        array_walk($values, create_function('&$v, $k', 'if (!is_numeric($v) && $v!="NULL") $v = "\'".$v."\'";'));
+        $query = preg_replace($keys, $values, $query, 1, $count);
         return $query;
-    }
-
-
+    }   // end function interpolateQuery()
 
 }
