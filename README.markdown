@@ -1,6 +1,7 @@
 #wblib - WebBird's Base Libraries
 
 ## Description
+
 wblib is a bunch of library classes you may find useful:
 
 + Template Engine (wbTemplate)
@@ -9,6 +10,7 @@ wblib is a bunch of library classes you may find useful:
 + Form Builder / Validator (wbFormBuilder)
 + Data validation (wbValidate)
 + Calendar (wbCalendar)
++ some helper classes (wbArray, wbDirectory)
 
 For more information, please visit
 
@@ -16,9 +18,10 @@ http://wblib.webbird.de/de (German; work in progress)
 
 ## Important note for LEPTON/WB users!
 
-Please use the download link on top to download the module for LEPTON/WB. 
-Do NOT use the ZIP option provided by GitHub. This will give you an 
-incomplete download!
+Do NOT use the ZIP option provided by GitHub. This will give you an
+incomplete download, and the ZIP will not be installable!
+
+For download, visit http://wbaddons.webbird.de
     
 ## License
 
