@@ -74,6 +74,11 @@ class wbDatabase {
      * @return string The interpolated query
      */
     public static function interpolateQuery($query, $params) {
+
+        if ( ! is_array($params) ) {
+            return $query;
+        }
+
         $keys = array();
         $values = $params;
 
@@ -81,7 +86,8 @@ class wbDatabase {
         foreach ($params as $key => $value) {
             if (is_string($key)) {
                 $keys[] = '/:'.$key.'/';
-            } else {
+            }
+            else {
                 $keys[] = '/[?]/';
             }
 
