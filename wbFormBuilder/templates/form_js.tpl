@@ -96,12 +96,12 @@
 {{ :if use_filetype_check }}
             .script('{{ WBLIB_BASE_URL }}/wblib/js/filetypes.js').wait(){{ :ifend }}
 {{ :if use_calendar }}
-            .script('{{ WBLIB_BASE_URL }}/wblib/js/jQuery/jquery-ui.min.js').wait()
-            .script('{{ WBLIB_BASE_URL }}/wblib/js/jquery.datepicker.js').wait(
+            .script('{{ WBLIB_BASE_URL }}/wblib/js/jQuery/jquery-ui.min.js').wait(
                 function() {
                     var calendar_image = '{{ WBLIB_BASE_URL }}/wblib/wbFormBuilder/templates/calendar.gif';
                 }
             )
+            .script('{{ WBLIB_BASE_URL }}/wblib/js/jquery.datepicker.js').wait()
 {{ :ifend }}
 {{ :if form2tab }}
             .script('{{ WBLIB_BASE_URL }}/wblib/js/jQuery/jquery-ui.min.js').wait(

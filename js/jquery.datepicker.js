@@ -43,8 +43,7 @@ if ( typeof jQuery !== undefined ) {
 		    showButtonPanel: true, // button panel in popup
 		    changeMonth: true, // month dropdown in popup
 		    changeYear: true, // year dropdown in popup
-		    beforeShow: checkDates, // callback function
-	 	    buttonImage: calendar_image
+		    beforeShow: checkDates // callback function
           });
       }
     }
