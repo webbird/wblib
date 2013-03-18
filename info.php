@@ -4,7 +4,7 @@
 
   WebBird's PHP Libraries
 
-  Copyright (C) 2009, 2011, Bianka Martinovic
+  Copyright (C) 2009 - 2013, Bianka Martinovic
   Contact me: blackbird(at)webbird(dot)de, http://www.webbird.de/
   
   This info file is created for use with Websitebaker / LEPTON CMS

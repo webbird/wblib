@@ -16,12 +16,24 @@ For more information, please visit
 
 http://wblib.webbird.de/de (German; work in progress)
 
+## Download
+
+For download, visit http://wbaddons.webbird.de/?do=item&item=3
+
+## Please note
+
+The vendors subdirectory is intentionally empty in the GitHub repository. So you
+will have to add SecurImage v2.0.2 (http://phpcaptcha.org/) and class.upload.php
+(http://verot.net) manually if you download wblib from GitHub. The wblib will
+work without, but you will not be able to use the Captcha and Upload features
+of wbFormBuilder.
+
 ## Important note for LEPTON/WB users!
 
 Do NOT use the ZIP option provided by GitHub. This will give you an
 incomplete download, and the ZIP will not be installable!
 
-For download, visit http://wbaddons.webbird.de
+For download, visit http://wbaddons.webbird.de/?do=item&item=3
     
 ## License
 
