@@ -93,6 +93,8 @@ if (!class_exists('wbFormBuilder', false)) {
             // default path to search inc.forms.php
             'path' => '/forms',
             'fallback_path' => '/forms', 
+            // wether to show elements that have 'adminonly' set to true
+            'is_admin' => false,
             // default forms definition file name
             'file' => 'inc.forms.php', 
             // default variable name
@@ -1246,6 +1248,17 @@ if (!class_exists('wbFormBuilder', false)) {
         } // end function setAction()
         
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public function setAdmin($formname = NULL, $action) {
+            $formname = $this->__validateFormName($formname);
+            $this->_config['is_admin']
+                = ( is_bool($action) ? $action : false );
+        }   // end function setAdmin()
+
+        /**
          * add error message
          *
          * @access public
@@ -2022,7 +2035,10 @@ if (!class_exists('wbFormBuilder', false)) {
                 $this->_js[] = "jQuery('#" . $element['name'] . "').jqEasyCounter({ " . "maxChars: " . $element['maxlength'] . ", " . "maxCharsWarning: " . ($element['maxlength'] - intval(($element['maxlength'] * 10 / 100))) . ", " . "msgText: '" . $this->translate("Characters") . ": '" . " });\n";
             }
             if (isset($element['editor']) && $element['editor'] === true) {
-                $this->_js[]                = "if ( typeof cleditor != 'undefined' ) { jQuery('#" . $element['name'] . "').cleditor(); } else { alert('unable to load CLEditor!'); }\n";
+                $this->_js[]
+                    = $this->tpl->getTemplate('load_wysiwyg.tpl', array(
+                          'element' => $element['name'],
+                      ));
                 $this->_flags['use_editor'] = true;
             }
             
@@ -2257,6 +2273,11 @@ if (!class_exists('wbFormBuilder', false)) {
                 // overload 'value' key with current data
                 if (isset($formdata[$element['name']])) {
                     $element['value'] = $formdata[$element['name']];
+                }
+
+                // hide elements with 'adminonly' set
+                if(isset($element['adminonly']) && $element['adminonly'] && !$this->_config['is_admin']) {
+                    continue;
                 }
                 
                 // reference to currently used array

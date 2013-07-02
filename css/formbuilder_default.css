@@ -32,10 +32,9 @@ input.fbdisabled,textarea.fbdisabled{border:0 !important;background-color:transp
 #DHTMLgoodies_formTooltipContent{margin-bottom:10px;}
 .DHTMLgoodies_formTooltip_closeMessage{font-size:0.8em;}
 /*******************************************************************************
-    CLEditor
+    jQueryTE WYSIWYG Editor
 *******************************************************************************/
-div.cleditorMain, div.cleditorToolbar, div.cleditorGroup, div.cleditorButton, div.cleditorDivider{margin-top:auto !important;}
-div.cleditorMain{float:right !important;}
+div.jqte{float:right !important;}
 /*******************************************************************************
     Password Strength Meter
 *******************************************************************************/

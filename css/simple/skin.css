@@ -15,4 +15,6 @@ fieldset.fbfieldset li.fbtypecheckbox span{margin-right: -25px;}
 li.fbtypecheckbox input.fbcheckbox{margin-left:260px;}
 li.fbtypecheckbox label.fblabel{float:none;}
 .fbbuttonpane{border-top:1px solid #aaa;padding-top:25px;}
-div.cleditorMain {float:none !important; margin-left:374px !important;}
+div.jqte {float:none !important; margin: 0 374px 5px 0 !important;border-color: #aaa !important;}
+div.jqte .jqte_tool_label {height:24px !important;}
+div.jqte .jqte_source {min-height:15px !important;}

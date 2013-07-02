@@ -22,7 +22,12 @@
 
 **/
 
-class wbArray extends wbBase {
+if(!class_exists('wbBase',false))
+    include dirname(__FILE__).'/class.wbBase.php';
+
+if(!class_exists('wbArray',false))
+{
+    class wbArray extends wbBase {
 
         private static $Needle = NULL;
         private static $Key    = NULL;
@@ -181,6 +186,7 @@ class wbArray extends wbBase {
             }
             return false;
         }   // end function ArrayFindKeyRecursive ()
+    }
 }
 
 

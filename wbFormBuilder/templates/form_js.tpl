@@ -29,7 +29,7 @@
             document.getElementsByTagName("head")[0].appendChild(fileref);
         }
     }
-    }
+    }   // end function checkUITheme() {
 
     // tabbed interface
     function createTabs() {
@@ -48,7 +48,7 @@
             $("fieldset.fbouter").prepend('<ul>'+tabs+'</ul>');
             $("fieldset.fbouter").tabs();
         }
-    }
+    }   // end function createTabs()
 
 {{ :if load_ui_theme }}
     checkUITheme();
@@ -109,24 +109,19 @@
             )
 {{ :ifend }}
 {{ :if use_editor }}
-            .script('{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.js').wait(
+            .script('{{ WBLIB_BASE_URL }}/wblib/js/jQueryTE/jquery-te-1.4.0.min.js').wait(
                 function() {
                     var fileref=document.createElement("link");
                     fileref.setAttribute("rel", "stylesheet");
                     fileref.setAttribute("type", "text/css");
                     fileref.setAttribute("media", "screen");
-                    fileref.setAttribute("href", "{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.css");
+                    fileref.setAttribute("href", "{{ WBLIB_BASE_URL }}/wblib/js/jQueryTE/jquery-te-1.4.0.css");
                     if (typeof fileref!="undefined") {
                         document.getElementsByTagName("head")[0].appendChild(fileref);
                     }
                 }
             )
-            .script('{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.xhtml.min.js').wait(
-                function() {
-                    $.cleditor.defaultOptions.width = 486;
-                    $.cleditor.defaultOptions.height = 300;
-                }
-            ){{ :ifend }}
+{{ :ifend }}
             .wait(
                 function() {
                     jQuery(document).ready(function($) {
