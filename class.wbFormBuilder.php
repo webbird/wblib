@@ -93,8 +93,6 @@ if (!class_exists('wbFormBuilder', false)) {
             // default path to search inc.forms.php
             'path' => '/forms',
             'fallback_path' => '/forms', 
-            // wether to show elements that have 'adminonly' set to true
-            'is_admin' => false,
             // default forms definition file name
             'file' => 'inc.forms.php', 
             // default variable name
@@ -1248,17 +1246,6 @@ if (!class_exists('wbFormBuilder', false)) {
         } // end function setAction()
         
         /**
-         *
-         * @access public
-         * @return
-         **/
-        public function setAdmin($formname = NULL, $action) {
-            $formname = $this->__validateFormName($formname);
-            $this->_config['is_admin']
-                = ( is_bool($action) ? $action : false );
-        }   // end function setAdmin()
-
-        /**
          * add error message
          *
          * @access public
@@ -2273,11 +2260,6 @@ if (!class_exists('wbFormBuilder', false)) {
                 // overload 'value' key with current data
                 if (isset($formdata[$element['name']])) {
                     $element['value'] = $formdata[$element['name']];
-                }
-
-                // hide elements with 'adminonly' set
-                if(isset($element['adminonly']) && $element['adminonly'] && !$this->_config['is_admin']) {
-                    continue;
                 }
                 
                 // reference to currently used array

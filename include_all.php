@@ -31,6 +31,7 @@ foreach (
         'wbListBuilder',
         'wbHolidays',
         'wbDirectory',
+        'wbArray',
     ) as $class
 ) {
     if ( ! class_exists($class,false) ) {
