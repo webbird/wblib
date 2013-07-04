@@ -109,6 +109,26 @@
             )
 {{ :ifend }}
 {{ :if use_editor }}
+            .script('{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.min.js').wait(
+                function() {
+                    var fileref=document.createElement("link");
+                    fileref.setAttribute("rel", "stylesheet");
+                    fileref.setAttribute("type", "text/css");
+                    fileref.setAttribute("media", "screen");
+                    fileref.setAttribute("href", "{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.css");
+                    if (typeof fileref!="undefined") {
+                        document.getElementsByTagName("head")[0].appendChild(fileref);
+                    }
+                }
+            )
+            .script('{{ WBLIB_BASE_URL }}/wblib/js/cleditor/jquery.cleditor.xhtml.min.js').wait(
+                function() {
+                    $.cleditor.defaultOptions.width = 486;
+                    $.cleditor.defaultOptions.height = 300;
+                }
+            )
+{{ :ifend }}
+{{ :if use_editor_html5 }}
             .script('{{ WBLIB_BASE_URL }}/wblib/js/jQueryTE/jquery-te-1.4.0.min.js').wait(
                 function() {
                     var fileref=document.createElement("link");

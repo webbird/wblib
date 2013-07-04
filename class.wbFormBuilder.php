@@ -81,7 +81,13 @@ if (!class_exists('wbFormBuilder', false)) {
         private $_upload_errors = array( );
         
         //
-        private $_flags = array('use_filetype_check' => false, 'use_calendar' => false, 'use_editor' => false, '__cal_lang_set' => false);
+        private $_flags = array(
+            'use_filetype_check' => false,
+            'use_calendar' => false,
+            'use_editor' => false,
+            'use_editor_html5' => false,
+            '__cal_lang_set' => false
+        );
         
         //
         protected $_errors;
@@ -93,6 +99,8 @@ if (!class_exists('wbFormBuilder', false)) {
             // default path to search inc.forms.php
             'path' => '/forms',
             'fallback_path' => '/forms', 
+            // wether to show elements that have 'adminonly' set to true
+            'is_admin' => false,
             // default forms definition file name
             'file' => 'inc.forms.php', 
             // default variable name
@@ -400,7 +408,10 @@ if (!class_exists('wbFormBuilder', false)) {
                 // a "<br>" is left, which is treated as "some data". This
                 // makes the check for required field fail.
                 if ($element['type'] == 'textarea') {
-                    if (isset($element['editor']) && $element['editor'] == true) {
+                    if (
+                           isset($element['editor'])       && $element['editor'] == true
+                        || isset($element['editor_html5']) && $element['editor_html5'] == true
+                    ) {
                         $value = $this->val->param($element['name'], 'PCRE_PLAIN');
                         // br only means there's no content
                         if (preg_match('/^<br\s*?\/' . '?' . '>$/i', $value)) {
@@ -472,7 +483,20 @@ if (!class_exists('wbFormBuilder', false)) {
                 }
                 
                 // encode HTML? - default is YES!
-                if ($value != '' && ($element['type'] != 'textarea' || !$element['editor']) && (!isset($element['encode']) || $element['encode'] !== false)) {
+                if (
+                       $value != ''
+                    && (
+                          $element['type'] != 'textarea'
+                       || (
+                             !$element['editor']
+                          && !$element['editor_html5']
+                          )
+                       )
+                    && (
+                           !isset($element['encode'])
+                        || $element['encode'] !== false
+                       )
+                ) {
                     $value = $this->seq->encodeFormData($value);
                 }
                 
@@ -595,7 +619,7 @@ if (!class_exists('wbFormBuilder', false)) {
             else {
                 return NULL;
             }
-        }
+        }   // end function getElement()
         
         /**
          * returns the list of errors
@@ -881,7 +905,8 @@ if (!class_exists('wbFormBuilder', false)) {
         public function getUploadFileCount($formname = NULL) {
             $formname = $this->__validateFormName($formname);
             return (isset($this->_uploads[$formname])) ? count($this->_uploads[$formname]) : 0;
-        }
+        }   // end function getUploadFileCount()
+
         /**
          * returns the complete path and filename of an uploaded file
          *
@@ -1245,6 +1270,17 @@ if (!class_exists('wbFormBuilder', false)) {
             return NULL;
         } // end function setAction()
         
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function setAdmin($formname = NULL, $action) {
+            $formname = $this->__validateFormName($formname);
+            $this->_config['is_admin']
+                = ( is_bool($action) ? $action : false );
+        }   // end function setAdmin()
+
         /**
          * add error message
          *
@@ -1806,7 +1842,7 @@ if (!class_exists('wbFormBuilder', false)) {
                 $element['name'] .= '[]';
             }
             return $this->select($element);
-        }
+        }   // end function multiselect()
         
         /**
          * create a select box (dropdown)
@@ -2018,13 +2054,34 @@ if (!class_exists('wbFormBuilder', false)) {
                 $style = ' style="' . $this->_error_style . '"';
             }
             
-            if (isset($element['maxlength'])) {
-                $this->_js[] = "jQuery('#" . $element['name'] . "').jqEasyCounter({ " . "maxChars: " . $element['maxlength'] . ", " . "maxCharsWarning: " . ($element['maxlength'] - intval(($element['maxlength'] * 10 / 100))) . ", " . "msgText: '" . $this->translate("Characters") . ": '" . " });\n";
+            if (isset($element['maxlength']) && is_numeric($element['maxlength'])) {
+                #$this->_js[] = "jQuery('#" . $element['name'] . "').jqEasyCounter({ " . "maxChars: " . $element['maxlength'] . ", " . "maxCharsWarning: " . ($element['maxlength'] - intval(($element['maxlength'] * 10 / 100))) . ", " . "msgText: '" . $this->translate("Characters") . ": '" . " });\n";
+                $this->_js[]
+                    = $this->tpl->getTemplate('load_charcounter.tpl', array(
+                          'element'   => $element['name'],
+                          'maxlength' => $element['maxlength'],
+                          'warning'   => ($element['maxlength'] - intval(($element['maxlength'] * 10 / 100))),
+                          'characters' => $this->translate("Characters"),
+                      ));
             }
-            if (isset($element['editor']) && $element['editor'] === true) {
+
+            // use WYSIWYG; use editor_html5 for jQueryTE, editor for CLEditor
+            // exclusive! dunno if they would work together on same page...
+            if (isset($element['editor_html5']) && $element['editor_html5'] === true) {
+                $this->_js[]
+                    = $this->tpl->getTemplate('load_wysiwyg_html5.tpl', array(
+                          'element'   => $element['name'],
+                          'maxlength' => ( isset($element['maxlength']) ? $element['maxlength'] : NULL ),
+                          'characters' => $this->translate("Characters"),
+                      ));
+                $this->_flags['use_editor_html5'] = true;
+            }
+            elseif (isset($element['editor']) && $element['editor'] === true) {
                 $this->_js[]
                     = $this->tpl->getTemplate('load_wysiwyg.tpl', array(
                           'element' => $element['name'],
+                          'maxlength' => ( isset($element['maxlength']) ? $element['maxlength'] : NULL ),
+                          'characters' => $this->translate("Characters"),
                       ));
                 $this->_flags['use_editor'] = true;
             }
@@ -2262,6 +2319,11 @@ if (!class_exists('wbFormBuilder', false)) {
                     $element['value'] = $formdata[$element['name']];
                 }
                 
+                // hide elements with 'adminonly' set
+                if(isset($element['adminonly']) && $element['adminonly'] && !$this->_config['is_admin']) {
+                    continue;
+                }
+                
                 // reference to currently used array
                 $add_to_array =& $fields;
                 
@@ -2291,6 +2353,10 @@ if (!class_exists('wbFormBuilder', false)) {
                 $label = NULL;
                 $id    = preg_replace('#\[\]$#', '', $element['name']);
                 
+                if ( isset($element['callback']) ) {
+                    call_user_func_array($element['callback'],array(&$element));
+                }
+
                 // create element
                 if (method_exists($this, $element['type'])) {
                     $field = $this->{$element['type']}($element);
