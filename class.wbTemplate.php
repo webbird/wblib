@@ -528,15 +528,16 @@ if (!class_exists('wbTemplate', false))
             // $2 - only set if closing tag matches
             // $3 - var name
             // $4 - content
-            $regexp = '(' // capture
-                . $this->_config['start_tag'] // {{ open
-                . "\s*" // optional space
-                . ':(if|loop)(end)?' // optional          $3
-                . "\s*" // optional space
-                . '(' // capture...
-                . "[^" . $this->_config['end_tag'] . "]*" // anything but closing
-                . ')' // end capture
-                . $this->_config['end_tag'] // }} close
+            $regexp =
+                  '(' // capture
+                . $this->_config['start_tag']                    // {{ open
+                .     "\s*"                                      // optional space
+                .     ':(if|loop)(end)?'                         // optional          $3
+                .     "\s*"                                      // optional space
+                .     '('                                        // capture...
+                .        "[^" . $this->_config['end_tag'] . "]*" // anything but closing
+                .     ')'                                        // end capture
+                . $this->_config['end_tag']                      // }} close
                 . ')';
 
             $tokens = preg_split("/$regexp/im", $string, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -636,12 +637,12 @@ if (!class_exists('wbTemplate', false))
                 $key = $match[2];
                 $not = true;
             }
-            if (preg_match("#\s+isloop\s+(.*)#", $key, $match))
+            if (preg_match("#isloop\s+(.*)#", $key, $match))
             {
                 $key    = $match[1];
                 $isloop = true;
             }
-            if ($type == 'loop' && preg_match("#\s+keys\s+(.*)#", $key, $match))
+            if ($type == 'loop' && preg_match("#keys\s+(.*)#", $key, $match))
             {
                 $key  = $match[1];
                 $keys = true;
@@ -673,7 +674,6 @@ if (!class_exists('wbTemplate', false))
             array_push($this->_stack, $el);
 
             $this->log()->LogDebug('started a new block:', $el);
-
             $this->log()->LogDebug('opened block of type: ' . $type);
 
             return true;
