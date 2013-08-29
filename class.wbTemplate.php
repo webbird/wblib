@@ -632,7 +632,7 @@ if (!class_exists('wbTemplate', false))
             $isloop = false;
             $keys   = false;
 
-            if (preg_match("#\s+(\!|not)\s+(.*)#", $key, $match))
+            if (preg_match("#(\!|not)\s+(.*)#", $key, $match))
             {
                 $key = $match[2];
                 $not = true;
